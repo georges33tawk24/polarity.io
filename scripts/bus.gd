@@ -18,6 +18,10 @@ signal leaderboard_changed(rows: Array)
 signal ring_changed(radius: float)
 signal clock_changed(seconds_left: float)
 signal player_outside_ring(outside: bool)
+## The player died and a revive is genuinely available. The arena is HELD — it does
+## not finish — until Arena.revive_player() or Arena.decline_revive() is called, so
+## the offer can never be silently dropped and leave the match hanging.
+signal player_down
 
 # --- feel ---
 signal shake(amount: float)

@@ -126,6 +126,60 @@ func _capture() -> void:
 	print("screenshot %s -> %s" % ["ok" if err == OK else "FAILED", _shot_path])
 
 
+## Revive is the one feature whose failure mode is "the match never ends" — the
+## arena deliberately holds in AWAITING_REVIVE until it is answered. Every exit has
+## to be proven, or a dropped callback strands the player in a frozen arena.
+func _check_revive() -> void:
+	var a: Arena = _main.arena
+	if a == null or a.player == null:
+		printerr("FAIL  revive: no arena/player"); _pre_fails += 1
+		return
+	# Reviving resets placement, mass and alive. Snapshot and restore, so this
+	# check cannot corrupt the result assertions standing next to it — it caught
+	# itself doing exactly that ("bad placement 0 for YOU").
+	var was_placement := a.player.placement
+	var was_mass := a.player.mass
+	var was_alive := a.player.alive
+	var was_state := a.state
+
+	# Declining must finish the match exactly as dying used to.
+	a._finished_emitted = false
+	a.state = Arena.State.AWAITING_REVIVE
+	a.decline_revive()
+	if a.state != Arena.State.FINISHED:
+		printerr("FAIL  revive: declining did not finish the match"); _pre_fails += 1
+	else:
+		print("revive: declining ends the match")
+
+	# Accepting must bring the player back, alive, inside the ring.
+	# Set `alive` directly rather than calling kill(): kill() emits `eliminated`,
+	# which re-enters the arena's own handler and finishes the match out from under
+	# the test. What is under test is revive_player, not the death path.
+	a._finished_emitted = false
+	a.player.alive = false
+	a.state = Arena.State.AWAITING_REVIVE
+	a.revive_player()
+	var ok_alive: bool = a.player.alive and a.state == Arena.State.PLAYING
+	var inside: bool = Vector2(a.player.global_position.x,
+			a.player.global_position.z).length() < a.ring_radius
+	if not ok_alive or not inside:
+		printerr("FAIL  revive: player not restored inside the ring (alive=%s state=%d)"
+				% [a.player.alive, a.state]); _pre_fails += 1
+	else:
+		print("revive: player restored at %.1f mass inside the ring" % a.player.mass)
+
+	# Once per match. A second offer must not be made.
+	if not a._revive_used:
+		printerr("FAIL  revive: not marked as used"); _pre_fails += 1
+	else:
+		print("revive: marked used, so it cannot be taken twice")
+
+	a.player.placement = was_placement
+	a.player.mass = was_mass
+	a.player.alive = was_alive
+	a.state = was_state
+
+
 func _on_ended(result: Dictionary) -> void:
 	if _done:
 		return
@@ -140,6 +194,7 @@ func _on_ended(result: Dictionary) -> void:
 		print("shot deadline missed (match ended at %.1fs) - capturing now" % _elapsed)
 		await _capture()
 
+	_check_revive()
 	var fails := _pre_fails
 	var placement := int(result.get("placement", 0))
 	if placement < 1 or placement > int(result.get("total", 0)):

@@ -73,6 +73,7 @@ func start_match() -> void:
 
 	ui.show_screen("hud")
 	ui.attach_minimap(arena)
+	ui.attach_arena(arena)
 	ui.start_ftue(arena)
 
 

@@ -818,3 +818,28 @@ effects, nameplates and arenas stopped previewing as the same two-pole chip.
   swap-in path, not the pack: `assets/sfx/<name>.{wav,ogg,mp3}` wins over the
   synthesised sound with no code change, and boot prints `sfx: N authored, M
   synthesised` so a half-installed pack is visible.
+
+
+## §12w — rewarded revive (2026-07-30)
+
+The first rewarded placement beyond double-coins (§4.4). Design constraints that
+shaped it:
+
+- **The arena HOLDS rather than finishing.** A new `AWAITING_REVIVE` state freezes
+  the match while the offer is up. Everything that gates on `PLAYING` therefore
+  stops, so the fight does not continue without the player watching it.
+- **The offer only appears when an ad genuinely exists** (`Ads.rewarded_available()`),
+  because an offer that then fails to deliver is worse than no offer.
+- **Every exit answers.** Accept, decline, ad-failed, and an 8-second auto-decline all
+  end in `revive_player()` or `decline_revive()`. The failure mode here is a match
+  that never ends, so this is the one thing the test suite proves exhaustively.
+- Revived at 45% of PEAK mass (remote-configurable) at the most open spot inside the
+  ring — survivable, but dying is still a real loss.
+- Bots are never revived. A bot that came back would make the leaderboard lie.
+
+**The test caught itself corrupting the run, twice.** First it was called during
+`_ready()`, so `decline_revive()` ended the match before it had played (0 eliminations).
+Then it ran inside `_on_ended` before the result assertions, and `revive()` resets
+`placement`, so the suite reported "bad placement 0 for YOU". It now snapshots and
+restores the player state it touches. Worth recording: a test that mutates live game
+state has to be as careful as the code it checks.

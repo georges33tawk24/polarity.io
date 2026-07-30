@@ -424,6 +424,30 @@ func kill(killer: Magnet = null) -> void:
 	eliminated.emit(self, killer)
 
 
+## Brings a dead magnet back. Only the player is ever revived (§4.4 rewarded
+## placement) — bots die for good, because a bot that came back would make the
+## leaderboard lie about what happened.
+func revive(at: Vector3, with_mass: float) -> void:
+	if alive:
+		return
+	alive = true
+	visible = true
+	set_physics_process(true)
+	collision_layer = 1
+	collision_mask = 1
+	global_position = at
+	velocity = Vector3.ZERO
+	charge = 0.0
+	cooldown = 0.0
+	frozen = 0.0
+	_hurt = 0.0
+	outside_ring = false
+	placement = 0
+	_set_mass(with_mass)
+	# Brief invulnerability is not modelled; instead the caller places the magnet in
+	# open space, which is cheaper and cannot be gamed by standing in a saw.
+
+
 func apply_impulse(dir: Vector3, strength: float, source: Magnet = null) -> void:
 	# Divide by mass: a heavy magnet shrugs off a hit that would launch a light one.
 	velocity += dir * strength / maxf(mass / t.start_mass, 0.35)

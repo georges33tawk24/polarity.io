@@ -118,3 +118,8 @@ UI_NOTIFICATIONS,NOTIFICATIONS,NOTIFICACIONES,NOTIFICAÇÕES,NOTIFICATIONS,BENAC
 UI_EMPTY_MISSIONS,No missions right now — play a match,No hay misiones ahora — juega una partida,Sem missões agora — jogue uma partida,Aucune mission — jouez une partie,Keine Missionen — spiel ein Match,Заданий нет — сыграй матч,Şu an görev yok — bir maç oyna,Belum ada misi — mainkan satu match,ミッションはありません — 1試合プレイしましょう,미션이 없습니다 — 한 판 플레이하세요
 UI_BEST,Best,Mejor,Melhor,Meilleur,Beste,Лучшее,En iyi,Terbaik,最高,최고
 UI_LEFT_SHORT,LEFT,QUEDAN,RESTAM,RESTE,ÜBRIG,ОСТАЛОСЬ,KALAN,SISA,残り,남음
+UI_ELIMINATED,ELIMINATED,ELIMINADO,ELIMINADO,ÉLIMINÉ,AUSGESCHIEDEN,ВЫБЫЛ,ELENDİN,TERELIMINASI,敗退,탈락
+UI_REVIVE_BODY,Get back in with some of your mass.,Vuelve con parte de tu masa.,Volte com parte da sua massa.,Revenez avec une partie de votre masse.,Kehre mit einem Teil deiner Masse zurück.,Вернись с частью своей массы.,Kütlenin bir kısmıyla geri dön.,Kembali dengan sebagian massamu.,質量の一部を残して復帰します。,질량 일부를 가지고 복귀합니다.
+UI_REVIVE,CONTINUE,CONTINUAR,CONTINUAR,CONTINUER,WEITER,ПРОДОЛЖИТЬ,DEVAM,LANJUT,つづける,계속하기
+UI_NO_THANKS,NO THANKS,NO GRACIAS,NÃO OBRIGADO,NON MERCI,NEIN DANKE,НЕТ СПАСИБО,HAYIR,TIDAK,やめる,괜찮아요
+UI_SECONDS_LEFT,%ds,%ds,%ds,%ds,%ds,%dс,%ds,%dd,%d秒,%d초

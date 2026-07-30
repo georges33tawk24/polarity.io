@@ -6,7 +6,10 @@ extends Node3D
 ## every rule (attraction, bites, repel, hazards, the ring) is in one readable
 ## pass instead of scattered across N objects reaching into each other.
 
-enum State { COUNTDOWN, PLAYING, SUDDEN_DEATH, FINISHED }
+## AWAITING_REVIVE holds the match open after the player dies while the revive offer
+## is on screen. Everything that gates on PLAYING therefore stops, which is what we
+## want: the arena freezes rather than running on without you.
+enum State { COUNTDOWN, PLAYING, SUDDEN_DEATH, AWAITING_REVIVE, FINISHED }
 
 ## Fallback pool. The localised pools live in data/bot_names.json — see
 ## _bot_name_pool(). A lobby of English handles in a Japanese build was the one
@@ -58,6 +61,7 @@ var _countdown := 0.0
 var _last_countdown_call := -1
 var _placement_counter := 0
 var _board_timer := 0.0
+var _revive_used := false
 var _alarm_timer := 0.0
 var _fps_accum := 0.0
 var _fps_frames := 0
@@ -792,6 +796,12 @@ func _on_eliminated(victim: Magnet, killer: Magnet) -> void:
 	Audio.set_intensity(clampf(1.0 - float(alive - 1) / maxf(1.0, magnets.size() - 1), 0.0, 1.0))
 
 	if victim.is_player:
+		# One revive per match, and only when an ad is genuinely available — the
+		# offer must never appear and then fail to deliver.
+		if not _revive_used and Config.flag("revive_enabled") and Ads.rewarded_available():
+			state = State.AWAITING_REVIVE
+			Bus.player_down.emit()
+			return
 		_finish()
 		return
 	if alive <= 1:
@@ -887,3 +897,51 @@ func _bot_name_pool() -> Array:
 				if pools.has(key) and (pools[key] as Array).size() >= 8:
 					return (pools[key] as Array).duplicate()
 	return BOT_NAMES.duplicate()
+
+
+## Accepted the revive. Placed at the ring centre with a fraction of peak mass:
+## far enough from anything to be survivable, small enough that dying was still a
+## real loss.
+func revive_player() -> void:
+	if player == null or state != State.AWAITING_REVIVE:
+		return
+	_revive_used = true
+	var give: float = maxf(t.start_mass, player.peak_mass * Config.num("revive.mass_fraction", 0.45))
+	player.revive(_open_spot(), give)
+	state = State.PLAYING
+	Bus.alive_count_changed.emit(_alive_count())
+	Audio.play("size_up", 1.0, -4.0)
+	fx.shockwave(player.global_position, player.radius() * 2.2,
+			player.tint_a, 0.6)
+	Analytics.track("revive_used", {"mass": give})
+
+
+## Declined, or the offer timed out. The match ends exactly as it would have.
+func decline_revive() -> void:
+	if state != State.AWAITING_REVIVE:
+		return
+	_finish()
+
+
+## Somewhere inside the ring that is not on top of a hazard or another magnet.
+func _open_spot() -> Vector3:
+	var best := Vector3.ZERO
+	var best_clear := -1.0
+	for attempt in 24:
+		var a := randf() * TAU
+		var r: float = ring_radius * 0.55 * sqrt(randf())
+		var p := Vector3(cos(a) * r, 0.0, sin(a) * r)
+		var clear := INF
+		# Distance to the nearest live magnet AND the nearest hazard.
+		for m in magnets:
+			if m.alive:
+				clear = minf(clear, p.distance_to(m.global_position))
+		for h in _hazard_nodes:
+			if is_instance_valid(h) and h is Node3D:
+				clear = minf(clear, p.distance_to((h as Node3D).global_position))
+		if clear > best_clear:
+			best_clear = clear
+			best = p
+		if clear > 14.0:
+			break
+	return best

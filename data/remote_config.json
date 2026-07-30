@@ -1,6 +1,5 @@
 {
   "_comment": "Local defaults for every remotely-tunable value. A real Remote Config provider overrides these at runtime; this file is the offline fallback and the schema of record. Nothing here may be required for the game to boot.",
-
   "flags": {
     "ads_enabled": true,
     "interstitials_enabled": true,
@@ -16,9 +15,9 @@
     "cloud_save_enabled": true,
     "rating_prompt_enabled": true,
     "share_card_enabled": true,
-    "kill_switch_monetisation": false
+    "kill_switch_monetisation": false,
+    "revive_enabled": true
   },
-
   "ads": {
     "interstitial_every_n_matches": 3,
     "interstitial_min_seconds": 60,
@@ -28,33 +27,49 @@
     "revive_cost_seconds": 0,
     "double_coins_multiplier": 2
   },
-
   "economy": {
     "coins_per_kill": 12,
     "coins_win_bonus": 120,
     "starter_pack_gems": 500,
     "starter_pack_price_usd": 2.99
   },
-
   "offers": {
     "starter_pack_after_matches": 3,
     "churn_offer_after_days_away": 3,
     "offer_duration_hours": 24
   },
-
   "referral": {
     "invitee_coins": 500,
     "referrer_coins": 750
   },
-
   "rating": {
     "prompt_after_wins": 2,
     "prompt_min_matches": 8,
     "prompt_cooldown_days": 60
   },
-
   "experiments": {
-    "onboarding_prompt": { "variants": ["hold_first", "launch_first"], "weights": [50, 50] },
-    "starter_price":     { "variants": ["control", "cheap"], "weights": [70, 30] }
+    "onboarding_prompt": {
+      "variants": [
+        "hold_first",
+        "launch_first"
+      ],
+      "weights": [
+        50,
+        50
+      ]
+    },
+    "starter_price": {
+      "variants": [
+        "control",
+        "cheap"
+      ],
+      "weights": [
+        70,
+        30
+      ]
+    }
+  },
+  "revive": {
+    "mass_fraction": 0.45
   }
 }

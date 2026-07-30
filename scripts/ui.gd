@@ -54,6 +54,8 @@ var _hint: Label
 var _name_edit: LineEdit
 var _pole_target: Control
 var _result_trophy: HBoxContainer
+var _arena: Arena
+var _revive_box: Control
 var _wallet: Label
 var _result_rows: VBoxContainer
 var _result_title: Stencil.StencilLabel
@@ -157,6 +159,7 @@ func _connect_bus() -> void:
 	Bus.player_mass_changed.connect(func(m: float) -> void: _mass_target = m)
 	Bus.player_absorbed.connect(func(_p: Vector3, _a: float) -> void: _punch_mass())
 	Bus.ring_changed.connect(_on_ring)
+	Bus.player_down.connect(_on_player_down)
 	Bus.clock_changed.connect(_on_clock)
 	Bus.alive_count_changed.connect(_on_alive)
 	Bus.leaderboard_changed.connect(_on_board)
@@ -638,6 +641,12 @@ func _build_hud() -> Control:
 	_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	root.add_child(_hint)
 	return root
+
+
+## The revive offer needs to call back into the arena, and the HUD's tension cue
+## needs the tuning. Ui held neither.
+func attach_arena(a: Arena) -> void:
+	_arena = a
 
 
 func attach_minimap(a: Arena) -> void:
@@ -1455,3 +1464,68 @@ func _is_new(key: String, just_unlocked: bool) -> bool:
 	if dict.get("seen_" + key, false):
 		return false
 	return just_unlocked
+
+
+## The revive offer. Held open by the arena, so the ONE thing this must never do is
+## return without answering — every path below ends in revive_player() or
+## decline_revive(), including the timeout and the ad failing.
+func _on_player_down() -> void:
+	if _arena == null or not is_instance_valid(_arena):
+		return
+	var box := UiKit.modal(_layout)
+	_revive_box = box
+	var answered := [false]
+
+	var answer := func(take: bool) -> void:
+		if answered[0]:
+			return
+		answered[0] = true
+		UiKit.dismiss(box)
+		_revive_box = null
+		if not is_instance_valid(_arena):
+			return
+		if not take:
+			_arena.decline_revive()
+			return
+		Ads.show_rewarded("revive", func(granted: bool) -> void:
+			if not is_instance_valid(_arena):
+				return
+			if granted:
+				_arena.revive_player()
+			else:
+				# No ad, no revive, no penalty — the match ends as it would have.
+				_flash_toast(tr("UI_COME_BACK"))
+				_arena.decline_revive())
+
+	box.add_child(_lbl(tr("UI_ELIMINATED"), UiKit.T_TITLE, UiKit.DANGER_LINE,
+			HORIZONTAL_ALIGNMENT_CENTER))
+	box.add_child(_lbl(tr("UI_REVIVE_BODY"), UiKit.T_BODY, UiKit.INK_DIM,
+			HORIZONTAL_ALIGNMENT_CENTER))
+	box.add_child(UiKit.spacer(UiKit.S2))
+
+	var take := _btn(tr("UI_REVIVE"), ACCENT)
+	UiKit.cap_width(take, 640)
+	take.pressed.connect(func() -> void: answer.call(true))
+	box.add_child(take)
+
+	var no := UiKit.btn_ghost(tr("UI_NO_THANKS"))
+	UiKit.cap_width(no, 640)
+	no.pressed.connect(func() -> void: answer.call(false))
+	box.add_child(no)
+
+	# A countdown, and a hard auto-decline behind it. Without this a player who
+	# backgrounds the app leaves the match frozen forever.
+	var clock := _lbl("", UiKit.T_LABEL, UiKit.INK_MUTE, HORIZONTAL_ALIGNMENT_CENTER)
+	box.add_child(clock)
+	var left := [8]
+	var tick := Timer.new()
+	tick.wait_time = 1.0
+	tick.autostart = true
+	box.add_child(tick)
+	clock.text = tr("UI_SECONDS_LEFT") % left[0]
+	tick.timeout.connect(func() -> void:
+		left[0] -= 1
+		if is_instance_valid(clock):
+			clock.text = tr("UI_SECONDS_LEFT") % maxi(0, left[0])
+		if left[0] <= 0:
+			answer.call(false))
