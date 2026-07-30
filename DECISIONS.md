@@ -936,3 +936,37 @@ instead of grabbing the window — that makes the tool display-independent. Not 
   bug report. Lockstep is NOT claimed: physics runs on floats through Godot's solver
   at a variable delta, bots hold their own RNG. A test asserting full determinism
   would pass here and fail across two machines, which is worse than not having one.
+
+
+## §12aa — Supabase backend (2026-07-30)
+
+Chosen over Firebase (no official Godot SDK — plugin fighting), PocketBase (free but
+you host it) and Nakama (overkill until real multiplayer). Supabase is a REST API
+over Postgres, so the provider is `HTTPRequest` and nothing else — which matters
+because the same build runs on Web, where native plugins do not exist.
+
+**The seam had to be made real first.** `Backend.Provider` was an INNER class, and a
+GDScript inner class cannot be extended from another file — so the "provider seam"
+the architecture claimed could not actually be implemented by anything. Lifted to
+`scripts/backend_provider.gd` as `class_name BackendProvider`. The abstraction was
+decorative until something tried to use it.
+
+**Security model.** The client holds only the anon key, which is public by design and
+ships in every Supabase app. That is safe *only* because of Row Level Security: every
+policy checks `auth.uid()`, saves are readable and writable by exactly one user, and
+the scores table is read-only to clients. Score writes go through a `SECURITY DEFINER`
+function that keeps the BEST score, so a replayed or tampered request cannot lower
+someone's entry — which is a real slice of §4.13 that was previously fully blocked.
+
+**Anonymous auth**, not a self-invented guest id: Supabase keeps the same `auth.uid()`
+when an anonymous user later signs in with Google or Apple, so saves carry over
+instead of being stranded.
+
+**Degradation is the tested property.** No config means `available()` is false and the
+game stays on the local provider, fully playable. Every provider call answers even
+when unconfigured and host-less, because a caller awaiting a callback that never
+arrives hangs forever. Boot prints which provider was selected — offline is a fine
+state, offline while believing you are online is not.
+
+`supabase.cfg` is gitignored. The `service_role` key must never enter the client,
+the repo, or a chat window; nothing here asks for it.

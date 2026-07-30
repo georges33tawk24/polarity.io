@@ -23,26 +23,7 @@ signal board_ready(scope: String, rows: Array)
 
 enum Scope { GLOBAL, FRIENDS, WEEKLY, COUNTRY }
 
-class Provider:
-	## Calls back with (ok, account_id, display_name).
-	func sign_in(guest: bool, cb: Callable) -> void:
-		cb.call(true, "guest-local", "")
-	func sign_out() -> void:
-		pass
-	## Calls back with the remote payload, or {} when there is none.
-	func load_cloud(cb: Callable) -> void:
-		cb.call({})
-	func save_cloud(_payload: Dictionary, cb: Callable) -> void:
-		cb.call(true)
-	func submit_score(_score: int, cb: Callable) -> void:
-		cb.call(true)
-	func fetch_board(_scope: int, cb: Callable) -> void:
-		cb.call([])
-	func available() -> bool:
-		return false
-
-
-var provider := Provider.new()
+var provider: BackendProvider = BackendProvider.new()
 var account_id := ""
 var signed_in := false
 var _syncing := false
@@ -50,8 +31,24 @@ var _syncing := false
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	_select_provider()
 	sign_in_guest()
 	Bus.match_ended.connect(_on_match_ended)
+
+
+## Picks the real backend when it is configured, and stays local when it is not.
+##
+## The check is deliberately at boot and deliberately loud: a game that silently
+## fell back to local storage would look like it was syncing and lose a player's
+## progress the day they changed device. Offline is a fine state; offline while
+## believing you are online is not.
+func _select_provider() -> void:
+	var sb := SupabaseProvider.new(self)
+	if sb.available():
+		provider = sb
+		print("[polarity] backend: supabase (%s)" % sb.url)
+	else:
+		print("[polarity] backend: local (no supabase.cfg — cloud features off)")
 
 
 # --- auth ------------------------------------------------------------------

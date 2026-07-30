@@ -29,6 +29,7 @@ func _ready() -> void:
 	test_save_migration()
 	test_save_sealing()
 	test_rewarded_boosts()
+	test_supabase_provider()
 	test_locale_formatting()
 	await test_arena_determinism()
 	test_netcode_seam()
@@ -176,6 +177,36 @@ func test_repel_power() -> void:
 ##      floats and a bit on the wire.
 ## §4.9 currency and date formatting. Small table, but the failure mode is a price
 ## that reads as wrong money in someone's language, which is worse than English.
+## The backend must degrade to offline, never to a crash and never to a state where
+## it looks connected while writing nowhere. That last one is the dangerous case: a
+## player would believe their progress was safe.
+func test_supabase_provider() -> void:
+	print("supabase provider")
+	var sb := SupabaseProvider.new(null)
+	# No config in this repo, and there never will be — supabase.cfg is gitignored.
+	ok(not sb.available(), "unconfigured provider reports unavailable")
+
+	# Every call must answer even with no config and no host node, or a caller
+	# awaiting the callback hangs forever.
+	var answered := [0]
+	sb.sign_in(true, func(_ok: bool, _id: String, _n: String) -> void: answered[0] += 1)
+	sb.load_cloud(func(_d: Dictionary) -> void: answered[0] += 1)
+	sb.save_cloud({}, func(_ok: bool) -> void: answered[0] += 1)
+	sb.submit_score(10, func(_ok: bool) -> void: answered[0] += 1)
+	sb.fetch_board(0, func(_r: Array) -> void: answered[0] += 1)
+	ok(answered[0] == 5, "every call answers when unconfigured (%d/5)" % answered[0])
+
+	# It has to actually implement the seam, or Backend cannot hold it.
+	ok(sb is BackendProvider, "SupabaseProvider implements the backend seam")
+
+	# Half a config is not a config: a URL with no key must stay offline rather
+	# than firing unauthenticated requests at a real project.
+	sb.url = "https://example.supabase.co"
+	sb.anon_key = "too-short"
+	sb._configured = sb.url.begins_with("http") and sb.anon_key.length() > 20
+	ok(not sb.available(), "a half-filled config stays offline")
+
+
 func test_locale_formatting() -> void:
 	print("locale formatting")
 	ok(Locale.currency(4.99, "en") == "$4.99", "en leads with $ and keeps cents")

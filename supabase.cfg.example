@@ -1,0 +1,13 @@
+; Copy to `supabase.cfg` (same folder) and fill in. That file is gitignored.
+;
+; Both values below are PUBLIC by design — the anon key ships inside every
+; Supabase client and is safe to embed in the game binary. What makes it safe is
+; Row Level Security: the key alone grants nothing, and every policy checks
+; auth.uid(). See supabase/schema.sql.
+;
+; The `service_role` key is the real secret. It must never appear in this file,
+; in this repository, or in a chat window. It bypasses every policy.
+
+[supabase]
+url = "https://YOUR-PROJECT-REF.supabase.co"
+anon_key = "PASTE-YOUR-ANON-PUBLIC-KEY"
