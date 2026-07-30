@@ -197,12 +197,12 @@ new screen is built with `tr()` from the start instead of being retrofitted.
 - [x] RTL layout switch wired (`Locale.is_rtl` → `layout_direction`) — DONE (no RTL language shipped yet)
 - [x] Locale-aware number grouping + duration formatting — DONE
 - [x] CJK glyph coverage verified (ja/ko render on the default font) — DONE
-- [ ] Localized bot-name pools per §7 — TODO
+- [x] Localized bot-name pools — DONE (`data/bot_names.json`, 10 locales)
 - [ ] Currency/date formatting beyond digit grouping — TODO
 
 ### 4.10 Save & sync
 - [x] Versioned, migratable, corruption-tolerant local save + backup — DONE, unit-tested
-- [ ] Encryption at rest for sensitive fields — TODO
+- [x] Encryption at rest — DONE (device-derived XOR + base64; obfuscation, named honestly as such — DECISIONS §12v)
 - [x] Cloud save + conflict merge (currency max, entitlement union, idempotent) — DONE, unit-tested
 - [x] Persistent profile vs run state separated — DONE
 
@@ -230,13 +230,13 @@ new screen is built with `tr()` from the start instead of being retrofitted.
 - [x] **§5** Service architecture, EventBus, data-driven tuning — DONE (4 autoloads, see DECISIONS §2)
 - [x] **§5** ARCHITECTURE.md — DONE
 - [x] **§6** Responsive scaling, safe areas, input abstraction, HUD reflow, web resize — DONE
-- [ ] **§6.5** Verified at 9:16 / 3:4 / 16:9 / 21:9 / tablet — PARTIAL (portrait + landscape checked)
-- [x] **§7** Bot lobby with .io names — DONE · [ ] localized name pools — TODO
+- [x] **§6.5** Verified at 9:16 / 3:4 / 16:9 / 21:9 / tablet — DONE (`menu_shot --size=WxH`)
+- [x] **§7** Bot lobby with .io names, localized pools — DONE
 - [x] **§8** MultiMesh scrap, pooled FX, no realtime shadows, quality scaler — DONE
 - [x] **§8** Spatial partition for magnetic influence — DONE (uniform grid, `scrap_field.gd` CELL = 8.0)
 - [x] **§8** Staged arena construction behind a branded loader — DONE
 - [x] **§9** WebGL2 single-threaded export, PWA, focus mute, audio gesture unlock — DONE
-- [ ] **§9** Branded loader / WASM error+retry screen — TODO
+- [x] **§9** Branded loader + WASM error/retry screen — DONE (`web/shell.html`), **verified in a real browser**: boots, and the failure path was tested by hiding the wasm
 - [ ] **§9** Web portal ad SDK — BLOCKED (vendor)
 - [x] **§10** Android/iOS export presets, portrait lock, min SDK/iOS — DONE (unbuilt: no signing)
 - [x] **§10** Store listing scaffold + data-safety answers — DONE (`store/LISTING.md`)
@@ -259,7 +259,7 @@ new screen is built with `tr()` from the start instead of being retrofitted.
       `~/Applications/Blender.app` is an orphaned Steam launcher stub from 2022.
       One command once Blender exists: see assets/README.md
 - [x] **§13B** Music (menu/game/intensity) — DONE, synthesised
-- [ ] **§13B** Licensed/authored SFX and music — TODO (all synthesised)
+- [ ] **§13B** Licensed/authored SFX and music — BLOCKED (I cannot license or download audio). Drop-in seam built: `assets/sfx/<name>.wav` overrides synthesis with no code change, and the boot log reports the split.
 - [x] **§15.8** No secrets, no copyrighted assets — DONE
 
 ---

@@ -8,6 +8,9 @@ extends Node3D
 
 enum State { COUNTDOWN, PLAYING, SUDDEN_DEATH, FINISHED }
 
+## Fallback pool. The localised pools live in data/bot_names.json — see
+## _bot_name_pool(). A lobby of English handles in a Japanese build was the one
+## remaining place the game did not speak the player's language (§7).
 const BOT_NAMES := [
 	"Ferro", "Gauss", "Tesla", "NoobSlayer", "Polaris", "xX_Iron_Xx", "Bolt",
 	"Rust", "Magneto", "Anvil", "Cobalt", "Zap", "Slag", "Nickel", "Coil",
@@ -372,7 +375,7 @@ func _hazard_node(radius: float, tint: Color, saw: bool) -> Node3D:
 
 # --- spawning --------------------------------------------------------------
 func _spawn_magnets() -> void:
-	var names := BOT_NAMES.duplicate()
+	var names := _bot_name_pool()
 	names.shuffle()
 	var total: int = t.bot_count + 1
 	for i in total:
@@ -868,3 +871,19 @@ func _update_quality(delta: float) -> void:
 
 func _exit_tree() -> void:
 	Engine.time_scale = 1.0
+
+
+## Bot names for the active language, falling back to English. Loaded per match
+## rather than cached: a locale change rebuilds the UI and the next match should
+## follow it.
+func _bot_name_pool() -> Array:
+	var f := FileAccess.get_file_as_string("res://data/bot_names.json")
+	if f != "":
+		var parsed: Variant = JSON.parse_string(f)
+		if parsed is Dictionary:
+			var pools: Dictionary = (parsed as Dictionary).get("pools", {})
+			var code := String(Game.get_value("locale", "en"))
+			for key in [code, code.split("_")[0]]:
+				if pools.has(key) and (pools[key] as Array).size() >= 8:
+					return (pools[key] as Array).duplicate()
+	return BOT_NAMES.duplicate()

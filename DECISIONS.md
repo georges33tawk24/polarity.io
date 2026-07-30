@@ -790,3 +790,31 @@ the next lobby is had appeared nowhere.
 
 **Cosmetics:** 35 -> 56 items, and `UiKit.cosmetic_preview` draws per kind, so trails,
 effects, nameplates and arenas stopped previewing as the same two-pole chip.
+
+
+## §12v — repo, encryption, localisation, web shell (2026-07-30)
+
+- **Repository created and pushed** to github.com/georges33tawk24/polarity.io. CI has
+  never been able to run before this; it runs on every push now.
+- **Save encryption at rest.** Device-derived key (`OS.get_unique_id()` + a build
+  constant, SHA-256), XOR, base64, magic prefix. Named as obfuscation rather than
+  security in the code, because a key on a device the player owns is not a secret —
+  the threat model is a text editor, not an attacker. Deliberately NOT
+  `open_encrypted_with_pass`, which throws on a wrong key and would turn one
+  corrupted byte into an unrecoverable save; this degrades to "unparseable, fall back
+  to the backup", which the existing loader already handles. Unsealed saves from
+  older builds still load, so no migration step is needed.
+- **Localised bot names** in `data/bot_names.json`, 10 pools, falling back to English.
+  Flavour text rather than UI strings, so not in strings.csv.
+- **`web/shell.html`.** Godot's default shell shows a bare bar and, on failure, a
+  line of grey text with no way forward — on a 35 MB download that is a dead end.
+  The new one is branded in the game's material, reports real progress, detects a
+  stalled download separately from an error, and offers both a retry and a
+  cache-clear (a stale service worker is the most common cause of a web build that
+  will not start after an update).
+  **Verified in a real browser**: the game boots, and the failure path was tested by
+  hiding `index.wasm`.
+- **Authored-audio seam.** I cannot license or download audio, so what shipped is the
+  swap-in path, not the pack: `assets/sfx/<name>.{wav,ogg,mp3}` wins over the
+  synthesised sound with no code change, and boot prints `sfx: N authored, M
+  synthesised` so a half-installed pack is visible.

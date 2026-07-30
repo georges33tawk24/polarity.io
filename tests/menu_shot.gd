@@ -8,6 +8,7 @@ var _screen := "menu"
 var _settle := 1.9
 var _locale_set := false
 var _kind := ""
+var _size := Vector2i.ZERO
 
 
 func _ready() -> void:
@@ -31,6 +32,12 @@ func _ready() -> void:
 			# be captured at all and the one screen whose job is to feel like a
 			# prize was never actually looked at.
 			Game.set_value("daily", {"last_day": Meta.today() - 1, "streak": 3})
+		elif arg.begins_with("--size="):
+			# §6.5 asks for verification at several aspect ratios. Only portrait and
+			# landscape had ever actually been looked at.
+			var wh := arg.substr(7).split("x")
+			if wh.size() == 2:
+				_size = Vector2i(int(wh[0]), int(wh[1]))
 		elif arg.begins_with("--kind="):
 			# The shop always opened on skins, so four of its five categories could
 			# not be captured at all — which is how they all shipped previewing as
@@ -56,6 +63,11 @@ func _ready() -> void:
 	if not _locale_set:
 		Game.set_value("locale", "en")
 		Locale.apply("en")
+
+	if _size != Vector2i.ZERO:
+		DisplayServer.window_set_size(_size)
+		get_viewport().size = _size
+		await get_tree().process_frame
 
 	var main: Node = load("res://main.tscn").instantiate()
 	add_child(main)

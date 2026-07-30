@@ -21,6 +21,7 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_make_buses()
 	_build_sfx()
+	_apply_authored()
 	for i in POOL_SIZE:
 		var p := AudioStreamPlayer.new()
 		p.bus = "SFX"
@@ -230,6 +231,38 @@ func duck(on: bool) -> void:
 
 
 # --- synthesis -------------------------------------------------------------
+## Prefers a real recorded sound over the synthesised one, per name.
+##
+## I cannot license or download audio, so the deliverable here is the SEAM, not the
+## pack: drop `foo.wav`/`foo.ogg` into `assets/sfx/` and it replaces the generated
+## `foo` with no code change. Same shape as AssetLibrary does for meshes. Until a
+## pack exists every name falls through to synthesis, and the boot line says how
+## many of each were used so a half-installed pack is visible rather than silent.
+const SFX_DIR := "res://assets/sfx"
+
+
+func _load_authored(name: String) -> AudioStream:
+	for ext in [".wav", ".ogg", ".mp3"]:
+		var path := "%s/%s%s" % [SFX_DIR, name, ext]
+		if ResourceLoader.exists(path):
+			var res := ResourceLoader.load(path)
+			if res is AudioStream:
+				return res
+	return null
+
+
+## Swaps in anything authored, and reports the split.
+func _apply_authored() -> void:
+	var authored := 0
+	for name: String in _sfx.keys():
+		var real := _load_authored(name)
+		if real != null:
+			_sfx[name] = real
+			authored += 1
+	print("[polarity] sfx: %d authored, %d synthesised"
+			% [authored, _sfx.size() - authored])
+
+
 func _build_sfx() -> void:
 	# Every impact is struck metal now. The pitch tells you the size of the thing
 	# that was hit, which a sweep never did.

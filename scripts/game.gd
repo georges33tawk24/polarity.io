@@ -225,7 +225,7 @@ func _flush() -> void:
 	if f == null:
 		push_error("could not write save: %s" % FileAccess.get_open_error())
 		return
-	f.store_string(JSON.stringify(profile))
+	f.store_string(_seal(JSON.stringify(profile)))
 	f.close()
 
 
@@ -240,12 +240,58 @@ func _load() -> Dictionary:
 func _read(path: String) -> Dictionary:
 	if not FileAccess.file_exists(path):
 		return {}
-	var text := FileAccess.get_file_as_string(path)
+	var text := _unseal(FileAccess.get_file_as_string(path))
 	var parsed: Variant = JSON.parse_string(text)
 	if parsed is Dictionary:
 		return parsed
 	push_warning("corrupt save at %s — ignoring" % path)
 	return {}
+
+
+## --- encryption at rest -----------------------------------------------------
+##
+## Obfuscation, and named honestly as such. A local save on a device the player
+## controls can never be *secure* — anyone determined enough owns the machine the
+## key is on. What this does buy is that a casual player cannot open the file in a
+## text editor and set coins to a million, which is the actual threat model for a
+## single-player-ish game with no server (§4.13 puts authoritative validation
+## behind a backend that does not exist yet).
+##
+## Deliberately NOT Godot's FileAccess.open_encrypted_with_pass: that throws on a
+## wrong key, which would turn a corrupted byte into an unrecoverable save. This
+## degrades to "unreadable, fall back to the backup" instead, which is what the
+## corruption-tolerant loader already handles.
+const SEAL_MAGIC := "P0LSEAL1:"
+
+## Device-derived so a save cannot simply be copied between installs, mixed with a
+## build constant so the key is not guessable from the device id alone.
+static func _seal_key() -> PackedByteArray:
+	var seed_text := "polarity/" + OS.get_unique_id() + "/v1"
+	return seed_text.sha256_buffer()
+
+
+static func _xor(bytes: PackedByteArray, key: PackedByteArray) -> PackedByteArray:
+	var out := bytes.duplicate()
+	var n := key.size()
+	if n == 0:
+		return out
+	for i in out.size():
+		out[i] = out[i] ^ key[i % n]
+	return out
+
+
+static func _seal(text: String) -> String:
+	return SEAL_MAGIC + Marshalls.raw_to_base64(
+			_xor(text.to_utf8_buffer(), _seal_key()))
+
+
+## Accepts plaintext too, so a save written by an older build still loads. That
+## one-way compatibility is why this can ship without a migration step.
+static func _unseal(text: String) -> String:
+	if not text.begins_with(SEAL_MAGIC):
+		return text
+	var raw := Marshalls.base64_to_raw(text.substr(SEAL_MAGIC.length()))
+	return _xor(raw, _seal_key()).get_string_from_utf8()
 
 
 ## Fills in anything a newer build added, and upgrades old shapes.

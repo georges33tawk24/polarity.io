@@ -27,6 +27,7 @@ func _ready() -> void:
 	test_pull_force()
 	test_repel_power()
 	test_save_migration()
+	test_save_sealing()
 	test_economy_clamps()
 	test_match_rewards()
 	test_intent_mapping()
@@ -153,6 +154,30 @@ func test_repel_power() -> void:
 	ok(about(full, 1.0), "full charge is full power")
 	ok(about(over, 1.0), "overcharge cannot exceed full power")
 	ok(tap < full, "holding longer hits harder")
+
+
+## Encryption at rest. Obfuscation, not security — see game.gd — but it has to
+## round-trip, has to still load an unsealed save from an older build, and must not
+## leave the interesting numbers greppable in the file.
+func test_save_sealing() -> void:
+	print("save sealing")
+	var plain := '{"coins": 1234567, "version": 9}'
+	var sealed := Game._seal(plain)
+	ok(sealed.begins_with(Game.SEAL_MAGIC), "sealed text carries its magic")
+	ok(not sealed.contains("1234567"), "the balance is not greppable in the file")
+	ok(Game._unseal(sealed) == plain, "seal round-trips")
+	ok(Game._unseal(plain) == plain,
+			"an unsealed save from an older build still loads")
+	# A flipped byte must degrade to unparseable, not to a wrong-but-valid save,
+	# so the corruption-tolerant loader falls through to the backup.
+	var tampered := sealed.substr(0, sealed.length() - 4) + "AAAA"
+	# JSON.new().parse() returns an error code; JSON.parse_string() would push an
+	# engine error into the log, and this test EXPECTS the parse to fail.
+	var j := JSON.new()
+	var err := j.parse(Game._unseal(tampered))
+	var out: Variant = j.data if err == OK else null
+	ok(out == null or (out is Dictionary and int((out as Dictionary).get("coins", 0)) != 1234567),
+			"a tampered save does not yield the original balance")
 
 
 func test_save_migration() -> void:
