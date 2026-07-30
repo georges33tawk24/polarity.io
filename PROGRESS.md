@@ -219,7 +219,7 @@ new screen is built with `tr()` from the start instead of being retrofitted.
 ### 4.13 Anti-abuse
 - [x] Client-side currency clamps — DONE, unit-tested
 - [x] Client-side score sanity clamp — DONE, unit-tested
-- [~] Server-authoritative validation — PARTIAL: `submit_score()` is SECURITY DEFINER and keeps the best score, so a replayed or lowered submission cannot land. Full validation still needs a server-side simulation.
+- [~] Server-authoritative validation — PARTIAL, and now PROVEN: a lower submission does not overwrite a higher score, and direct writes to `scores` are refused (403). Full validation still needs server-side simulation.
 
 ### 4.14 Netcode seam
 - [x] Bots write the same `move_dir`/`holding` intent a network peer would — DONE
@@ -241,7 +241,7 @@ new screen is built with `tr()` from the start instead of being retrofitted.
 - [x] **§10** Android: **signed debug APK BUILT** (`build/android/polarity-debug.apk`, 48 MB, io.polarity.arena, arm64 + armv7, signature verified). Never yet RUN — no emulator/device on this machine. · [ ] iOS: BLOCKED, Godot refuses to export without an Apple Developer Team ID.
 - [x] **§10** Store listing scaffold + data-safety answers — DONE (`store/LISTING.md`)
 - [x] **§10** App icons at 9 store sizes — DONE · [~] Store screenshots — PARTIAL: `tools/store_shots.sh` generates the set from the real game, but capture is the window framebuffer and macOS clamps it to the display, so 1290x2796 comes back 1290x1570. Composition is right, pixels are short. Needs a taller display or a SubViewport render pass. · [ ] promo video — TODO
-- [~] **§11** Backend — Supabase provider WRITTEN and unit-tested (`scripts/supabase_provider.gd`, `supabase/schema.sql`). Needs the user to create the project and drop in `supabase.cfg`. Degrades to the local provider until then.
+- [x] **§11** Backend — **LIVE on Supabase.** Anonymous auth, cloud save round-trip, leaderboards all verified against the real project (`tools/backend_check.tscn`). RLS isolation proven: a second user cannot read or overwrite another's save (403), and cannot write the scores table directly (403).
 - [x] **§12** Typed GDScript, doc comments, no magic numbers — DONE
 - [x] **§12** Tests: 269 headless assertions + 145 screen/icon/audio checks + real-renderer smoke — DONE (no GUT, see DECISIONS §13)
 - [x] **§12** Debug overlay + cheat console, `OS.is_debug_build()` gated — DONE

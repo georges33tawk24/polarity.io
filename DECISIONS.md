@@ -999,3 +999,34 @@ Three things had to change to get here:
 Xcode project without a Team ID, and a distributable IPA additionally needs a signing
 certificate and provisioning profile in the keychain. Neither is something I can
 create — both require signing into an Apple account, and the membership is $99/year.
+
+
+## §12ac — the backend is live (2026-07-31)
+
+Connected to a real Supabase project and verified end to end. Notably it worked on
+first contact — I had predicted a wrong header or column name, and there was none.
+
+`tools/backend_check.tscn` runs the round-trip the unit tests never could: the suite
+only ever covers the UNCONFIGURED path, because the repo has no credentials and never
+will. Seven checks — sign-in, save, load-back-the-exact-payload, submit, fetch, and
+that a LOWER score does not overwrite a higher one.
+
+**RLS was then proven adversarially rather than assumed**, by creating a second
+anonymous user and attacking the first:
+
+| attempt | result |
+|---|---|
+| B reads A's save | `[]` — no rows |
+| B overwrites A's save | 403 |
+| B writes `scores` directly, bypassing `submit_score` | 403 |
+| B submits a lower score over a higher one | silently kept the higher |
+
+That matters more here than in most projects: the publishable key ships inside the
+APK and the web build, so it is *public by design* and every player has it. RLS is
+the only thing standing between that and a shared database. A policy that is merely
+written is not a policy that works — this is the difference between the schema being
+correct and being *known* to be correct.
+
+The `service_role` key is used nowhere in the client and must stay that way. Its one
+legitimate future home is an Edge Function for receipt validation, which runs on
+Supabase's servers where a player cannot read it.
