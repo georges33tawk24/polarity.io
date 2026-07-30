@@ -1030,3 +1030,24 @@ correct and being *known* to be correct.
 The `service_role` key is used nowhere in the client and must stay that way. Its one
 legitimate future home is an Edge Function for receipt validation, which runs on
 Supabase's servers where a player cannot read it.
+
+
+### The suite was measuring the machine, not the code
+
+Connecting the real backend broke three tests, and the failures were more useful
+than the connection succeeding:
+
+- `unconfigured provider reports unavailable` asserted `not available()` on a fresh
+  `SupabaseProvider`. That only held because no developer had credentials. It now
+  forces the unconfigured state explicitly.
+- Two leaderboard assertions expected the LOCAL provider's synthetic board and were
+  silently asserting against live rows. The test now pins `Backend.provider` for its
+  duration and restores it after.
+
+Both had been green for the entire project while depending on the absence of a file.
+CI would never have caught it — CI has no credentials, so CI is exactly the
+environment where the bug hides. **A test that passes because of what the machine
+lacks is not a passing test.**
+
+Verified both ways now: 307/307 with `supabase.cfg` present, and 307/307 with it
+moved aside.

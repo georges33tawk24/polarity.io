@@ -183,7 +183,12 @@ func test_repel_power() -> void:
 func test_supabase_provider() -> void:
 	print("supabase provider")
 	var sb := SupabaseProvider.new(null)
-	# No config in this repo, and there never will be — supabase.cfg is gitignored.
+	# Force the unconfigured state rather than assuming supabase.cfg is absent. It
+	# IS absent in the repo and on CI, but a developer with real credentials was
+	# making this assertion fail — the test was measuring the machine, not the code.
+	sb.url = ""
+	sb.anon_key = ""
+	sb._configured = false
 	ok(not sb.available(), "unconfigured provider reports unavailable")
 
 	# Every call must answer even with no config and no host node, or a caller
@@ -719,6 +724,12 @@ func test_referral() -> void:
 
 func test_leaderboards() -> void:
 	print("leaderboards")
+	# This test is about the LOCAL provider's synthetic board. It used to pass only
+	# because nobody had a backend configured; with one configured it asserted
+	# against live rows and failed. A test must not depend on the developer's
+	# machine having or not having credentials.
+	var restore := Backend.provider
+	Backend.provider = BackendProvider.new()
 	Game.set_value("best_mass", 150.0)
 	var got := {"rows": []}
 	Backend.board_ready.connect(func(_scope: String, rows: Array) -> void:
@@ -742,6 +753,7 @@ func test_leaderboards() -> void:
 
 	# Anti-cheat clamp: an impossible score must not be submitted.
 	var weekly_before := int(Game.get_value("weekly_best", 0))
+	# (provider restored at the end of this test)
 	Backend.submit(999999)
 	ok(int(Game.get_value("weekly_best", 0)) == weekly_before,
 			"an impossible score is rejected")
@@ -755,10 +767,14 @@ func test_leaderboards() -> void:
 	ok(JSON.parse_string(dump) is Dictionary, "data export is valid JSON")
 	ok(dump.contains("coins"), "data export includes the profile")
 
+	# Put back whatever this machine actually has configured.
+	Backend.provider = restore
+
 
 ## Fake billing so the grant/restore/revoke logic above the provider is actually
 ## exercised. The shipped provider always fails, which would leave every one of
 ## these paths untested until the day a real SDK is wired in.
+
 class FakeBilling extends Store.Provider:
 	var succeed := true
 	var owned: Array = []
@@ -772,6 +788,7 @@ class FakeBilling extends Store.Provider:
 		return true
 	func price_string(_product_id: String) -> String:
 		return ""
+
 
 
 func test_store() -> void:
