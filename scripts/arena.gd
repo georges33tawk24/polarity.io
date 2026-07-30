@@ -63,6 +63,18 @@ var _placement_counter := 0
 var _board_timer := 0.0
 var _revive_used := false
 var _pending_boost := 0.0
+
+## §4.14 determinism. Every random the ARENA uses goes through this, so the same
+## seed produces the same layout — spawn ring, hazard placement, scrap field.
+##
+## What this buys and what it does NOT: a reproducible starting state, which is the
+## prerequisite for replays, for a server validating a client's match, and for
+## reproducing a bug report. It is NOT lockstep determinism — physics runs on
+## floats through Godot's solver, bots hold their own RNG, and delta varies with
+## frame rate. Claiming more than this would be the kind of thing that looks true
+## until two machines disagree.
+var rng := RandomNumberGenerator.new()
+var seed_used := 0
 var _alarm_timer := 0.0
 var _fps_accum := 0.0
 var _fps_frames := 0
@@ -71,16 +83,22 @@ var _finished_emitted := false
 var _hitstop_until := 0
 
 
-func setup(tuning: Tuning, camera_rig: CameraRig) -> void:
-	for step in setup_staged(tuning, camera_rig):
-		pass
+func setup(tuning: Tuning, camera_rig: CameraRig, match_seed := 0) -> void:
+	for step in setup_staged(tuning, camera_rig, match_seed):
+		step.call()
 
 
 ## Same work, yielded in stages so a loading screen can report honest progress.
 ## Each stage is one frame's worth of construction; the caller drives it.
-func setup_staged(tuning: Tuning, camera_rig: CameraRig) -> Array[Callable]:
+func setup_staged(tuning: Tuning, camera_rig: CameraRig,
+		match_seed := 0) -> Array[Callable]:
 	t = tuning
 	rig = camera_rig
+	# 0 means "pick one" — a real match should differ every time. A caller that
+	# passes a seed gets that exact layout back, which is what makes a bug report
+	# reproducible.
+	seed_used = match_seed if match_seed != 0 else randi()
+	rng.seed = seed_used
 	ring_radius = t.ring_start_radius
 	time_left = t.match_duration
 	_countdown = t.countdown_time
@@ -90,8 +108,11 @@ func setup_staged(tuning: Tuning, camera_rig: CameraRig) -> Array[Callable]:
 		# After spawning, so hazards can be kept clear of everyone's start point.
 		func() -> void: _build_hazards(),
 		func() -> void:
-			rig.setup(t)
-			rig.target = player
+			# A headless caller (the determinism test, and any future replay
+			# re-simulation) has no camera. The arena is fully playable without one.
+			if rig != null:
+				rig.setup(t)
+				rig.target = player
 			_placement_counter = magnets.size()
 			Bus.alive_count_changed.emit(magnets.size())
 			Bus.ring_changed.emit(ring_radius),
@@ -186,18 +207,18 @@ func _build_hazards() -> void:
 	# ring_end_radius there has to be somewhere left to actually fight.
 	var inner: float = t.ring_end_radius * 1.15
 	for i in t.saw_count:
-		var orbit: float = maxf(inner, t.ring_start_radius * randf_range(0.22, 0.66))
+		var orbit: float = maxf(inner, t.ring_start_radius * rng.randf_range(0.22, 0.66))
 		var angle := _clear_angle(orbit, t.saw_radius)
 		_saws.append({
 			"angle": angle,
 			"orbit": orbit,
-			"speed": t.saw_orbit_speed * randf_range(0.6, 1.4) * (1.0 if randf() < 0.5 else -1.0),
+			"speed": t.saw_orbit_speed * rng.randf_range(0.6, 1.4) * (1.0 if rng.randf() < 0.5 else -1.0),
 			"pos": Vector3(cos(angle) * orbit, 0.0, sin(angle) * orbit),
 		})
 		_hazard_nodes.append(_hazard_node(t.saw_radius, Color(0.82, 0.65, 0.28), true))
 
 	for i in t.spike_count:
-		var r: float = lerpf(inner, t.ring_start_radius * 0.72, sqrt(randf()))
+		var r: float = lerpf(inner, t.ring_start_radius * 0.72, sqrt(rng.randf()))
 		var a := _clear_angle(r, t.spike_radius)
 		var p := Vector3(cos(a) * r, 0.0, sin(a) * r)
 		_spikes.append({"pos": p})
@@ -216,12 +237,12 @@ func _build_hazards() -> void:
 func _build_fences(inner: float) -> void:
 	for i in t.fence_count:
 		var orbit: float = maxf(inner + t.fence_length * 0.5,
-				t.ring_start_radius * randf_range(0.3, 0.55))
+				t.ring_start_radius * rng.randf_range(0.3, 0.55))
 		var angle := _clear_angle(orbit, t.fence_length * 0.5)
 		_fences.append({
 			"centre": Vector3(cos(angle) * orbit, 0.0, sin(angle) * orbit),
-			"angle": randf() * TAU,
-			"speed": t.fence_spin * (1.0 if randf() < 0.5 else -1.0),
+			"angle": rng.randf() * TAU,
+			"speed": t.fence_spin * (1.0 if rng.randf() < 0.5 else -1.0),
 		})
 		var root := Node3D.new()
 		add_child(root)
@@ -247,9 +268,9 @@ func _build_fences(inner: float) -> void:
 ## positioning hazard, and shoving a rival onto one is the point.
 func _build_conveyors(inner: float) -> void:
 	for i in t.conveyor_count:
-		var r: float = lerpf(inner, t.ring_start_radius * 0.6, randf())
-		var a := randf() * TAU
-		var dir_angle := randf() * TAU
+		var r: float = lerpf(inner, t.ring_start_radius * 0.6, rng.randf())
+		var a := rng.randf() * TAU
+		var dir_angle := rng.randf() * TAU
 		_conveyors.append({
 			"centre": Vector3(cos(a) * r, 0.0, sin(a) * r),
 			"dir": Vector3(cos(dir_angle), 0.0, sin(dir_angle)),
@@ -276,7 +297,7 @@ func _build_conveyors(inner: float) -> void:
 ## hazard that changes the verb rather than the health bar.
 func _build_reverse_zones(inner: float) -> void:
 	for i in t.reverse_zone_count:
-		var r: float = lerpf(inner, t.ring_start_radius * 0.65, randf())
+		var r: float = lerpf(inner, t.ring_start_radius * 0.65, rng.randf())
 		var a := _clear_angle(r, t.reverse_zone_radius)
 		var pos := Vector3(cos(a) * r, 0.0, sin(a) * r)
 		_reverse_zones.append({"pos": pos})
@@ -305,7 +326,7 @@ func _build_reverse_zones(inner: float) -> void:
 func _clear_angle(orbit: float, hazard_radius: float) -> float:
 	var clearance := hazard_radius + 5.0
 	for attempt in 12:
-		var a := randf() * TAU
+		var a := rng.randf() * TAU
 		var p := Vector3(cos(a) * orbit, 0.0, sin(a) * orbit)
 		var clear := true
 		for m in magnets:
@@ -314,7 +335,7 @@ func _clear_angle(orbit: float, hazard_radius: float) -> float:
 				break
 		if clear:
 			return a
-	return randf() * TAU
+	return rng.randf() * TAU
 
 
 func _hazard_node(radius: float, tint: Color, saw: bool) -> Node3D:
@@ -404,15 +425,15 @@ func _spawn_magnets() -> void:
 		# Ring formation with jitter — spread out, but not visibly geometric.
 		# Kept well inside the boundary: spawn near the edge and a single enemy
 		# repel launches you straight out for an unearned instant kill.
-		var angle := TAU * float(i) / total + randf_range(-0.12, 0.12)
-		var dist: float = t.ring_start_radius * randf_range(0.35, 0.65)
+		var angle := TAU * float(i) / total + rng.randf_range(-0.12, 0.12)
+		var dist: float = t.ring_start_radius * rng.randf_range(0.35, 0.65)
 		m.position = Vector3(cos(angle) * dist, Magnet.BODY_Y, sin(angle) * dist)
 
 		if not is_player:
 			# Skill spread so the lobby feels like real players of mixed ability.
 			# Bracketed by rank: climbing the ladder has to mean tougher lobbies.
 			var bias := Meta.bot_skill_bias()
-			m.brain = BotBrain.new(m, t, clampf(randfn(0.35 + bias * 0.4, 0.22), 0.05, 0.98))
+			m.brain = BotBrain.new(m, t, clampf(rng.randfn(0.35 + bias * 0.4, 0.22), 0.05, 0.98))
 		else:
 			player = m
 
@@ -687,7 +708,7 @@ func _hazard_hit(m: Magnet, amount: float, at: Vector3) -> void:
 	if m.is_player:
 		Bus.shake.emit(t.shake_hit * 0.6)
 		Platform.vibrate(12, 0.4)
-	if randf() < 0.25:
+	if rng.randf() < 0.25:
 		fx.floater(at + Vector3(0, 0.5, 0), "!", Color(1, 0.5, 0.2))
 
 
@@ -949,8 +970,8 @@ func _open_spot() -> Vector3:
 	var best := Vector3.ZERO
 	var best_clear := -1.0
 	for attempt in 24:
-		var a := randf() * TAU
-		var r: float = ring_radius * 0.55 * sqrt(randf())
+		var a := rng.randf() * TAU
+		var r: float = ring_radius * 0.55 * sqrt(rng.randf())
 		var p := Vector3(cos(a) * r, 0.0, sin(a) * r)
 		var clear := INF
 		# Distance to the nearest live magnet AND the nearest hazard.

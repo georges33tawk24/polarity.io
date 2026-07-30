@@ -130,3 +130,10 @@ UI_TRY,TRY,PROBAR,TESTAR,ESSAYER,TESTEN,ПРОБА,DENE,COBA,おためし,체험
 UI_TRY_ACTIVE,Equipped for one match,Equipado por una partida,Equipado por uma partida,Équipé pour une partie,Für ein Spiel ausgerüstet,Экипировано на один матч,Bir maç için kuşanıldı,Dipakai untuk satu pertandingan,1マッチだけ装備,한 경기 동안 장착
 EVENT_SCRAPYARD,SCRAPYARD RUSH,FIEBRE DE CHATARRA,CORRIDA DO FERRO-VELHO,RUÉE DE LA CASSE,SCHROTTPLATZ-RAUSCH,СВАЛОЧНАЯ ЛИХОРАДКА,HURDALIK KOŞUSU,DEMAM RONGSOK,スクラップラッシュ,고철 러시
 UI_EVENT_ENDS,Ends in %s,Termina en %s,Termina em %s,Fin dans %s,Endet in %s,Осталось %s,%s kaldı,Berakhir %s,残り %s,%s 남음
+UI_CODEX,COLLECTION,COLECCIÓN,COLEÇÃO,COLLECTION,SAMMLUNG,КОЛЛЕКЦИЯ,KOLEKSİYON,KOLEKSI,コレクション,컬렉션
+UI_CREDITS,CREDITS,CRÉDITOS,CRÉDITOS,CRÉDITS,MITWIRKENDE,АВТОРЫ,EMEĞİ GEÇENLER,KREDIT,クレジット,제작진
+UI_SUPPORT,SUPPORT,SOPORTE,SUPORTE,ASSISTANCE,SUPPORT,ПОДДЕРЖКА,DESTEK,DUKUNGAN,サポート,고객지원
+UI_SIGN_IN_GOOGLE,SIGN IN WITH GOOGLE,ENTRAR CON GOOGLE,ENTRAR COM GOOGLE,SE CONNECTER AVEC GOOGLE,MIT GOOGLE ANMELDEN,ВОЙТИ ЧЕРЕЗ GOOGLE,GOOGLE İLE GİRİŞ,MASUK DENGAN GOOGLE,GOOGLEでログイン,GOOGLE로 로그인
+UI_SIGN_IN_APPLE,SIGN IN WITH APPLE,ENTRAR CON APPLE,ENTRAR COM APPLE,SE CONNECTER AVEC APPLE,MIT APPLE ANMELDEN,ВОЙТИ ЧЕРЕЗ APPLE,APPLE İLE GİRİŞ,MASUK DENGAN APPLE,APPLEでログイン,APPLE로 로그인
+UI_CREDITS_BODY,"Built with Godot. All art, sound and music generated in-engine.","Hecho con Godot. Todo el arte, sonido y música generados en el motor.","Feito com Godot. Arte, som e música gerados no motor.","Créé avec Godot. Graphismes, sons et musique générés dans le moteur.","Mit Godot gebaut. Grafik, Sound und Musik im Engine generiert.","Сделано на Godot. Вся графика, звук и музыка созданы в движке.","Godot ile yapıldı. Tüm görsel, ses ve müzik motor içinde üretildi.","Dibuat dengan Godot. Semua seni, suara, dan musik dihasilkan di mesin.",Godot製。アート・効果音・音楽はすべてエンジン内で生成。,Godot로 제작. 모든 아트·사운드·음악은 엔진에서 생성.
+UI_SIGNED_IN,Signed in,Sesión iniciada,Conectado,Connecté,Angemeldet,Вы вошли,Giriş yapıldı,Masuk,ログインしました,로그인됨

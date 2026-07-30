@@ -906,3 +906,33 @@ The tool now prints every file's real dimensions against the folder it is in and
 marks them `!! SHORT`, specifically so a wrong-sized set cannot be shipped by
 accident. The real fix is to render into a SubViewport of the exact target size
 instead of grabbing the window — that makes the tool display-independent. Not done.
+
+
+## §12z — victory pose, codex, account, formatting, determinism (2026-07-30)
+
+- **Victory pose** on the results screen, not in-arena: a flourish before results
+  would add friction to the one screen this genre must never slow down. Only on a
+  win — a flourish after a loss reads as mockery.
+- **Codex** reached from the shop's completion counter, which was previously a dead
+  label that also lied (it counted all 56 while sitting under a filter showing 23).
+  Locked items are shown dimmed rather than hidden; seeing what you have not got is
+  the entire point.
+- **Federated sign-in** is a seam, not a feature: `Platform.federated_auth_available`
+  returns false for both, so the buttons are HIDDEN rather than broken. Google Play
+  Games and Sign in with Apple both need native plugins and there is no
+  pure-GDScript path to either. Kept separate from guest sign-in because the merge
+  semantics differ — a guest id is device-local and disposable.
+- **Support** is a `mailto:` — the only contact channel needing no backend that works
+  everywhere this ships. `SUPPORT_EMAIL` is a placeholder and a dead one is a store
+  rejection, so it is a named constant rather than buried in a string.
+- **Currency/date** is a small explicit table, not a pretend-general formatter. It
+  covers the ten shipped locales and the honest failure for anything else is "$ in
+  front". Real IAP prices arrive pre-formatted from the store; this is only for
+  locally computed amounts.
+- **Determinism (§4.14)**: all 19 randoms in `arena.gd` now route through a seeded
+  `RandomNumberGenerator`, and `setup(..., match_seed)` reproduces a layout exactly.
+  **The claim is deliberately narrow** — same seed, same arena layout, which is
+  enough for replays, for a server to re-derive a match start, and for a reproducible
+  bug report. Lockstep is NOT claimed: physics runs on floats through Godot's solver
+  at a variable delta, bots hold their own RNG. A test asserting full determinism
+  would pass here and fail across two machines, which is worse than not having one.

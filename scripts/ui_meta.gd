@@ -179,9 +179,15 @@ func _build_shop() -> void:
 				_shop_kind = k
 				_rebuild(), 118))
 
+	# The completion counter is the codex entry point. It was a dead label that
+	# also lied — it counted all 56 items while sitting under a kind filter showing
+	# 23, so SKINS read "6 / 56".
 	var done := Cosmetics.completion()
-	_content.add_child(UiKit.lbl("%d / %d" % [done.x, done.y], 32, UiKit.INK_DIM,
-			HORIZONTAL_ALIGNMENT_RIGHT))
+	var codex_btn := UiKit.btn_text("%d / %d" % [done.x, done.y], 64)
+	codex_btn.add_theme_font_size_override("font_size", UiKit.T_LABEL)
+	codex_btn.alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	codex_btn.pressed.connect(_open_codex)
+	_content.add_child(codex_btn)
 
 	for item: Dictionary in Cosmetics.all_of(_shop_kind):
 		_content.add_child(_item_card(item))
@@ -641,3 +647,63 @@ func _toast(text: String) -> void:
 	tw.tween_interval(1.1)
 	tw.tween_property(l, "modulate:a", 0.0, 0.4)
 	tw.tween_callback(l.queue_free)
+
+
+## Codex. Everything in the game at once, owned or not, with per-kind completion —
+## the shop can only ever show one category, so there was nowhere to see the
+## collection as a whole or how close it is to finished (§4.1).
+func _open_codex() -> void:
+	var box := UiKit.modal(self)
+	box.add_child(UiKit.lbl(tr("UI_CODEX"), UiKit.T_TITLE, UiKit.INK,
+			HORIZONTAL_ALIGNMENT_CENTER))
+	var all := Cosmetics.completion()
+	box.add_child(UiKit.lbl("%d / %d" % [all.x, all.y], UiKit.T_BODY,
+			UiKit.INK_MUTE, HORIZONTAL_ALIGNMENT_CENTER))
+	box.add_child(UiKit.spacer(UiKit.S2))
+
+	var scroll := ScrollContainer.new()
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.custom_minimum_size = Vector2(0, 1180)
+	box.add_child(scroll)
+	var col := VBoxContainer.new()
+	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	col.add_theme_constant_override("separation", UiKit.S3)
+	scroll.add_child(col)
+
+	var labels := {"skin": "UI_SKINS", "trail": "UI_TRAILS", "launch_vfx": "UI_EFFECTS",
+			"nameplate": "UI_NAMEPLATES", "arena_theme": "UI_ARENAS"}
+	for kind: String in Cosmetics.KINDS:
+		var items: Array = Cosmetics.all_of(kind)
+		var owned := 0
+		for it: Dictionary in items:
+			if Cosmetics.is_owned(String(it["id"])):
+				owned += 1
+		var head := UiKit.row([
+			UiKit.lbl_label(tr(String(labels.get(kind, "UI_SKINS"))), UiKit.T_LABEL,
+					UiKit.INK),
+			UiKit.lbl("%d / %d" % [owned, items.size()], UiKit.T_LABEL,
+					UiKit.INK_MUTE, HORIZONTAL_ALIGNMENT_RIGHT),
+		], UiKit.S2)
+		(head.get_child(0) as Control).size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		col.add_child(head)
+		col.add_child(UiKit.bar(float(owned) / maxf(1.0, float(items.size())),
+				UiKit.SIGNAL_GOOD if owned == items.size() else UiKit.BRASS, 8))
+
+		# A grid of previews, dimmed when locked. Seeing the silhouette of what you
+		# have not got yet is the entire point of a codex.
+		var grid := GridContainer.new()
+		grid.columns = 6
+		grid.add_theme_constant_override("h_separation", UiKit.S1)
+		grid.add_theme_constant_override("v_separation", UiKit.S1)
+		for it: Dictionary in items:
+			var tile := UiKit.cosmetic_preview(it, 96)
+			if not Cosmetics.is_owned(String(it["id"])):
+				tile.modulate = Color(1, 1, 1, 0.22)
+			grid.add_child(tile)
+		col.add_child(grid)
+
+	var close := UiKit.btn_secondary(tr("UI_BACK"))
+	UiKit.cap_width(close, 560)
+	close.pressed.connect(func() -> void: UiKit.dismiss(box))
+	box.add_child(close)

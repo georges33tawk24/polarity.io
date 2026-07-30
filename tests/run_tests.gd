@@ -29,6 +29,8 @@ func _ready() -> void:
 	test_save_migration()
 	test_save_sealing()
 	test_rewarded_boosts()
+	test_locale_formatting()
+	await test_arena_determinism()
 	test_netcode_seam()
 	test_economy_clamps()
 	test_match_rewards()
@@ -172,6 +174,62 @@ func test_repel_power() -> void:
 ##   2. A bot NEVER touches position, velocity or mass directly.
 ##   3. Intent is bounded and serialisable — a unit vector and a bool, which is 3
 ##      floats and a bit on the wire.
+## §4.9 currency and date formatting. Small table, but the failure mode is a price
+## that reads as wrong money in someone's language, which is worse than English.
+func test_locale_formatting() -> void:
+	print("locale formatting")
+	ok(Locale.currency(4.99, "en") == "$4.99", "en leads with $ and keeps cents")
+	ok(Locale.currency(4.99, "de").ends_with("\u20ac"), "de trails with the euro sign")
+	ok(Locale.currency(4.99, "de").contains(","), "de uses a comma decimal")
+	# Yen and won have no minor unit; ".00" on them is a tell.
+	ok(not Locale.currency(500.0, "ja").contains("."), "ja shows no minor unit")
+	ok(Locale.currency(500.0, "ja").begins_with("\u00a5"), "ja leads with the yen sign")
+
+	# 2001-09-09, a date whose parts are all distinguishable.
+	var t := 1000000000
+	ok(Locale.date(t, "en").begins_with("09"), "en is month-first")
+	ok(Locale.date(t, "de").begins_with("09"), "de is day-first")
+	ok(Locale.date(t, "ja").begins_with("2001"), "ja is year-first")
+
+
+## §4.14 determinism. The claim is deliberately narrow: the same seed produces the
+## same arena LAYOUT. That is enough for replays, for a server to re-derive a match
+## start, and for a bug report to be reproducible — and it is all that can honestly
+## be claimed while physics runs on floats through Godot's solver at a variable
+## delta. A test that asserted full lockstep would pass here and fail across two
+## machines, which is worse than not having it.
+func test_arena_determinism() -> void:
+	print("arena determinism")
+	var layouts: Array = []
+	for pass_i in 2:
+		var a := Arena.new()
+		add_child(a)
+		a.setup(Game.tuning, null, 12345)
+		var shape: Array = []
+		for m in a.magnets:
+			shape.append("%.4f,%.4f" % [m.global_position.x, m.global_position.z])
+		for h in a._hazard_nodes:
+			if h is Node3D:
+				shape.append("h%.4f,%.4f" % [(h as Node3D).position.x,
+						(h as Node3D).position.z])
+		layouts.append(",".join(shape))
+		a.queue_free()
+		await get_tree().process_frame
+	ok(layouts[0] == layouts[1] and layouts[0] != "",
+			"the same seed rebuilds the same arena layout")
+
+	var b := Arena.new()
+	add_child(b)
+	b.setup(Game.tuning, null, 999)
+	var other: Array = []
+	for m in b.magnets:
+		other.append("%.4f,%.4f" % [m.global_position.x, m.global_position.z])
+	ok(",".join(other) != layouts[0], "a different seed gives a different layout")
+	ok(b.seed_used == 999, "the seed used is recorded for a bug report")
+	b.queue_free()
+	await get_tree().process_frame
+
+
 func test_netcode_seam() -> void:
 	print("netcode seam")
 	var src := FileAccess.get_file_as_string("res://scripts/bot_brain.gd")

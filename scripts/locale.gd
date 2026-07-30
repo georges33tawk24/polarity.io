@@ -97,3 +97,57 @@ static func duration(seconds: int) -> String:
 	if h > 0:
 		return "%d:%02d:%02d" % [h, m, s]
 	return "%d:%02d" % [m, s]
+
+
+## Locale-aware currency. Godot ships no ICU money formatter, so this is a small
+## table rather than a pretend-general solution: symbol, whether it leads or
+## trails, and whether a space sits between. Those three facts cover every locale
+## this game ships in, and the honest failure for anything else is "$ in front",
+## which is what an unformatted price already does.
+##
+## Prices from a real IAP provider arrive PRE-FORMATTED by the store — this is only
+## for locally computed amounts (offers, bundle previews, "was $X.XX").
+const CURRENCY := {
+	"en": ["$", true, false], "es": ["\u20ac", false, true],
+	"pt_BR": ["R$", true, true], "fr": ["\u20ac", false, true],
+	"de": ["\u20ac", false, true], "ru": ["\u20bd", false, true],
+	"tr": ["\u20ba", true, false], "id": ["Rp", true, true],
+	"ja": ["\u00a5", true, false], "ko": ["\u20a9", true, false],
+}
+
+
+static func currency(amount: float, code := "") -> String:
+	var c := code if code != "" else String(Game.get_value("locale", "en"))
+	var rule: Array = CURRENCY.get(c, CURRENCY.get(c.split("_")[0], ["$", true, false]))
+	var sym := String(rule[0])
+	var leads := bool(rule[1])
+	var space := bool(rule[2])
+	# Yen and won have no minor unit; showing ".00" on them is a tell.
+	var minor := 0 if c in ["ja", "ko"] else 2
+	var body := number(int(round(amount))) if minor == 0 \
+			else "%s%s%02d" % [number(int(amount)), decimal_sep(c),
+					int(round(fmod(absf(amount), 1.0) * 100.0))]
+	var gap := " " if space else ""
+	return (sym + gap + body) if leads else (body + gap + sym)
+
+
+static func decimal_sep(code := "") -> String:
+	var c := code if code != "" else String(Game.get_value("locale", "en"))
+	return "," if c.split("_")[0] in ["es", "fr", "de", "ru", "tr", "id", "pt"] else "."
+
+
+## Short date, ordered the way the locale writes it. Used for season end dates and
+## the GDPR export stamp — anywhere a bare ISO string would read as a machine value.
+static func date(unix: int, code := "") -> String:
+	var c := code if code != "" else String(Game.get_value("locale", "en"))
+	var d := Time.get_datetime_dict_from_unix_time(unix)
+	var y: int = d["year"]
+	var m: int = d["month"]
+	var day: int = d["day"]
+	match c.split("_")[0]:
+		"ja", "ko":
+			return "%d/%02d/%02d" % [y, m, day]
+		"en":
+			return "%02d/%02d/%d" % [m, day, y] if c == "en" else "%02d/%02d/%d" % [day, m, y]
+		_:
+			return "%02d/%02d/%d" % [day, m, y]

@@ -128,12 +128,12 @@ new screen is built with `tr()` from the start instead of being retrofitted.
 - [x] Missions: daily 3 / weekly 5 / 5 achievements, progress + claim — DONE
 - [x] Battle Pass: 30 tiers, free + premium, seasonal reset — DONE
 - [ ] Platform achievements (Play Games / Game Center) — BLOCKED (vendor)
-- [x] Collection completion counter — DONE · [ ] dedicated codex screen — TODO
+- [x] Collection completion counter + dedicated codex screen — DONE (per-kind completion bars, locked items shown dimmed)
 
 ### 4.2 Cosmetics
 - [x] Skins (23), trails (10), launch VFX (8), nameplates (7), arena themes (8) = 56 — DONE, all visually wired
 - [x] Rarity tiers, equip/loadout, stale-id fallback — DONE
-- [ ] Emotes / victory poses / absorb VFX — TODO
+- [x] Emotes, absorb VFX, victory pose — DONE
 - [x] Kind-aware previews in-card (skin poles, trail, burst, nameplate, arena plate) — DONE · [ ] dedicated preview screen — TODO
 - [ ] Gacha behind a config toggle — TODO (direct purchase only, deliberate)
 
@@ -187,7 +187,7 @@ new screen is built with `tr()` from the start instead of being retrofitted.
 - [x] UI scale slider — DONE
 - [x] Language selector — DONE
 - [x] Account section: guest sign-in, restore purchases, GDPR export + delete, privacy link — DONE
-- [ ] Google/Apple sign-in, support/contact, credits — TODO
+- [x] Support/contact (mailto) + credits — DONE · [x] Google/Apple sign-in seam — DONE, hidden until a native plugin exists (`Platform.federated_auth_available`)
 - [x] Version/build info — DONE
 
 ### 4.9 Localization
@@ -198,7 +198,7 @@ new screen is built with `tr()` from the start instead of being retrofitted.
 - [x] Locale-aware number grouping + duration formatting — DONE
 - [x] CJK glyph coverage verified (ja/ko render on the default font) — DONE
 - [x] Localized bot-name pools — DONE (`data/bot_names.json`, 10 locales)
-- [ ] Currency/date formatting beyond digit grouping — TODO
+- [x] Currency + date formatting per locale — DONE, unit-tested (no minor unit on ja/ko, comma decimals, date order)
 
 ### 4.10 Save & sync
 - [x] Versioned, migratable, corruption-tolerant local save + backup — DONE, unit-tested
@@ -223,7 +223,7 @@ new screen is built with `tr()` from the start instead of being retrofitted.
 
 ### 4.14 Netcode seam
 - [x] Bots write the same `move_dir`/`holding` intent a network peer would — DONE
-- [ ] Explicit interface + deterministic-friendly audit — TODO
+- [x] Explicit interface audit + seeded-RNG determinism — DONE. Narrow claim on purpose: same seed = same arena LAYOUT (enough for replays and reproducible bug reports). Lockstep is NOT claimed — physics is float-based at variable delta.
 
 ## §5–§16 Cross-cutting
 

@@ -57,6 +57,11 @@ var _result_trophy: HBoxContainer
 var _arena: Arena
 var _revive_box: Control
 var _emote_row: HBoxContainer
+var _result_pose: Control
+
+## Store review requires a working support contact on both platforms. Replace with
+## a real address before submitting — a dead mailto is a rejection.
+const SUPPORT_EMAIL := "support@example.com"
 var _wallet: Label
 var _result_rows: VBoxContainer
 var _result_title: Stencil.StencilLabel
@@ -902,6 +907,14 @@ func _build_results() -> Control:
 	box.add_theme_constant_override("separation", UiKit.S2)
 	root.add_child(box)
 
+	# The player's own magnet, shown only on a win. A victory pose in-arena would
+	# delay the results screen, which is the one place this genre must never add
+	# friction — so the flourish happens here, on the object the player owns.
+	_result_pose = UiKit.cosmetic_preview({"kind": "skin"}, 190)
+	_result_pose.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	_result_pose.visible = false
+	box.add_child(_result_pose)
+
 	# Placement is the headline — in this genre the number IS the result.
 	_result_title = Stencil.node("", UiKit.T_HERO, UiKit.INK)
 	_result_title.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
@@ -961,6 +974,7 @@ func _on_match_ended(result: Dictionary) -> void:
 	# draws nothing rather than becoming a mystery box.
 	_result_title.stencil_text = "1ST" if placement == 1 else "#%d" % placement
 	_result_title.ink = UiKit.ACCENT if placement == 1 else UiKit.INK
+	_show_pose(placement == 1)
 	_result_sub.text = tr("UI_PLACEMENT_OF") % [placement, int(result.get("total", 0))]
 
 	# Trophies: gained on a good finish, lost on a bad one. The sign is carried by
@@ -1236,12 +1250,28 @@ func _build_settings() -> Control:
 
 	box.add_child(_toggle(tr("UI_NOTIFICATIONS"), "notifications"))
 	box.add_child(UiKit.spacer(24))
-	box.add_child(_lbl(tr("UI_ACCOUNT"), 54, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER))
+	box.add_child(_lbl(tr("UI_ACCOUNT"), UiKit.T_TITLE, UiKit.INK,
+			HORIZONTAL_ALIGNMENT_CENTER))
+
+	# Federated sign-in. Shown only where a plugin could actually service it, so
+	# the section never offers a button that cannot work.
+	for pair in [["google", "UI_SIGN_IN_GOOGLE"], ["apple", "UI_SIGN_IN_APPLE"]]:
+		if not Platform.federated_auth_available(String(pair[0])):
+			continue
+		var sign_btn := UiKit.btn_secondary(tr(String(pair[1])))
+		sign_btn.pressed.connect(func() -> void:
+			Backend.sign_in_federated(String(pair[0]), func(ok: bool) -> void:
+				_flash_toast(tr("UI_SIGNED_IN") if ok else tr("UI_UNAVAILABLE"))))
+		box.add_child(sign_btn)
 
 	var restore_iap := _btn(tr("UI_RESTORE"))
 	restore_iap.pressed.connect(func() -> void:
 		Store.restore(func(n: int) -> void: _flash_toast("%s %d" % [tr("UI_RESTORE"), n])))
 	box.add_child(restore_iap)
+
+	var about_btn := UiKit.btn_ghost(tr("UI_CREDITS"))
+	about_btn.pressed.connect(func() -> void: _build_about())
+	box.add_child(about_btn)
 
 	var export_btn := _btn(tr("UI_EXPORT_DATA"))
 	export_btn.pressed.connect(func() -> void:
@@ -1632,3 +1662,66 @@ func _send_emote(index: int) -> void:
 	if _arena != null and is_instance_valid(_arena) and _arena.player != null:
 		_arena.player.emote(index)
 		Audio.play("ui_tap", 1.1, -14.0)
+
+
+## Victory pose: the winner's own magnet, spinning up into place. Only on a win —
+## a flourish after a loss reads as mockery.
+func _show_pose(won: bool) -> void:
+	if _result_pose == null or not is_instance_valid(_result_pose):
+		return
+	_result_pose.visible = won
+	if not won:
+		return
+	var colors := Cosmetics.skin_colors()
+	var sw := _result_pose as UiKit.Swatch
+	if sw != null:
+		sw.a = colors[0]
+		sw.b = colors[1]
+		sw.queue_redraw()
+	_result_pose.pivot_offset = _result_pose.size * 0.5
+	_result_pose.scale = Vector2(0.2, 0.2)
+	_result_pose.rotation = -TAU * 0.75
+	var tw := _result_pose.create_tween()
+	tw.parallel().tween_property(_result_pose, "scale", Vector2.ONE, UiKit.dur(0.5)) \
+			.set_trans(Tween.TRANS_EXPO).set_ease(Tween.EASE_OUT)
+	tw.parallel().tween_property(_result_pose, "rotation", 0.0, UiKit.dur(0.6)) \
+			.set_trans(Tween.TRANS_EXPO).set_ease(Tween.EASE_OUT)
+	# One slow idle rotation afterwards, so the winner's magnet stays alive on
+	# screen instead of freezing the moment it arrives.
+	if UiKit.dur(1.0) > 0.0:
+		var idle := _result_pose.create_tween().set_loops()
+		idle.tween_interval(0.6)
+		idle.tween_property(_result_pose, "rotation", 0.10, 1.6) \
+				.set_trans(Tween.TRANS_SINE)
+		idle.tween_property(_result_pose, "rotation", -0.10, 1.6) \
+				.set_trans(Tween.TRANS_SINE)
+
+
+## Support and credits. Both were missing entirely, and a store review will ask for
+## the first one — Apple and Google both require a working support contact.
+func _build_about() -> Control:
+	var box := UiKit.modal(_layout)
+	box.add_child(_lbl(tr("UI_CREDITS"), UiKit.T_TITLE, UiKit.INK,
+			HORIZONTAL_ALIGNMENT_CENTER))
+	var body := _lbl("POLARITY\n\n%s\n\nGodot %s\n%s" % [
+			tr("UI_CREDITS_BODY"),
+			"%d.%d" % [Engine.get_version_info()["major"], Engine.get_version_info()["minor"]],
+			Game.build_string() if Game.has_method("build_string") else ""],
+			UiKit.T_BODY, UiKit.INK_DIM, HORIZONTAL_ALIGNMENT_CENTER)
+	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	box.add_child(body)
+	box.add_child(UiKit.spacer(UiKit.S2))
+
+	var support := UiKit.btn_secondary(tr("UI_SUPPORT"))
+	UiKit.cap_width(support, 560)
+	support.pressed.connect(func() -> void:
+		# mailto: is the only contact channel that needs no backend and works on
+		# every platform this ships to.
+		OS.shell_open("mailto:%s?subject=POLARITY%%20support" % SUPPORT_EMAIL))
+	box.add_child(support)
+
+	var close := UiKit.btn_ghost(tr("UI_BACK"))
+	UiKit.cap_width(close, 560)
+	close.pressed.connect(func() -> void: UiKit.dismiss(box))
+	box.add_child(close)
+	return box

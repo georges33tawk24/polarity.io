@@ -97,6 +97,19 @@ func _refresh_safe_area() -> void:
 
 
 # --- haptics ---------------------------------------------------------------
+## Google Play Games / Sign in with Apple. Both are native-plugin territory, and
+## neither plugin is present, so this is false everywhere for now. Gating the UI on
+## it means the buttons are hidden rather than broken.
+func federated_auth_available(kind: String) -> bool:
+	# Both are false until a plugin ships. Written as an explicit false rather than
+	# omitted, so the reason is visible at the call site instead of the feature
+	# silently not existing.
+	match kind:
+		"google": return self.kind == Kind.MOBILE and false
+		"apple": return os_name == "iOS" and false
+		_: return false
+
+
 func vibrate(ms: int, strength := 0.6) -> void:
 	if not Game.profile.get("haptics", true):
 		return

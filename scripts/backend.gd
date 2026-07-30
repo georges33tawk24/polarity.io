@@ -66,6 +66,28 @@ func sign_in_guest() -> void:
 		auth_changed.emit(true))
 
 
+## Google / Apple sign-in. Both need a NATIVE PLUGIN on their platform — there is
+## no pure-GDScript path to either — so with the null provider this reports
+## unavailable rather than opening a dead web flow. Wiring one is a plugin plus a
+## provider that returns a real account id here; nothing above this line changes.
+##
+## Kept separate from sign_in_guest() because the merge semantics differ: a guest
+## id is device-local and disposable, a federated id is the thing cloud save should
+## actually key on.
+func sign_in_federated(kind: String, cb: Callable) -> void:
+	if not Platform.federated_auth_available(kind):
+		Analytics.track("auth_unavailable", {"kind": kind})
+		cb.call(false)
+		return
+	provider.sign_in(false, func(ok: bool, id: String, _name: String) -> void:
+		if ok:
+			account_id = id
+			signed_in = true
+			Game.set_value("auth_kind", kind)
+			auth_changed.emit(true)
+		cb.call(ok))
+
+
 func sign_out() -> void:
 	provider.sign_out()
 	signed_in = false
