@@ -100,6 +100,7 @@ func _make_burst() -> GPUParticles3D:
 
 
 func _process(delta: float) -> void:
+	_spark_cooldown = maxf(0.0, _spark_cooldown - delta)
 	for w in _waves:
 		if not w.node.visible:
 			continue
@@ -167,12 +168,36 @@ func floater(pos: Vector3, text: String, color: Color) -> void:
 		return
 
 
+## Absorb sparkle. Throttled hard on purpose: scrap is absorbed many times a
+## second, so an un-gated particle burst per nut would both bury the frame and stop
+## meaning anything. At ~7/s it still reads as "that one counted" (§4.2 absorb VFX).
+var _spark_cooldown := 0.0
+
+
+func spark(pos: Vector3, color: Color) -> void:
+	if quality < 0.5 or _spark_cooldown > 0.0:
+		return
+	_spark_cooldown = 0.14
+	var p := _bursts[_burst_next]
+	_burst_next = (_burst_next + 1) % BURSTS
+	p.global_position = pos
+	p.amount = 8
+	var mesh := p.draw_pass_1 as BoxMesh
+	var mat := mesh.material as StandardMaterial3D
+	mat.albedo_color = color
+	mat.emission = color
+	p.restart()
+	p.emitting = true
+
+
 func burst(pos: Vector3, color: Color) -> void:
 	if quality < 0.5:
 		return
 	var p := _bursts[_burst_next]
 	_burst_next = (_burst_next + 1) % BURSTS
 	p.global_position = pos
+	# spark() borrows the same pool at a lower count; restore it.
+	p.amount = 26
 	var mesh := p.draw_pass_1 as BoxMesh
 	var mat := mesh.material as StandardMaterial3D
 	mat.albedo_color = color

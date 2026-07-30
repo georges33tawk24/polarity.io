@@ -56,6 +56,7 @@ var _pole_target: Control
 var _result_trophy: HBoxContainer
 var _arena: Arena
 var _revive_box: Control
+var _emote_row: HBoxContainer
 var _wallet: Label
 var _result_rows: VBoxContainer
 var _result_title: Stencil.StencilLabel
@@ -298,6 +299,21 @@ func _build_menu() -> Control:
 	# One secondary row of text links, not a stack of slabs. An .io front end is
 	# a name field and a PLAY button; everything else lives underneath, small.
 	# Progressive unlock (spec §4.7) still applies — a first-timer sees only PLAY.
+	var event: Dictionary = Meta.active_event()
+	if not event.is_empty():
+		var banner := UiKit.plate(UiKit.STEEL_30, UiKit.R_LG, 2, UiKit.ACCENT)
+		UiKit.cap_width(banner, 700)
+		var col := VBoxContainer.new()
+		col.add_theme_constant_override("separation", UiKit.S0)
+		col.add_child(_lbl(tr(String(event.get("name_key", ""))), UiKit.T_LABEL,
+				UiKit.ACCENT, HORIZONTAL_ALIGNMENT_CENTER))
+		col.add_child(_lbl(tr("UI_EVENT_ENDS") % Locale.duration(
+				Meta.event_seconds_left()), UiKit.T_MICRO, UiKit.INK_MUTE,
+				HORIZONTAL_ALIGNMENT_CENTER))
+		banner.add_child(col)
+		box.add_child(banner)
+		box.add_child(UiKit.spacer(UiKit.S1))
+
 	var matches := int(Game.get_value("matches", 0))
 	var boosts := HBoxContainer.new()
 	boosts.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -646,6 +662,34 @@ func _build_hud() -> Control:
 	_warning.offset_top = 380
 	_warning.visible = false
 	root.add_child(_warning)
+
+	# Emotes. Collapsed behind one button: an always-open row of four would sit in
+	# the same corner the minimap needs, and this is a side feature.
+	_emote_row = HBoxContainer.new()
+	_emote_row.add_theme_constant_override("separation", UiKit.S1)
+	_emote_row.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
+	_emote_row.offset_left = -560.0
+	_emote_row.offset_right = -250.0
+	_emote_row.offset_top = -330.0
+	_emote_row.offset_bottom = -242.0
+	_emote_row.visible = false
+	root.add_child(_emote_row)
+	for i in Magnet.EMOTES.size():
+		var e := UiKit.btn_secondary(Magnet.EMOTES[i], 88)
+		e.custom_minimum_size.x = 74
+		e.add_theme_font_size_override("font_size", UiKit.T_LABEL)
+		e.pressed.connect(func() -> void: _send_emote(i))
+		_emote_row.add_child(e)
+
+	var emote_btn := UiKit.icon_btn("star", 92)
+	emote_btn.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
+	emote_btn.offset_left = -356.0
+	emote_btn.offset_right = -264.0
+	emote_btn.offset_top = -228.0
+	emote_btn.offset_bottom = -136.0
+	emote_btn.pressed.connect(func() -> void:
+		_emote_row.visible = not _emote_row.visible)
+	root.add_child(emote_btn)
 
 	_hint = UiKit.hud_lbl("", UiKit.T_CAPTION, UiKit.INK_DIM, HORIZONTAL_ALIGNMENT_CENTER)
 	_hint.anchor_left = 0.0
@@ -1577,3 +1621,14 @@ func _on_wheel() -> void:
 			_: text = tr("UI_BOOST_READY")
 		_flash_toast(text)
 		rebuild())
+
+
+## Emotes are cosmetic only. The symbol appears above the SENDER's own magnet, so
+## it can be ignored by looking elsewhere — which is why a fixed symbol set needs no
+## moderation and no mute button.
+func _send_emote(index: int) -> void:
+	if _emote_row != null:
+		_emote_row.visible = false
+	if _arena != null and is_instance_valid(_arena) and _arena.player != null:
+		_arena.player.emote(index)
+		Audio.play("ui_tap", 1.1, -14.0)

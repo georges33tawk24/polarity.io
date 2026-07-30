@@ -356,8 +356,14 @@ func record_match(result: Dictionary) -> Dictionary:
 	if placement == 1:
 		coins += t.coins_win_bonus
 		xp += t.xp_win_bonus
+	# A live event scales the payout. Applied here, once, so every consumer — the
+	# results screen, analytics, the ledger — sees the same number and nothing has
+	# to remember to multiply.
+	coins = int(round(coins * Meta.event_multiplier("coins")))
+	xp = int(round(xp * Meta.event_multiplier("xp")))
 	result["coins_earned"] = coins
 	result["xp_earned"] = xp
+	result["event"] = String(Meta.active_event().get("id", ""))
 
 	profile["matches"] = int(profile.get("matches", 0)) + 1
 	profile["kills"] = int(profile.get("kills", 0)) + kills

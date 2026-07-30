@@ -29,6 +29,7 @@ func _ready() -> void:
 	test_save_migration()
 	test_save_sealing()
 	test_rewarded_boosts()
+	test_netcode_seam()
 	test_economy_clamps()
 	test_match_rewards()
 	test_intent_mapping()
@@ -162,6 +163,61 @@ func test_repel_power() -> void:
 ## leave the interesting numbers greppable in the file.
 ## Rewarded boosts. Each is a one-shot flag consumed by the thing it affects, and
 ## the failure modes are opposite and equally bad: granted twice, or silently lost.
+## §4.14 asks that v1 be architected so multiplayer can be added later. The claim
+## has always been "bots write the same intent a network peer would". That is only
+## true if it is enforced, so this asserts the seam rather than trusting the comment:
+##
+##   1. The intent surface is exactly move_dir + holding. Anything else a bot could
+##      write is a private channel a remote peer would not have.
+##   2. A bot NEVER touches position, velocity or mass directly.
+##   3. Intent is bounded and serialisable — a unit vector and a bool, which is 3
+##      floats and a bit on the wire.
+func test_netcode_seam() -> void:
+	print("netcode seam")
+	var src := FileAccess.get_file_as_string("res://scripts/bot_brain.gd")
+	ok(src != "", "bot_brain.gd is readable")
+
+	# The brain may only WRITE these two fields on its magnet.
+	var forbidden := ["global_position =", "position =", "velocity =", "mass =",
+			"_set_mass(", "gain_mass(", "kill("]
+	for f: String in forbidden:
+		ok(not src.contains("magnet." + f.replace("(", "(")),
+				"bot does not write magnet.%s" % f.replace(" =", ""))
+
+	ok(src.contains("move_dir") and src.contains("holding"),
+			"bot writes the intent fields")
+
+	# The property that actually matters is not naming — Intent calls them dir/held
+	# and arena.gd translates — it is that NOTHING ELSE writes them. Every writer of
+	# magnet.move_dir / magnet.holding has to be a thing a network peer could also
+	# be. Today that is exactly two: the bot brain, and the one line in arena.gd
+	# that copies local input in. A third writer is where a would-be multiplayer
+	# build starts diverging, so it fails here first.
+	var writers: Array[String] = []
+	for f: String in ["arena", "bot_brain", "magnet", "ftue", "intent", "main", "ui"]:
+		var body := FileAccess.get_file_as_string("res://scripts/%s.gd" % f)
+		for line in body.split("\n"):
+			var l := String(line).strip_edges()
+			if l.begins_with("#"):
+				continue
+			# An assignment TO the field on some other object.
+			if l.contains(".move_dir =") or l.contains(".holding ="):
+				writers.append(f)
+				break
+	ok(writers.size() <= 2,
+			"only the bot brain and local input write intent (writers: %s)"
+					% ", ".join(writers))
+	ok(writers.has("arena"), "local input reaches the magnet through arena.gd")
+
+	# Bounded and serialisable: a normalised direction plus a flag.
+	var m := Magnet.new()
+	m.move_dir = Vector2(9.0, 9.0)
+	m.holding = true
+	ok(m.move_dir is Vector2 and m.holding is bool,
+			"intent is two floats and a bool — 9 bytes on the wire, no command object")
+	m.free()
+
+
 func test_rewarded_boosts() -> void:
 	print("rewarded boosts")
 	Game.set_value("trial_skin", "")

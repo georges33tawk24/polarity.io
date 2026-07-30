@@ -7,6 +7,7 @@ extends RefCounted
 enum State { SEEK, HUNT, FLEE, RETURN }
 
 var magnet: Magnet
+var _emote_timer := 12.0
 var t: Tuning
 ## 0 = clumsy, 1 = sharp. Drives reaction time, aim error and aggression.
 var skill := 0.5
@@ -33,6 +34,15 @@ func _init(m: Magnet, tuning: Tuning, skill_level: float) -> void:
 func think(delta: float, magnets: Array, ring_radius: float) -> void:
 	if not magnet.alive:
 		return
+
+	# Flavour only, and never in reaction to anything — a bot that emoted on cue
+	# would read as taunting, which is the failure mode fixed emote sets exist to
+	# avoid in the first place.
+	_emote_timer -= delta
+	if _emote_timer <= 0.0:
+		_emote_timer = randf_range(16.0, 45.0)
+		if randf() < 0.3 and magnet != null and magnet.alive:
+			magnet.emote(randi() % Magnet.EMOTES.size())
 
 	_release_timer = maxf(0.0, _release_timer - delta)
 	_waypoint_timer -= delta

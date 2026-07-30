@@ -33,6 +33,11 @@ func _ready() -> void:
 			_shot_path = arg.substr(7)
 		# Mid-match captures: at 4s the countdown has only just cleared, so
 		# anything driven by player input is still idle and unverifiable.
+		if arg.begins_with("--size="):
+			var wh := arg.substr(7).split("x")
+			if wh.size() == 2:
+				DisplayServer.window_set_size(Vector2i(int(wh[0]), int(wh[1])))
+				get_viewport().size = Vector2i(int(wh[0]), int(wh[1]))
 		if arg.begins_with("--shot-at="):
 			_shot_at = float(arg.substr(10))
 		elif arg == "--real":

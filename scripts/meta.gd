@@ -492,3 +492,36 @@ func spin_wheel() -> Dictionary:
 func clear_trial() -> void:
 	if String(Game.get_value("trial_skin", "")) != "":
 		Game.set_value("trial_skin", "")
+
+
+# --- timed events -----------------------------------------------------------
+
+## A live event, or {} when none is running. Purely remote-config driven: shipping a
+## new event is a config push, not a build, which is the whole point of §4.5.
+##
+## Windows are absolute unix timestamps rather than "N days from first seen", so
+## every player's event starts and ends together — a rolling window per install
+## makes leaderboards and shared deadlines meaningless.
+func active_event() -> Dictionary:
+	if not Config.flag("events_enabled"):
+		return {}
+	var now := int(Time.get_unix_time_from_system())
+	for e: Dictionary in Config.get_value("events.list", []):
+		if now >= int(e.get("starts", 0)) and now < int(e.get("ends", 0)):
+			return e
+	return {}
+
+
+## Reward multiplier from the running event, 1.0 when none applies.
+func event_multiplier(kind: String) -> float:
+	var e := active_event()
+	if e.is_empty():
+		return 1.0
+	return float(e.get(kind + "_multiplier", 1.0))
+
+
+func event_seconds_left() -> int:
+	var e := active_event()
+	if e.is_empty():
+		return 0
+	return maxi(0, int(e.get("ends", 0)) - int(Time.get_unix_time_from_system()))

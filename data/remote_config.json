@@ -19,7 +19,8 @@
     "revive_enabled": true,
     "wheel_enabled": true,
     "boost_enabled": true,
-    "trial_enabled": true
+    "trial_enabled": true,
+    "events_enabled": true
   },
   "ads": {
     "interstitial_every_n_matches": 3,
@@ -109,6 +110,18 @@
         "kind": "boost_mass",
         "amount": 1,
         "weight": 12
+      }
+    ]
+  },
+  "events": {
+    "list": [
+      {
+        "id": "scrapyard_rush",
+        "name_key": "EVENT_SCRAPYARD",
+        "starts": 1767225600,
+        "ends": 1767830400,
+        "coins_multiplier": 2.0,
+        "xp_multiplier": 1.5
       }
     ]
   }

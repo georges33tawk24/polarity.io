@@ -128,3 +128,5 @@ UI_BOOST_READY,Boost ready,Impulso listo,Impulso pronto,Bonus prêt,Boost bereit
 UI_DAILY_SPIN,DAILY SPIN,GIRO DIARIO,GIRO DIÁRIO,TOUR DU JOUR,TAGESDREH,КРУТКА ДНЯ,GÜNLÜK ÇEVİR,PUTAR HARIAN,デイリー,일일 뽑기
 UI_TRY,TRY,PROBAR,TESTAR,ESSAYER,TESTEN,ПРОБА,DENE,COBA,おためし,체험
 UI_TRY_ACTIVE,Equipped for one match,Equipado por una partida,Equipado por uma partida,Équipé pour une partie,Für ein Spiel ausgerüstet,Экипировано на один матч,Bir maç için kuşanıldı,Dipakai untuk satu pertandingan,1マッチだけ装備,한 경기 동안 장착
+EVENT_SCRAPYARD,SCRAPYARD RUSH,FIEBRE DE CHATARRA,CORRIDA DO FERRO-VELHO,RUÉE DE LA CASSE,SCHROTTPLATZ-RAUSCH,СВАЛОЧНАЯ ЛИХОРАДКА,HURDALIK KOŞUSU,DEMAM RONGSOK,スクラップラッシュ,고철 러시
+UI_EVENT_ENDS,Ends in %s,Termina en %s,Termina em %s,Fin dans %s,Endet in %s,Осталось %s,%s kaldı,Berakhir %s,残り %s,%s 남음

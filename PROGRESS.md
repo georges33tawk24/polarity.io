@@ -240,7 +240,7 @@ new screen is built with `tr()` from the start instead of being retrofitted.
 - [ ] **§9** Web portal ad SDK — BLOCKED (vendor)
 - [x] **§10** Android/iOS export presets, portrait lock, min SDK/iOS — DONE (unbuilt: no signing)
 - [x] **§10** Store listing scaffold + data-safety answers — DONE (`store/LISTING.md`)
-- [x] **§10** App icons at 9 store sizes (`tools/make_icons.gd`) — DONE · [ ] store screenshots + promo video — TODO
+- [x] **§10** App icons at 9 store sizes — DONE · [~] Store screenshots — PARTIAL: `tools/store_shots.sh` generates the set from the real game, but capture is the window framebuffer and macOS clamps it to the display, so 1290x2796 comes back 1290x1570. Composition is right, pixels are short. Needs a taller display or a SubViewport render pass. · [ ] promo video — TODO
 - [ ] **§11** Backend — BLOCKED (needs user's vendor choice)
 - [x] **§12** Typed GDScript, doc comments, no magic numbers — DONE
 - [x] **§12** Tests: 269 headless assertions + 145 screen/icon/audio checks + real-renderer smoke — DONE (no GUT, see DECISIONS §13)

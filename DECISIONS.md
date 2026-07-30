@@ -868,3 +868,41 @@ are visible, which is the null-provider rule working rather than a bug.
 The screens check earned its keep again here: a block referencing `matches` before its
 declaration broke `Ui` entirely, and `screens.tscn` reported "1 screen checks, 1
 failed" immediately instead of the suite quietly passing 254 logic assertions.
+
+
+## §12y — emotes, absorb VFX, events, netcode audit, store shots (2026-07-30)
+
+- **Absorb sparkle** on the pooled burst system, hard-throttled to ~7/s. Scrap is
+  absorbed many times a second, so an ungated particle burst per nut would both bury
+  the frame and stop meaning anything. Only pickups above 0.9 mass spark, tinted with
+  the player's own launch-VFX cosmetic so a bought effect shows up during the loop
+  rather than only on repel.
+- **Emotes**: four fixed symbols (`!`, `?`, `GG`, crown), not words. They need no
+  translation, read at any size, and cannot be used to harass anyone — the symbol
+  appears above the SENDER's magnet, so it is ignorable by looking elsewhere. That is
+  why a fixed set needs no moderation and no mute button. Bots emote on a 16-45s
+  random timer and never in reaction to anything: a bot that emoted on cue reads as
+  taunting, which is the exact failure mode fixed sets exist to avoid.
+- **Timed events** (§4.5): remote-config driven, absolute unix windows rather than
+  "N days from first seen" so every player's event opens and closes together. The
+  multiplier is applied once in `record_match`, so the results screen, analytics and
+  the ledger cannot disagree.
+- **Netcode seam audit** (§4.14). The first version asserted that `intent.gd`
+  contains `move_dir`/`holding` — it does not, because Intent calls them `dir`/`held`
+  and arena.gd translates. The claim was right and the test was wrong. Rewritten to
+  assert the property that actually matters: **only two things in the codebase write
+  `magnet.move_dir` / `magnet.holding`** — the bot brain and the single line of local
+  input in arena.gd. A third writer is where a multiplayer build would start
+  diverging, so it now fails there first.
+
+### Store screenshots: PARTIAL, and why
+
+`tools/store_shots.sh` generates the set from the real game. It is **not submittable
+yet**: the capture is the window framebuffer, and macOS clamps a window to the
+physical display, so a request for 1290x2796 comes back 1290x1572. Composition and
+content are right; pixels are short.
+
+The tool now prints every file's real dimensions against the folder it is in and
+marks them `!! SHORT`, specifically so a wrong-sized set cannot be shipped by
+accident. The real fix is to render into a SubViewport of the exact target size
+instead of grabbing the window — that makes the tool display-independent. Not done.

@@ -422,6 +422,11 @@ func _spawn_magnets() -> void:
 
 
 # --- input -----------------------------------------------------------------
+
+	# Once, outside the loop: this is a Bus signal, not a per-magnet one.
+	if not Bus.player_absorbed.is_connected(_on_player_absorbed):
+		Bus.player_absorbed.connect(_on_player_absorbed)
+
 func _unhandled_input(event: InputEvent) -> void:
 	if state == State.FINISHED:
 		return
@@ -746,6 +751,13 @@ func _update_board(delta: float) -> void:
 
 
 # --- events ----------------------------------------------------------------
+func _on_player_absorbed(pos: Vector3, amount: float) -> void:
+	# Only worthwhile pickups spark. A sparkle on every 0.2-mass nut is noise.
+	if fx == null or amount < 0.9:
+		return
+	fx.spark(pos + Vector3(0, 0.6, 0), Cosmetics.launch_color())
+
+
 func _on_repelled(origin: Vector3, radius: float, strength: float, power: float, source: Magnet) -> void:
 	scrap.repel(origin, radius, strength * 0.7)
 	var launched := 0

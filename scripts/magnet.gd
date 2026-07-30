@@ -64,6 +64,7 @@ var _aura_mat: ShaderMaterial
 var _field_strength := 0.0
 var _field_sweep := 0.0
 var _label: Label3D
+var _emote_label: Label3D
 var _shadow: MeshInstance3D
 
 
@@ -211,6 +212,8 @@ func _set_mass(v: float) -> void:
 	if _aura != null:
 		_aura.scale = Vector3(_pull_radius, 1.0, _pull_radius)
 	_label.position.y = _radius * 0.5 + 1.5
+	if _emote_label != null and is_instance_valid(_emote_label):
+		_emote_label.position.y = _radius * 0.5 + 3.1
 	if is_player:
 		Bus.player_mass_changed.emit(mass)
 
@@ -422,6 +425,39 @@ func kill(killer: Magnet = null) -> void:
 	collision_layer = 0
 	collision_mask = 0
 	eliminated.emit(self, killer)
+
+
+## Emote symbols. Deliberately marks rather than words: they need no translation,
+## they read at any size, and they cannot be used to harass anyone — which is the
+## reason most .io games either ship a fixed set or ship none at all (§4.2).
+const EMOTES := ["!", "?", "GG", "\u2654"]
+
+
+## Pops a symbol above the magnet for a moment. Reuses the nameplate's own font and
+## billboard settings, so it sits exactly where a player already looks.
+func emote(index: int) -> void:
+	if not alive or _label == null or not is_instance_valid(_label):
+		return
+	if _emote_label == null or not is_instance_valid(_emote_label):
+		_emote_label = Label3D.new()
+		_emote_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		_emote_label.no_depth_test = true
+		_emote_label.fixed_size = true
+		_emote_label.pixel_size = 0.0005
+		_emote_label.font_size = 96
+		_emote_label.outline_size = 26
+		_emote_label.modulate = Color(0.98, 0.86, 0.52)
+		_emote_label.outline_modulate = Color(0.055, 0.051, 0.043, 0.95)
+		add_child(_emote_label)
+	_emote_label.text = EMOTES[clampi(index, 0, EMOTES.size() - 1)]
+	_emote_label.visible = true
+	_emote_label.modulate.a = 1.0
+	var tw := _emote_label.create_tween()
+	tw.tween_interval(1.4)
+	tw.tween_property(_emote_label, "modulate:a", 0.0, 0.35)
+	tw.tween_callback(func() -> void:
+		if is_instance_valid(_emote_label):
+			_emote_label.visible = false)
 
 
 ## Brings a dead magnet back. Only the player is ever revived (§4.4 rewarded
