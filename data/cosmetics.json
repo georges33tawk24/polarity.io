@@ -1,0 +1,556 @@
+{
+  "_comment": "Cosmetic catalogue. Adding an item here requires no code change. Cosmetics are purely visual \u2014 nothing in this file may affect gameplay (spec 4.2).",
+  "rarities": {
+    "common": {
+      "color": "#9a9184"
+    },
+    "rare": {
+      "color": "#7d9fb8"
+    },
+    "epic": {
+      "color": "#a488b8"
+    },
+    "legendary": {
+      "color": "#d9a13c"
+    }
+  },
+  "items": [
+    {
+      "id": "skin_classic",
+      "kind": "skin",
+      "name": "Classic",
+      "rarity": "common",
+      "price": 0,
+      "default": true,
+      "pole_a": "#d94f3d",
+      "pole_b": "#4a6fa5"
+    },
+    {
+      "id": "skin_mint",
+      "kind": "skin",
+      "name": "Mint",
+      "rarity": "common",
+      "price": 300,
+      "pole_a": "#5ecd97",
+      "pole_b": "#2f7664"
+    },
+    {
+      "id": "skin_ember",
+      "kind": "skin",
+      "name": "Ember",
+      "rarity": "common",
+      "price": 300,
+      "pole_a": "#e27f4a",
+      "pole_b": "#823925"
+    },
+    {
+      "id": "skin_slate",
+      "kind": "skin",
+      "name": "Slate",
+      "rarity": "common",
+      "price": 300,
+      "pole_a": "#bbc2cd",
+      "pole_b": "#525a66"
+    },
+    {
+      "id": "skin_grape",
+      "kind": "skin",
+      "name": "Grape",
+      "rarity": "rare",
+      "price": 900,
+      "pole_a": "#b669e7",
+      "pole_b": "#543b87"
+    },
+    {
+      "id": "skin_lagoon",
+      "kind": "skin",
+      "name": "Lagoon",
+      "rarity": "rare",
+      "price": 900,
+      "pole_a": "#47c2cc",
+      "pole_b": "#2f6392"
+    },
+    {
+      "id": "skin_sunset",
+      "kind": "skin",
+      "name": "Sunset",
+      "rarity": "rare",
+      "price": 900,
+      "pole_a": "#e39a52",
+      "pole_b": "#ae3d6f"
+    },
+    {
+      "id": "skin_toxic",
+      "kind": "skin",
+      "name": "Toxic",
+      "rarity": "rare",
+      "price": 900,
+      "pole_a": "#b8db56",
+      "pole_b": "#456a20",
+      "emission": 0.08
+    },
+    {
+      "id": "skin_voltage",
+      "kind": "skin",
+      "name": "Voltage",
+      "rarity": "epic",
+      "price": 2200,
+      "pole_a": "#e5ce5e",
+      "pole_b": "#445ae1",
+      "emission": 0.08
+    },
+    {
+      "id": "skin_magma",
+      "kind": "skin",
+      "name": "Magma",
+      "rarity": "epic",
+      "price": 2200,
+      "pole_a": "#db4f24",
+      "pole_b": "#381511",
+      "emission": 0.08
+    },
+    {
+      "id": "skin_frostbite",
+      "kind": "skin",
+      "name": "Frostbite",
+      "rarity": "epic",
+      "price": 2200,
+      "pole_a": "#ccebf7",
+      "pole_b": "#467fba",
+      "emission": 0.08
+    },
+    {
+      "id": "skin_obsidian",
+      "kind": "skin",
+      "name": "Obsidian",
+      "rarity": "epic",
+      "price": 2200,
+      "pole_a": "#353942",
+      "pole_b": "#191c22",
+      "emission": 0.07
+    },
+    {
+      "id": "skin_aurora",
+      "kind": "skin",
+      "name": "Aurora",
+      "rarity": "legendary",
+      "price": 6000,
+      "pole_a": "#69e7bc",
+      "pole_b": "#9d5ee5",
+      "emission": 0.08
+    },
+    {
+      "id": "skin_goldrush",
+      "kind": "skin",
+      "name": "Gold Rush",
+      "rarity": "legendary",
+      "price": 6000,
+      "pole_a": "#e4c25c",
+      "pole_b": "#835d15",
+      "emission": 0.08
+    },
+    {
+      "id": "skin_singular",
+      "kind": "skin",
+      "name": "Singularity",
+      "rarity": "legendary",
+      "price": 6000,
+      "pole_a": "#f0f0f0",
+      "pole_b": "#1e0a3d",
+      "emission": 0.08
+    },
+    {
+      "id": "trail_none",
+      "kind": "trail",
+      "name": "None",
+      "rarity": "common",
+      "price": 0,
+      "default": true,
+      "enabled": false
+    },
+    {
+      "id": "trail_spark",
+      "kind": "trail",
+      "name": "Sparks",
+      "rarity": "common",
+      "price": 400,
+      "enabled": true,
+      "color": "#eac680",
+      "amount": 22,
+      "size": 0.16
+    },
+    {
+      "id": "trail_ion",
+      "kind": "trail",
+      "name": "Ion",
+      "rarity": "rare",
+      "price": 1100,
+      "enabled": true,
+      "color": "#6cc9e7",
+      "amount": 30,
+      "size": 0.2
+    },
+    {
+      "id": "trail_venom",
+      "kind": "trail",
+      "name": "Venom",
+      "rarity": "rare",
+      "price": 1100,
+      "enabled": true,
+      "color": "#9be55e",
+      "amount": 30,
+      "size": 0.2
+    },
+    {
+      "id": "trail_plasma",
+      "kind": "trail",
+      "name": "Plasma",
+      "rarity": "epic",
+      "price": 2600,
+      "enabled": true,
+      "color": "#e769cf",
+      "amount": 40,
+      "size": 0.26
+    },
+    {
+      "id": "trail_stardust",
+      "kind": "trail",
+      "name": "Stardust",
+      "rarity": "legendary",
+      "price": 6500,
+      "enabled": true,
+      "color": "#f3e8b7",
+      "amount": 52,
+      "size": 0.3
+    },
+    {
+      "id": "burst_default",
+      "kind": "launch_vfx",
+      "name": "Shockwave",
+      "rarity": "common",
+      "price": 0,
+      "default": true,
+      "color": "#f0f0f0",
+      "scale": 1.0
+    },
+    {
+      "id": "burst_crimson",
+      "kind": "launch_vfx",
+      "name": "Crimson",
+      "rarity": "common",
+      "price": 500,
+      "color": "#e55c69",
+      "scale": 1.05
+    },
+    {
+      "id": "burst_pulse",
+      "kind": "launch_vfx",
+      "name": "Pulse",
+      "rarity": "rare",
+      "price": 1300,
+      "color": "#66d4e6",
+      "scale": 1.15
+    },
+    {
+      "id": "burst_nova",
+      "kind": "launch_vfx",
+      "name": "Nova",
+      "rarity": "epic",
+      "price": 2800,
+      "color": "#e8c471",
+      "scale": 1.3
+    },
+    {
+      "id": "burst_rift",
+      "kind": "launch_vfx",
+      "name": "Rift",
+      "rarity": "legendary",
+      "price": 7000,
+      "color": "#b881ea",
+      "scale": 1.45
+    },
+    {
+      "id": "plate_default",
+      "kind": "nameplate",
+      "name": "Plain",
+      "rarity": "common",
+      "price": 0,
+      "default": true,
+      "color": "#f0f0f0",
+      "outline": "#0f0f0f"
+    },
+    {
+      "id": "plate_gold",
+      "kind": "nameplate",
+      "name": "Gilded",
+      "rarity": "rare",
+      "price": 1000,
+      "color": "#e4c25c",
+      "outline": "#46320b"
+    },
+    {
+      "id": "plate_cyber",
+      "kind": "nameplate",
+      "name": "Cyber",
+      "rarity": "epic",
+      "price": 2400,
+      "color": "#69e7c3",
+      "outline": "#0a3f38"
+    },
+    {
+      "id": "plate_royal",
+      "kind": "nameplate",
+      "name": "Royal",
+      "rarity": "legendary",
+      "price": 5500,
+      "color": "#d4b7f3",
+      "outline": "#341b53"
+    },
+    {
+      "id": "arena_grid",
+      "kind": "arena_theme",
+      "name": "Neon Grid",
+      "rarity": "common",
+      "price": 0,
+      "default": true,
+      "base": "#333436",
+      "grid": "#61646a",
+      "danger": "#5e322e"
+    },
+    {
+      "id": "arena_junk",
+      "kind": "arena_theme",
+      "name": "Junkyard",
+      "rarity": "common",
+      "price": 800,
+      "base": "#38342f",
+      "grid": "#6c6459",
+      "danger": "#603a2a"
+    },
+    {
+      "id": "arena_lab",
+      "kind": "arena_theme",
+      "name": "Lab",
+      "rarity": "rare",
+      "price": 1600,
+      "base": "#3c4145",
+      "grid": "#717981",
+      "danger": "#5d3737"
+    },
+    {
+      "id": "arena_factory",
+      "kind": "arena_theme",
+      "name": "Factory",
+      "rarity": "epic",
+      "price": 3000,
+      "base": "#313134",
+      "grid": "#5c5f63",
+      "danger": "#5d3f31"
+    },
+    {
+      "id": "arena_void",
+      "kind": "arena_theme",
+      "name": "Void",
+      "rarity": "legendary",
+      "price": 7500,
+      "base": "#282733",
+      "grid": "#55506f",
+      "danger": "#502b45"
+    },
+    {
+      "id": "skin_gunmetal",
+      "kind": "skin",
+      "name": "Gunmetal",
+      "rarity": "common",
+      "price": 300,
+      "pole_a": "#7d6f66",
+      "pole_b": "#3f4650"
+    },
+    {
+      "id": "skin_copper",
+      "kind": "skin",
+      "name": "Copper",
+      "rarity": "common",
+      "price": 300,
+      "pole_a": "#a9673f",
+      "pole_b": "#5c4230"
+    },
+    {
+      "id": "skin_oxide",
+      "kind": "skin",
+      "name": "Oxide",
+      "rarity": "rare",
+      "price": 900,
+      "pole_a": "#9c4a34",
+      "pole_b": "#4a5560"
+    },
+    {
+      "id": "skin_patina",
+      "kind": "skin",
+      "name": "Patina",
+      "rarity": "rare",
+      "price": 900,
+      "pole_a": "#4f8878",
+      "pole_b": "#7a6a46"
+    },
+    {
+      "id": "skin_nickel",
+      "kind": "skin",
+      "name": "Nickel",
+      "rarity": "rare",
+      "price": 900,
+      "pole_a": "#8f9aa1",
+      "pole_b": "#54606b"
+    },
+    {
+      "id": "skin_ember_deep",
+      "kind": "skin",
+      "name": "Forge",
+      "rarity": "epic",
+      "price": 2200,
+      "pole_a": "#b5502c",
+      "pole_b": "#3a2b28",
+      "emission": 0.08
+    },
+    {
+      "id": "skin_arc",
+      "kind": "skin",
+      "name": "Arc",
+      "rarity": "epic",
+      "price": 2200,
+      "pole_a": "#6f93b5",
+      "pole_b": "#2c3a4a",
+      "emission": 0.08
+    },
+    {
+      "id": "skin_bullion",
+      "kind": "skin",
+      "name": "Bullion",
+      "rarity": "legendary",
+      "price": 5000,
+      "pole_a": "#c9a227",
+      "pole_b": "#5a4a1e",
+      "emission": 0.08
+    },
+    {
+      "id": "trail_swarf",
+      "kind": "trail",
+      "name": "Swarf",
+      "rarity": "common",
+      "price": 300,
+      "enabled": true,
+      "color": "#8a8279"
+    },
+    {
+      "id": "trail_rust",
+      "kind": "trail",
+      "name": "Rust",
+      "rarity": "rare",
+      "price": 900,
+      "enabled": true,
+      "color": "#9c5334"
+    },
+    {
+      "id": "trail_coolant",
+      "kind": "trail",
+      "name": "Coolant",
+      "rarity": "rare",
+      "price": 900,
+      "enabled": true,
+      "color": "#5f8f93"
+    },
+    {
+      "id": "trail_solder",
+      "kind": "trail",
+      "name": "Solder",
+      "rarity": "epic",
+      "price": 2200,
+      "enabled": true,
+      "color": "#b8b0a2"
+    },
+    {
+      "id": "burst_clang",
+      "kind": "launch_vfx",
+      "name": "Clang",
+      "rarity": "common",
+      "price": 300,
+      "color": "#b3a894",
+      "scale": 1.0
+    },
+    {
+      "id": "burst_slag",
+      "kind": "launch_vfx",
+      "name": "Slag",
+      "rarity": "rare",
+      "price": 900,
+      "color": "#a8563a",
+      "scale": 1.15
+    },
+    {
+      "id": "burst_flux",
+      "kind": "launch_vfx",
+      "name": "Flux",
+      "rarity": "epic",
+      "price": 2200,
+      "color": "#7a9bb0",
+      "scale": 1.3
+    },
+    {
+      "id": "plate_brass",
+      "kind": "nameplate",
+      "name": "Brass",
+      "rarity": "common",
+      "price": 300,
+      "color": "#c9a227",
+      "outline": "#2a2114"
+    },
+    {
+      "id": "plate_steel",
+      "kind": "nameplate",
+      "name": "Steel",
+      "rarity": "rare",
+      "price": 900,
+      "color": "#c7c0b2",
+      "outline": "#1a1814"
+    },
+    {
+      "id": "plate_hazard",
+      "kind": "nameplate",
+      "name": "Hazard",
+      "rarity": "epic",
+      "price": 2200,
+      "color": "#e0a13c",
+      "outline": "#241a0d"
+    },
+    {
+      "id": "arena_foundry",
+      "kind": "arena_theme",
+      "name": "Foundry",
+      "rarity": "rare",
+      "price": 900,
+      "base": "#2b2420",
+      "grid": "#6b5a48",
+      "danger": "#6a3020"
+    },
+    {
+      "id": "arena_coldstore",
+      "kind": "arena_theme",
+      "name": "Cold Store",
+      "rarity": "rare",
+      "price": 900,
+      "base": "#22262a",
+      "grid": "#57646e",
+      "danger": "#5a2e2c"
+    },
+    {
+      "id": "arena_shipyard",
+      "kind": "arena_theme",
+      "name": "Shipyard",
+      "rarity": "epic",
+      "price": 2200,
+      "base": "#23282b",
+      "grid": "#5f6f62",
+      "danger": "#63302a"
+    }
+  ]
+}

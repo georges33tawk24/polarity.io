@@ -1,0 +1,23 @@
+{
+  "_comment": "IAP catalogue. `id` must match the product id configured in Play Console / App Store Connect. Prices shown here are display fallbacks only — a live store always reports localised prices, which override these.",
+
+  "products": [
+    { "id": "coins_small",  "type": "consumable",     "grants": { "coins": 2500 },   "price_usd": 1.99, "sku_note": "starter currency" },
+    { "id": "coins_medium", "type": "consumable",     "grants": { "coins": 8000 },   "price_usd": 4.99, "best_value": false },
+    { "id": "coins_large",  "type": "consumable",     "grants": { "coins": 20000 },  "price_usd": 9.99, "best_value": true },
+    { "id": "gems_small",   "type": "consumable",     "grants": { "gems": 200 },     "price_usd": 1.99 },
+    { "id": "gems_medium",  "type": "consumable",     "grants": { "gems": 600 },     "price_usd": 4.99 },
+    { "id": "gems_large",   "type": "consumable",     "grants": { "gems": 1500 },    "price_usd": 9.99, "best_value": true },
+
+    { "id": "remove_ads",   "type": "non_consumable", "grants": { "no_ads": true },  "price_usd": 3.99 },
+    { "id": "starter_pack", "type": "non_consumable", "grants": { "gems": 500, "coins": 3000, "no_ads": true, "cosmetic": "skin_voltage" }, "price_usd": 2.99, "offer_only": true },
+    { "id": "vip",          "type": "subscription",   "grants": { "no_ads": true, "daily_gems": 25 }, "price_usd": 4.99, "period": "P1M" }
+  ],
+
+  "offers": [
+    { "id": "offer_starter", "product": "starter_pack", "segments": ["new"],         "discount_pct": 60, "hours": 24 },
+    { "id": "offer_comeback","product": "coins_medium", "segments": ["churn_risk"],  "discount_pct": 40, "hours": 24 },
+    { "id": "offer_whale",   "product": "gems_large",   "segments": ["payer"],       "discount_pct": 25, "hours": 48 },
+    { "id": "offer_regular", "product": "coins_large",  "segments": ["engaged"],     "discount_pct": 30, "hours": 24 }
+  ]
+}

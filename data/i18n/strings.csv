@@ -1,0 +1,120 @@
+keys,en,es,pt_BR,fr,de,ru,tr,id,ja,ko
+UI_PLAY,PLAY,JUGAR,JOGAR,JOUER,SPIELEN,ИГРАТЬ,OYNA,MAIN,プレイ,플레이
+UI_PLAY_AGAIN,PLAY AGAIN,JUGAR OTRA VEZ,JOGAR DE NOVO,REJOUER,NOCHMAL,ЕЩЁ РАЗ,TEKRAR OYNA,MAIN LAGI,もう一度,다시 하기
+UI_SETTINGS,SETTINGS,AJUSTES,AJUSTES,RÉGLAGES,EINSTELLUNGEN,НАСТРОЙКИ,AYARLAR,PENGATURAN,設定,설정
+UI_MENU,MENU,MENÚ,MENU,MENU,MENÜ,МЕНЮ,MENÜ,MENU,メニュー,메뉴
+UI_BACK,BACK,ATRÁS,VOLTAR,RETOUR,ZURÜCK,НАЗАД,GERİ,KEMBALI,戻る,뒤로
+UI_SHARE,SHARE,COMPARTIR,COMPARTILHAR,PARTAGER,TEILEN,ПОДЕЛИТЬСЯ,PAYLAŞ,BAGIKAN,シェア,공유
+UI_YOUR_NAME,YOUR NAME,TU NOMBRE,SEU NOME,VOTRE NOM,DEIN NAME,ВАШЕ ИМЯ,ADINIZ,NAMA KAMU,なまえ,이름
+UI_TAGLINE,Hold to attract · Release to repel,Mantén para atraer · Suelta para repeler,Segure para atrair · Solte para repelir,Maintenez pour attirer · Relâchez pour repousser,Halten zum Anziehen · Loslassen zum Abstoßen,Держи — притягивай · Отпусти — отталкивай,Çekmek için basılı tut · İtmek için bırak,Tahan untuk menarik · Lepas untuk menolak,長押しで引き寄せ・離して反発,누르면 끌어당기고 · 떼면 밀어내기
+UI_HINT_TOUCH,Hold to attract · Release to repel,Mantén para atraer · Suelta para repeler,Segure para atrair · Solte para repelir,Maintenez pour attirer · Relâchez pour repousser,Halten zum Anziehen · Loslassen zum Abstoßen,Держи — притягивай · Отпусти — отталкивай,Çekmek için basılı tut · İtmek için bırak,Tahan untuk menarik · Lepas untuk menolak,長押しで引き寄せ・離して反発,누르면 끌어당기고 · 떼면 밀어내기
+UI_HINT_DESKTOP,Hold mouse · Release to repel · WASD to steer,Mantén el ratón · Suelta para repeler · WASD para mover,Segure o mouse · Solte para repelir · WASD para mover,Maintenez la souris · Relâchez pour repousser · WASD pour diriger,Maus halten · Loslassen zum Abstoßen · WASD zum Lenken,Держи мышь · Отпусти — отталкивай · WASD — движение,Fareyi basılı tut · İtmek için bırak · WASD ile yönlen,Tahan mouse · Lepas untuk menolak · WASD untuk bergerak,マウス長押し・離して反発・WASDで移動,마우스 누르기 · 떼면 밀어내기 · WASD로 이동
+UI_ALIVE,%d ALIVE,%d VIVOS,%d VIVOS,%d EN VIE,%d ÜBRIG,ОСТАЛОСЬ %d,%d HAYATTA,%d HIDUP,残り %d,%d명 생존
+UI_GO,GO,¡YA!,VAI,PARTEZ,LOS,СТАРТ,BAŞLA,MULAI,スタート,시작
+UI_SUDDEN_DEATH,SUDDEN DEATH,MUERTE SÚBITA,MORTE SÚBITA,MORT SUBITE,SUDDEN DEATH,ВНЕЗАПНАЯ СМЕРТЬ,ANİ ÖLÜM,SUDDEN DEATH,サドンデス,서든데스
+UI_OUT_OF_RING,GET BACK IN THE RING,¡VUELVE AL RING!,VOLTE PARA A ARENA,RETOURNEZ DANS L'ARÈNE,ZURÜCK IN DIE ARENA,ВЕРНИСЬ В КРУГ,RİNGE GERİ DÖN,KEMBALI KE ARENA,リングに戻れ,링으로 돌아가
+UI_VICTORY,VICTORY,¡VICTORIA!,VITÓRIA,VICTOIRE,SIEG,ПОБЕДА,ZAFER,MENANG,勝利,승리
+UI_PLACED,PLACED,PUESTO,COLOCAÇÃO,CLASSEMENT,PLATZ,МЕСТО,SIRALAMA,PERINGKAT,順位,순위
+UI_PLACEMENT_OF,#%d of %d,#%d de %d,#%d de %d,#%d sur %d,#%d von %d,#%d из %d,%d / %d,#%d dari %d,%d / %d 位,%d / %d 위
+UI_MASS,MASS,MASA,MASSA,MASSE,MASSE,МАССА,KÜTLE,MASSA,質量,질량
+UI_ELIMINATIONS,ELIMINATIONS,ELIMINACIONES,ELIMINAÇÕES,ÉLIMINATIONS,AUSSCHALTUNGEN,УСТРАНЕНО,ELEME,ELIMINASI,撃破数,처치
+UI_SURVIVED,SURVIVED,SOBREVIVIDO,SOBREVIVEU,SURVIE,ÜBERLEBT,ПРОДЕРЖАЛСЯ,HAYATTA KALMA,BERTAHAN,生存時間,생존 시간
+UI_COINS,COINS,MONEDAS,MOEDAS,PIÈCES,MÜNZEN,МОНЕТЫ,ALTIN,KOIN,コイン,코인
+UI_GEMS,GEMS,GEMAS,GEMAS,GEMMES,EDELSTEINE,КРИСТАЛЛЫ,ELMAS,PERMATA,ジェム,젬
+UI_XP,XP,XP,XP,XP,EP,ОПЫТ,XP,XP,XP,경험치
+UI_LEVEL_SHORT,LV %d,NV %d,NV %d,NIV %d,LV %d,УР %d,SV %d,LV %d,Lv %d,LV %d
+UI_WALLET,LV %d   ·   %s COINS   ·   BEST #%s,NV %d   ·   %s MONEDAS   ·   MEJOR #%s,NV %d   ·   %s MOEDAS   ·   MELHOR #%s,NIV %d   ·   %s PIÈCES   ·   MEILLEUR #%s,LV %d   ·   %s MÜNZEN   ·   BESTE #%s,УР %d   ·   %s МОНЕТ   ·   ЛУЧШЕЕ #%s,SV %d   ·   %s ALTIN   ·   EN İYİ #%s,LV %d   ·   %s KOIN   ·   TERBAIK #%s,Lv %d   ·   %s コイン   ·   最高 #%s,LV %d   ·   %s 코인   ·   최고 #%s
+UI_FEED_KILL,%s eliminated %s,%s eliminó a %s,%s eliminou %s,%s a éliminé %s,%s hat %s ausgeschaltet,%s устранил %s,%s oyuncusunu eledi: %s,%s mengeliminasi %s,%s が %s を撃破,%s 이(가) %s 처치
+UI_FEED_DEATH,%s was eliminated,%s fue eliminado,%s foi eliminado,%s a été éliminé,%s wurde ausgeschaltet,%s устранён,%s elendi,%s tereliminasi,%s が脱落,%s 탈락
+UI_COPIED,COPIED TO CLIPBOARD,COPIADO AL PORTAPAPELES,COPIADO PARA A ÁREA DE TRANSFERÊNCIA,COPIÉ DANS LE PRESSE-PAPIERS,IN DIE ZWISCHENABLAGE KOPIERT,СКОПИРОВАНО В БУФЕР,PANOYA KOPYALANDI,DISALIN KE PAPAN KLIP,クリップボードにコピーしました,클립보드에 복사됨
+UI_SHARE_TEXT,POLARITY — finished #%d with %d mass and %d eliminations.,POLARITY — terminé #%d con %d de masa y %d eliminaciones.,POLARITY — terminei em #%d com %d de massa e %d eliminações.,POLARITY — terminé #%d avec %d de masse et %d éliminations.,POLARITY — Platz #%d mit %d Masse und %d Ausschaltungen.,POLARITY — место #%d: масса %d и %d устранений.,POLARITY — #%d bitirdim: %d kütle ve %d eleme.,POLARITY — selesai #%d dengan massa %d dan %d eliminasi.,POLARITY — %d位 質量 %d 撃破 %d,POLARITY — %d위 질량 %d 처치 %d
+UI_MUSIC,MUSIC,MÚSICA,MÚSICA,MUSIQUE,MUSIK,МУЗЫКА,MÜZİK,MUSIK,音楽,음악
+UI_SOUND,SOUND,SONIDO,SOM,SON,TON,ЗВУК,SES,SUARA,効果音,효과음
+UI_HAPTICS,HAPTICS,VIBRACIÓN,VIBRAÇÃO,VIBRATION,VIBRATION,ВИБРАЦИЯ,TİTREŞİM,GETARAN,振動,진동
+UI_REDUCED_MOTION,REDUCED MOTION,MENOS MOVIMIENTO,MENOS MOVIMENTO,MOUVEMENT RÉDUIT,WENIGER BEWEGUNG,МЕНЬШЕ ДВИЖЕНИЯ,AZALTILMIŞ HAREKET,KURANGI GERAKAN,モーションを減らす,모션 줄이기
+UI_QUALITY,QUALITY,CALIDAD,QUALIDADE,QUALITÉ,QUALITÄT,КАЧЕСТВО,KALİTE,KUALITAS,画質,화질
+UI_LANGUAGE,LANGUAGE,IDIOMA,IDIOMA,LANGUE,SPRACHE,ЯЗЫК,DİL,BAHASA,言語,언어
+UI_QUALITY_AUTO,AUTO,AUTO,AUTO,AUTO,AUTO,АВТО,OTOMATİK,OTOMATIS,自動,자동
+UI_QUALITY_LOW,LOW,BAJA,BAIXA,BASSE,NIEDRIG,НИЗКОЕ,DÜŞÜK,RENDAH,低,낮음
+UI_QUALITY_MEDIUM,MEDIUM,MEDIA,MÉDIA,MOYENNE,MITTEL,СРЕДНЕЕ,ORTA,SEDANG,中,보통
+UI_QUALITY_HIGH,HIGH,ALTA,ALTA,HAUTE,HOCH,ВЫСОКОЕ,YÜKSEK,TINGGI,高,높음
+UI_SHOP,SHOP,TIENDA,LOJA,BOUTIQUE,SHOP,МАГАЗИН,MAĞAZA,TOKO,ショップ,상점
+UI_SKINS,SKINS,ASPECTOS,SKINS,SKINS,SKINS,СКИНЫ,GÖRÜNÜMLER,SKIN,スキン,스킨
+UI_FEATURED,FEATURED,DESTACADO,DESTAQUES,À LA UNE,EMPFOHLEN,РЕКОМЕНДУЕМОЕ,ÖNE ÇIKAN,UNGGULAN,注目,추천
+UI_EQUIP,EQUIP,EQUIPAR,EQUIPAR,ÉQUIPER,AUSRÜSTEN,НАДЕТЬ,KUŞAN,PAKAI,そうび,장착
+UI_EQUIPPED,EQUIPPED,EQUIPADO,EQUIPADO,ÉQUIPÉ,AUSGERÜSTET,НАДЕТО,KUŞANILDI,DIPAKAI,そうび中,장착됨
+UI_OWNED,OWNED,EN POSESIÓN,ADQUIRIDO,POSSÉDÉ,IM BESITZ,ЕСТЬ,SAHİP,DIMILIKI,所持済み,보유 중
+UI_BUY,BUY,COMPRAR,COMPRAR,ACHETER,KAUFEN,КУПИТЬ,SATIN AL,BELI,こうにゅう,구매
+UI_NOT_ENOUGH,NOT ENOUGH COINS,MONEDAS INSUFICIENTES,MOEDAS INSUFICIENTES,PIÈCES INSUFFISANTES,ZU WENIG MÜNZEN,НЕ ХВАТАЕТ МОНЕТ,YETERSİZ ALTIN,KOIN TIDAK CUKUP,コインが足りません,코인이 부족합니다
+UI_DAILY_REWARD,DAILY REWARD,RECOMPENSA DIARIA,RECOMPENSA DIÁRIA,RÉCOMPENSE QUOTIDIENNE,TAGESBELOHNUNG,ЕЖЕДНЕВНАЯ НАГРАДА,GÜNLÜK ÖDÜL,HADIAH HARIAN,デイリーボーナス,일일 보상
+UI_CLAIM,CLAIM,RECLAMAR,RESGATAR,RÉCLAMER,ABHOLEN,ЗАБРАТЬ,AL,AMBIL,うけとる,받기
+UI_CLAIMED,CLAIMED,RECLAMADO,RESGATADO,RÉCLAMÉ,ABGEHOLT,ПОЛУЧЕНО,ALINDI,DIAMBIL,うけとり済み,받음
+UI_COME_BACK,Come back tomorrow,Vuelve mañana,Volte amanhã,Revenez demain,Komm morgen wieder,Возвращайся завтра,Yarın gel,Kembali besok,また明日,내일 다시 오세요
+UI_DAY_N,DAY %d,DÍA %d,DIA %d,JOUR %d,TAG %d,ДЕНЬ %d,GÜN %d,HARI %d,%d日目,%d일차
+UI_STREAK,%d DAY STREAK,RACHA DE %d DÍAS,SEQUÊNCIA DE %d DIAS,SÉRIE DE %d JOURS,%d TAGE SERIE,СЕРИЯ %d ДН.,%d GÜNLÜK SERİ,BERUNTUN %d HARI,%d日連続,%d일 연속
+UI_MISSIONS,MISSIONS,MISIONES,MISSÕES,MISSIONS,MISSIONEN,ЗАДАНИЯ,GÖREVLER,MISI,ミッション,미션
+UI_DAILY,DAILY,DIARIAS,DIÁRIAS,QUOTIDIENNES,TÄGLICH,ЕЖЕДНЕВНЫЕ,GÜNLÜK,HARIAN,デイリー,일일
+UI_WEEKLY,WEEKLY,SEMANALES,SEMANAIS,HEBDOMADAIRES,WÖCHENTLICH,ЕЖЕНЕДЕЛЬНЫЕ,HAFTALIK,MINGGUAN,ウィークリー,주간
+UI_ACHIEVEMENTS,ACHIEVEMENTS,LOGROS,CONQUISTAS,SUCCÈS,ERFOLGE,ДОСТИЖЕНИЯ,BAŞARIMLAR,PENCAPAIAN,実績,업적
+UI_RESETS_IN,RESETS IN %s,SE REINICIA EN %s,REINICIA EM %s,RÉINITIALISE DANS %s,ZURÜCKGESETZT IN %s,ОБНОВИТСЯ ЧЕРЕЗ %s,%s SONRA SIFIRLANIR,RESET DALAM %s,%s後にリセット,%s 후 초기화
+UI_RARITY_COMMON,COMMON,COMÚN,COMUM,COMMUN,GEWÖHNLICH,ОБЫЧНЫЙ,YAYGIN,UMUM,コモン,일반
+UI_RARITY_RARE,RARE,RARO,RARO,RARE,SELTEN,РЕДКИЙ,NADİR,LANGKA,レア,희귀
+UI_RARITY_EPIC,EPIC,ÉPICO,ÉPICO,ÉPIQUE,EPISCH,ЭПИЧЕСКИЙ,DESTANSI,EPIK,エピック,영웅
+UI_RARITY_LEGENDARY,LEGENDARY,LEGENDARIO,LENDÁRIO,LÉGENDAIRE,LEGENDÄR,ЛЕГЕНДАРНЫЙ,EFSANEVİ,LEGENDA,レジェンド,전설
+MISSION_ABSORB_SCRAP,Absorb %d scrap,Absorbe %d chatarra,Absorva %d sucata,Absorbez %d débris,Sammle %d Schrott,Поглоти %d лома,%d hurda topla,Serap %d rongsokan,スクラップを %d 個 吸収,고철 %d개 흡수
+MISSION_ELIMINATE,Eliminate %d rivals,Elimina a %d rivales,Elimine %d rivais,Éliminez %d rivaux,Schalte %d Gegner aus,Устрани %d соперников,%d rakip ele,Eliminasi %d lawan,ライバルを %d 体 撃破,라이벌 %d명 처치
+MISSION_REACH_MASS,Reach %d mass in a match,Alcanza %d de masa en una partida,Alcance %d de massa em uma partida,Atteignez %d de masse en une partie,Erreiche %d Masse in einem Match,Набери %d массы за матч,Bir maçta %d kütleye ulaş,Capai massa %d dalam satu match,1試合で質量 %d に到達,한 판에서 질량 %d 달성
+MISSION_TOP_THREE,Finish top 3,Termina entre los 3 mejores,Termine no top 3,Terminez dans le top 3,Beende in den Top 3,Займи место в топ-3,İlk 3'te bitir,Selesai di 3 besar,トップ3で終える,3위 안에 들기
+MISSION_TOP_THREE_N,Finish top 3 in %d matches,Termina entre los 3 mejores en %d partidas,Termine no top 3 em %d partidas,Terminez dans le top 3 en %d parties,Beende %d Spiele in den Top 3,Займи топ-3 в %d матчах,%d maçta ilk 3’te bitir,Selesai di 3 besar dalam %d pertandingan,%d 回 トップ3で終える,%d경기에서 3위 안에 들기
+MISSION_WIN,Win %d matches,Gana %d partidas,Vença %d partidas,Gagnez %d parties,Gewinne %d Matches,Выиграй %d матчей,%d maç kazan,Menangkan %d match,%d 回 勝利,%d회 승리
+MISSION_PLAY,Play %d matches,Juega %d partidas,Jogue %d partidas,Jouez %d parties,Spiele %d Matches,Сыграй %d матчей,%d maç oyna,Mainkan %d match,%d 回 プレイ,%d회 플레이
+UI_TRAILS,TRAILS,ESTELAS,RASTROS,TRAÎNÉES,SPUREN,СЛЕДЫ,İZLER,JEJAK,トレイル,트레일
+UI_EFFECTS,EFFECTS,EFECTOS,EFEITOS,EFFETS,EFFEKTE,ЭФФЕКТЫ,EFEKTLER,EFEK,エフェクト,이펙트
+UI_NAMEPLATES,NAMEPLATES,PLACAS,PLACAS,PLAQUES,SCHILDER,ТАБЛИЧКИ,İSİMLİKLER,PAPAN NAMA,ネームプレート,네임플레이트
+UI_ARENAS,ARENAS,ARENAS,ARENAS,ARÈNES,ARENEN,АРЕНЫ,ARENALAR,ARENA,アリーナ,아레나
+UI_PASS,PASS,PASE,PASSE,PASSE,PASS,ПРОПУСК,BİLET,PASS,パス,패스
+FTUE_HOLD,HOLD,MANTÉN,SEGURE,MAINTENEZ,HALTEN,ДЕРЖИ,BASILI TUT,TAHAN,長押し,누르기
+FTUE_RELEASE,RELEASE,SUELTA,SOLTE,RELÂCHEZ,LOSLASSEN,ОТПУСТИ,BIRAK,LEPAS,はなす,떼기
+FTUE_LAUNCH,LAUNCH A RIVAL,LANZA A UN RIVAL,LANCE UM RIVAL,PROPULSEZ UN RIVAL,GEGNER WEGSCHLEUDERN,ОТБРОСЬ СОПЕРНИКА,RAKİBİ FIRLAT,LONTARKAN LAWAN,ライバルを飛ばせ,라이벌을 날려라
+FTUE_NICE,NICE!,¡BIEN!,BOA!,BRAVO !,STARK!,ОТЛИЧНО!,HARİKA!,MANTAP!,いいね！,좋아요!
+UI_SKIP,SKIP,SALTAR,PULAR,PASSER,ÜBERSPRINGEN,ПРОПУСТИТЬ,ATLA,LEWATI,スキップ,건너뛰기
+UI_REPLAY_TUTORIAL,REPLAY TUTORIAL,REPETIR TUTORIAL,REFAZER TUTORIAL,REVOIR LE TUTO,TUTORIAL WIEDERHOLEN,ПОВТОРИТЬ ОБУЧЕНИЕ,EĞİTİMİ TEKRARLA,ULANGI TUTORIAL,チュートリアル再生,튜토리얼 다시 보기
+UI_NEW,NEW,NUEVO,NOVO,NOUVEAU,NEU,НОВОЕ,YENİ,BARU,NEW,NEW
+UI_AGE_TITLE,HOW OLD ARE YOU?,¿QUÉ EDAD TIENES?,QUAL É A SUA IDADE?,QUEL ÂGE AVEZ-VOUS ?,WIE ALT BIST DU?,СКОЛЬКО ВАМ ЛЕТ?,KAÇ YAŞINDASIN?,BERAPA USIAMU?,年齢を教えてください,나이를 알려주세요
+UI_AGE_UNDER,UNDER 13,MENOR DE 13,MENOR DE 13,MOINS DE 13 ANS,UNTER 13,МЕНЬШЕ 13,13 YAŞ ALTI,DI BAWAH 13,13歳未満,13세 미만
+UI_AGE_OVER,13 OR OLDER,13 O MÁS,13 OU MAIS,13 ANS OU PLUS,13 ODER ÄLTER,13 И СТАРШЕ,13 VE ÜZERİ,13 ATAU LEBIH,13歳以上,13세 이상
+UI_PRIVACY_TITLE,SHOW ADS?,¿MOSTRAR ANUNCIOS?,EXIBIR ANÚNCIOS?,AFFICHER DES PUBS ?,WERBUNG ANZEIGEN?,ПОКАЗЫВАТЬ РЕКЛАМУ?,REKLAM GÖSTERİLSİN Mİ?,TAMPILKAN IKLAN?,広告を表示しますか？,광고를 표시할까요?
+UI_PRIVACY_BODY,Ads are never personalised. You can turn them off any time in Settings.,Los anuncios nunca son personalizados. Puedes desactivarlos en Ajustes.,Os anúncios nunca são personalizados. Você pode desativá-los em Configurações.,Les publicités ne sont jamais personnalisées. Désactivable dans les Réglages.,Werbung ist nie personalisiert. Du kannst sie in den Einstellungen abschalten.,Реклама никогда не персонализируется. Её можно отключить в настройках.,Reklamlar asla kişiselleştirilmez. Ayarlar’dan kapatabilirsin.,Iklan tidak pernah dipersonalisasi. Bisa dimatikan di Pengaturan.,広告がパーソナライズされることはありません。設定でいつでもオフにできます。,광고는 맞춤 설정되지 않습니다. 설정에서 언제든 끌 수 있습니다.
+UI_CONSENT_YES,OK,DE ACUERDO,OK,D'ACCORD,OK,ХОРОШО,TAMAM,OKE,OK,확인
+UI_CONSENT_NO,NO ADS,SIN ANUNCIOS,SEM ANÚNCIOS,AUCUNE PUB,KEINE WERBUNG,БЕЗ РЕКЛАМЫ,REKLAM YOK,TANPA IKLAN,広告なし,광고 없음
+UI_DOUBLE_COINS,DOUBLE COINS,MONEDAS x2,MOEDAS x2,PIÈCES x2,MÜNZEN x2,МОНЕТЫ x2,ALTIN x2,KOIN x2,コイン2倍,코인 2배
+UI_PRIVACY_POLICY,PRIVACY POLICY,POLÍTICA DE PRIVACIDAD,POLÍTICA DE PRIVACIDADE,POLITIQUE DE CONFIDENTIALITÉ,DATENSCHUTZ,КОНФИДЕНЦИАЛЬНОСТЬ,GİZLİLİK POLİTİKASI,KEBIJAKAN PRIVASI,プライバシーポリシー,개인정보 처리방침
+UI_DELETE_DATA,DELETE MY DATA,BORRAR MIS DATOS,APAGAR MEUS DADOS,SUPPRIMER MES DONNÉES,MEINE DATEN LÖSCHEN,УДАЛИТЬ МОИ ДАННЫЕ,VERİLERİMİ SİL,HAPUS DATA SAYA,データを削除,내 데이터 삭제
+UI_STORE,STORE,TIENDA,LOJA,BOUTIQUE,STORE,МАГАЗИН,MAĞAZA,TOKO,ストア,스토어
+UI_RESTORE,RESTORE PURCHASES,RESTAURAR COMPRAS,RESTAURAR COMPRAS,RESTAURER LES ACHATS,KÄUFE WIEDERHERSTELLEN,ВОССТАНОВИТЬ ПОКУПКИ,SATIN ALIMLARI GERİ YÜKLE,PULIHKAN PEMBELIAN,購入を復元,구매 복원
+UI_OFFER,LIMITED OFFER,OFERTA LIMITADA,OFERTA LIMITADA,OFFRE LIMITÉE,BEFRISTETES ANGEBOT,ОГРАНИЧЕННОЕ ПРЕДЛОЖЕНИЕ,SINIRLI TEKLİF,PENAWARAN TERBATAS,期間限定,한정 특가
+UI_UNAVAILABLE,UNAVAILABLE,NO DISPONIBLE,INDISPONÍVEL,INDISPONIBLE,NICHT VERFÜGBAR,НЕДОСТУПНО,KULLANILAMAZ,TIDAK TERSEDIA,利用できません,이용 불가
+UI_REMOVE_ADS,REMOVE ADS,QUITAR ANUNCIOS,REMOVER ANÚNCIOS,SUPPRIMER LES PUBS,WERBUNG ENTFERNEN,УБРАТЬ РЕКЛАМУ,REKLAMLARI KALDIR,HAPUS IKLAN,広告を削除,광고 제거
+UI_LEADERBOARD,LEADERBOARD,CLASIFICACIÓN,CLASSIFICAÇÃO,CLASSEMENT,BESTENLISTE,ТАБЛИЦА ЛИДЕРОВ,LİDER TABLOSU,PAPAN PERINGKAT,ランキング,리더보드
+UI_GLOBAL,GLOBAL,GLOBAL,GLOBAL,MONDIAL,GLOBAL,МИР,GLOBAL,GLOBAL,世界,전체
+UI_FRIENDS,FRIENDS,AMIGOS,AMIGOS,AMIS,FREUNDE,ДРУЗЬЯ,ARKADAŞLAR,TEMAN,フレンド,친구
+UI_COUNTRY,COUNTRY,PAÍS,PAÍS,PAYS,LAND,СТРАНА,ÜLKE,NEGARA,国内,국가
+UI_ACCOUNT,ACCOUNT,CUENTA,CONTA,COMPTE,KONTO,АККАУНТ,HESAP,AKUN,アカウント,계정
+UI_EXPORT_DATA,EXPORT MY DATA,EXPORTAR MIS DATOS,EXPORTAR MEUS DADOS,EXPORTER MES DONNÉES,MEINE DATEN EXPORTIEREN,ЭКСПОРТ МОИХ ДАННЫХ,VERİLERİMİ DIŞA AKTAR,EKSPOR DATA SAYA,データを書き出す,내 데이터 내보내기
+UI_CONFIRM,Are you sure?,¿Estás seguro?,Tem certeza?,Êtes-vous sûr ?,Bist du sicher?,Вы уверены?,Emin misin?,Yakin?,本当によろしいですか？,정말인가요?
+UI_CANCEL,CANCEL,CANCELAR,CANCELAR,ANNULER,ABBRECHEN,ОТМЕНА,İPTAL,BATAL,キャンセル,취소
+UI_RATE_TITLE,Enjoying Polarity?,¿Te gusta Polarity?,Curtindo Polarity?,Vous aimez Polarity ?,Gefällt dir Polarity?,Нравится Polarity?,Polarity'i beğendin mi?,Suka Polarity?,Polarity は楽しいですか？,Polarity 재미있나요?
+UI_RATE_YES,RATE US,VALORAR,AVALIAR,NOTER,BEWERTEN,ОЦЕНИТЬ,OYLA,BERI NILAI,評価する,평가하기
+UI_LATER,LATER,MÁS TARDE,MAIS TARDE,PLUS TARD,SPÄTER,ПОЗЖЕ,SONRA,NANTI,あとで,나중에
+UI_SAVED_TO,SAVED,GUARDADO,SALVO,ENREGISTRÉ,GESPEICHERT,СОХРАНЕНО,KAYDEDİLDİ,TERSIMPAN,保存しました,저장됨
+UI_COLORBLIND,COLORBLIND MODE,MODO DALTÓNICO,MODO DALTÔNICO,MODE DALTONIEN,FARBENBLIND-MODUS,РЕЖИМ ДАЛЬТОНИКА,RENK KÖRÜ MODU,MODE BUTA WARNA,色覚サポート,색각 보조
+UI_UI_SCALE,UI SCALE,ESCALA DE INTERFAZ,ESCALA DA INTERFACE,ÉCHELLE DE L'INTERFACE,UI-GRÖSSE,МАСШТАБ ИНТЕРФЕЙСА,ARAYÜZ ÖLÇEĞİ,SKALA ANTARMUKA,UIサイズ,UI 크기
+UI_CONTROLS,CONTROLS,CONTROLES,CONTROLES,COMMANDES,STEUERUNG,УПРАВЛЕНИЕ,KONTROLLER,KONTROL,操作方法,조작
+UI_CONTROL_DRAG,DRAG,ARRASTRAR,ARRASTAR,GLISSER,ZIEHEN,ПЕРЕТАСКИВАНИЕ,SÜRÜKLE,GESER,ドラッグ,드래그
+UI_CONTROL_JOYSTICK,JOYSTICK,JOYSTICK,JOYSTICK,JOYSTICK,JOYSTICK,ДЖОЙСТИК,JOYSTICK,JOYSTICK,スティック,조이스틱
+UI_CONTROL_TOGGLE,TOGGLE,ALTERNAR,ALTERNAR,BASCULER,UMSCHALTEN,ПЕРЕКЛЮЧЕНИЕ,AÇ/KAPA,TOGGLE,切り替え,토글
+UI_LEFT_HANDED,LEFT-HANDED,ZURDO,CANHOTO,GAUCHER,LINKSHÄNDIG,ДЛЯ ЛЕВШЕЙ,SOL ELLİ,KIDAL,左手モード,왼손 모드
+UI_NOTIFICATIONS,NOTIFICATIONS,NOTIFICACIONES,NOTIFICAÇÕES,NOTIFICATIONS,BENACHRICHTIGUNGEN,УВЕДОМЛЕНИЯ,BİLDİRİMLER,NOTIFIKASI,通知,알림
+UI_EMPTY_MISSIONS,No missions right now — play a match,No hay misiones ahora — juega una partida,Sem missões agora — jogue uma partida,Aucune mission — jouez une partie,Keine Missionen — spiel ein Match,Заданий нет — сыграй матч,Şu an görev yok — bir maç oyna,Belum ada misi — mainkan satu match,ミッションはありません — 1試合プレイしましょう,미션이 없습니다 — 한 판 플레이하세요
+UI_BEST,Best,Mejor,Melhor,Meilleur,Beste,Лучшее,En iyi,Terbaik,最高,최고
+UI_LEFT_SHORT,LEFT,QUEDAN,RESTAM,RESTE,ÜBRIG,ОСТАЛОСЬ,KALAN,SISA,残り,남음

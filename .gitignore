@@ -1,0 +1,13 @@
+.godot/
+build/
+android/
+*.translation
+
+# Signing material must never enter the repo — see README "Signing".
+*.keystore
+*.jks
+export_credentials.cfg
+
+# Generated icon PNGs are build outputs of tools/make_icons.gd, but they are also
+# referenced by project.godot and export_presets.cfg, so they DO belong in the repo.
+# Listed here only to document that they are generated, not hand-drawn.

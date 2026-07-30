@@ -1,0 +1,165 @@
+name: CI
+
+# Lints, runs both suites headless, and produces Web + Android artifacts on a
+# tag. Signing material is never in the repo — see README "Signing".
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+
+env:
+  GODOT_VERSION: 4.3
+  GODOT_STATUS: stable
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache Godot and export templates
+        id: cache-godot
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/godot
+            ~/.local/share/godot/export_templates
+          key: godot-${{ env.GODOT_VERSION }}-${{ env.GODOT_STATUS }}
+
+      - name: Install Godot
+        if: steps.cache-godot.outputs.cache-hit != 'true'
+        run: |
+          set -euo pipefail
+          BASE="https://github.com/godotengine/godot/releases/download"
+          V="${GODOT_VERSION}-${GODOT_STATUS}"
+          mkdir -p ~/godot ~/.local/share/godot/export_templates
+          curl -sSfL -o godot.zip \
+            "$BASE/$V/Godot_v${V}_linux.x86_64.zip"
+          unzip -q godot.zip -d ~/godot
+          mv ~/godot/Godot_v${V}_linux.x86_64 ~/godot/godot
+          chmod +x ~/godot/godot
+          curl -sSfL -o templates.tpz \
+            "$BASE/$V/Godot_v${V}_export_templates.tpz"
+          unzip -q templates.tpz -d /tmp/tpl
+          mv /tmp/tpl/templates ~/.local/share/godot/export_templates/${GODOT_VERSION}.${GODOT_STATUS}
+
+      - name: Import resources
+        # Import must run to completion before anything else; a first run also
+        # generates the .godot cache the tests depend on.
+        run: |
+          ~/godot/godot --headless --import --quit-after 200 || true
+
+      - name: Lint (parse every script)
+        run: |
+          set -euo pipefail
+          fail=0
+          for f in $(find scripts tests -name '*.gd'); do
+            out=$(~/godot/godot --headless --check-only --script "$f" 2>&1 || true)
+            # Autoload identifiers are unavailable in --check-only, so only real
+            # syntax errors are treated as failures.
+            if echo "$out" | grep -q "Parse Error"; then
+              echo "::error file=$f::$out"
+              fail=1
+            fi
+          done
+          exit $fail
+
+      - name: Unit and integration tests
+        run: |
+          set -euo pipefail
+          out=$(~/godot/godot --headless res://tests/tests.tscn 2>&1)
+          echo "$out"
+          echo "$out" | grep -qE '^[0-9]+ checks, 0 failed' || {
+            echo "::error::test suite reported failures"; exit 1; }
+          # A green count over a runtime error is this project's signature bug:
+          # thirty rarity_color errors once shipped alongside "267 checks, 0 failed".
+          echo "$out" | grep -qE 'SCRIPT ERROR|Parse Error' && {
+            echo "::error::runtime errors during the test run"; exit 1; }
+          true
+
+      - name: Match smoke test
+        run: |
+          set -euo pipefail
+          out=$(~/godot/godot --headless res://tests/smoke.tscn 2>&1)
+          echo "$out"
+          echo "$out" | grep -q '0 failures' || {
+            echo "::error::smoke test reported failures"; exit 1; }
+          echo "$out" | grep -qE 'SCRIPT ERROR|Parse Error' && {
+            echo "::error::runtime errors during the smoke run"; exit 1; }
+          true
+
+      - name: Screen structure
+        # The suites above never build a screen. Four times in this project a
+        # green check has sat on top of a visibly broken one.
+        run: |
+          set -euo pipefail
+          out=$(~/godot/godot --headless res://tests/screens.tscn 2>&1)
+          echo "$out"
+          echo "$out" | grep -qE '^[0-9]+ screen checks, 0 failed' || {
+            echo "::error::a screen failed to build"; exit 1; }
+          echo "$out" | grep -qE 'SCRIPT ERROR|Parse Error' && {
+            echo "::error::runtime errors while building screens"; exit 1; }
+          true
+
+      - name: Banned identifiers
+        run: |
+          set -euo pipefail
+          if grep -rEn 'UiKit\.(BG|PANEL|DIM|HOT|GOOD|RADIUS)\b' scripts/; then
+            echo "::error::deprecated UiKit token in use"; exit 1
+          fi
+          # Quoted only: a comment naming a banned hex to explain why it is
+          # banned must not trip this.
+          if grep -rEn '"#(5ce1ff|ffc63f|3fa9ff|b45cff|ff4059|c98a12|2a86b8)"' scripts/ data/; then
+            echo "::error::banned saturated colour in source"; exit 1
+          fi
+
+  build:
+    needs: test
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/godot
+            ~/.local/share/godot/export_templates
+          key: godot-${{ env.GODOT_VERSION }}-${{ env.GODOT_STATUS }}
+
+      - name: Export Web
+        run: |
+          set -euo pipefail
+          mkdir -p build/web
+          ~/godot/godot --headless --import --quit-after 200 || true
+          ~/godot/godot --headless --export-release "Web" build/web/index.html
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: polarity-web
+          path: build/web
+
+      # Android needs a keystore. It is intentionally absent from the repo, so
+      # this step is skipped unless the secrets are configured.
+      - name: Export Android
+        if: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+        env:
+          KEYSTORE: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_USER: ${{ secrets.ANDROID_KEYSTORE_USER }}
+          KEYSTORE_PASS: ${{ secrets.ANDROID_KEYSTORE_PASS }}
+        run: |
+          set -euo pipefail
+          echo "$KEYSTORE" | base64 -d > /tmp/release.keystore
+          export GODOT_ANDROID_KEYSTORE_RELEASE_PATH=/tmp/release.keystore
+          export GODOT_ANDROID_KEYSTORE_RELEASE_USER="$KEYSTORE_USER"
+          export GODOT_ANDROID_KEYSTORE_RELEASE_PASSWORD="$KEYSTORE_PASS"
+          mkdir -p build/android
+          ~/godot/godot --headless --export-release "Android" build/android/polarity.aab
+
+      - uses: actions/upload-artifact@v4
+        if: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+        with:
+          name: polarity-android
+          path: build/android

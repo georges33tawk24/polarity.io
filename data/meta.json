@@ -1,0 +1,281 @@
+{
+  "_comment": "Daily calendar, mission pool, battle pass and rank ladder. Adding content here requires no code change (spec \u00a716).",
+  "daily_rewards": [
+    {
+      "day": 1,
+      "currency": "coins",
+      "amount": 100
+    },
+    {
+      "day": 2,
+      "currency": "coins",
+      "amount": 150
+    },
+    {
+      "day": 3,
+      "currency": "gems",
+      "amount": 5
+    },
+    {
+      "day": 4,
+      "currency": "coins",
+      "amount": 250
+    },
+    {
+      "day": 5,
+      "currency": "coins",
+      "amount": 350
+    },
+    {
+      "day": 6,
+      "currency": "gems",
+      "amount": 10
+    },
+    {
+      "day": 7,
+      "currency": "coins",
+      "amount": 750
+    }
+  ],
+  "missions": [
+    {
+      "id": "d_absorb_40",
+      "scope": "daily",
+      "metric": "scrap",
+      "target": 40,
+      "name_key": "MISSION_ABSORB_SCRAP",
+      "coins": 120,
+      "bp_xp": 20
+    },
+    {
+      "id": "d_absorb_120",
+      "scope": "daily",
+      "metric": "scrap",
+      "target": 120,
+      "name_key": "MISSION_ABSORB_SCRAP",
+      "coins": 220,
+      "bp_xp": 35
+    },
+    {
+      "id": "d_kill_3",
+      "scope": "daily",
+      "metric": "kills",
+      "target": 3,
+      "name_key": "MISSION_ELIMINATE",
+      "coins": 180,
+      "bp_xp": 30
+    },
+    {
+      "id": "d_kill_8",
+      "scope": "daily",
+      "metric": "kills",
+      "target": 8,
+      "name_key": "MISSION_ELIMINATE",
+      "coins": 320,
+      "bp_xp": 50
+    },
+    {
+      "id": "d_play_3",
+      "scope": "daily",
+      "metric": "matches",
+      "target": 3,
+      "name_key": "MISSION_PLAY",
+      "coins": 120,
+      "bp_xp": 20
+    },
+    {
+      "id": "d_mass_60",
+      "scope": "daily",
+      "metric": "mass",
+      "target": 60,
+      "name_key": "MISSION_REACH_MASS",
+      "coins": 200,
+      "bp_xp": 30
+    },
+    {
+      "id": "d_top3",
+      "scope": "daily",
+      "metric": "top3",
+      "target": 1,
+      "name_key": "MISSION_TOP_THREE",
+      "coins": 250,
+      "bp_xp": 40
+    },
+    {
+      "id": "d_win_1",
+      "scope": "daily",
+      "metric": "wins",
+      "target": 1,
+      "name_key": "MISSION_WIN",
+      "coins": 300,
+      "bp_xp": 50
+    },
+    {
+      "id": "w_absorb_600",
+      "scope": "weekly",
+      "metric": "scrap",
+      "target": 600,
+      "name_key": "MISSION_ABSORB_SCRAP",
+      "coins": 900,
+      "bp_xp": 120
+    },
+    {
+      "id": "w_kill_30",
+      "scope": "weekly",
+      "metric": "kills",
+      "target": 30,
+      "name_key": "MISSION_ELIMINATE",
+      "coins": 1100,
+      "bp_xp": 150
+    },
+    {
+      "id": "w_play_20",
+      "scope": "weekly",
+      "metric": "matches",
+      "target": 20,
+      "name_key": "MISSION_PLAY",
+      "coins": 700,
+      "bp_xp": 100
+    },
+    {
+      "id": "w_win_5",
+      "scope": "weekly",
+      "metric": "wins",
+      "target": 5,
+      "name_key": "MISSION_WIN",
+      "coins": 1500,
+      "bp_xp": 200
+    },
+    {
+      "id": "w_mass_150",
+      "scope": "weekly",
+      "metric": "mass",
+      "target": 150,
+      "name_key": "MISSION_REACH_MASS",
+      "coins": 1000,
+      "bp_xp": 140
+    },
+    {
+      "id": "w_top3_8",
+      "scope": "weekly",
+      "metric": "top3",
+      "target": 8,
+      "name_key": "MISSION_TOP_THREE_N",
+      "coins": 1200,
+      "bp_xp": 160
+    },
+    {
+      "id": "a_kill_100",
+      "scope": "achievement",
+      "metric": "kills_total",
+      "target": 100,
+      "name_key": "MISSION_ELIMINATE",
+      "coins": 2000
+    },
+    {
+      "id": "a_kill_1000",
+      "scope": "achievement",
+      "metric": "kills_total",
+      "target": 1000,
+      "name_key": "MISSION_ELIMINATE",
+      "coins": 8000
+    },
+    {
+      "id": "a_play_100",
+      "scope": "achievement",
+      "metric": "matches_total",
+      "target": 100,
+      "name_key": "MISSION_PLAY",
+      "coins": 2500
+    },
+    {
+      "id": "a_win_25",
+      "scope": "achievement",
+      "metric": "wins_total",
+      "target": 25,
+      "name_key": "MISSION_WIN",
+      "coins": 3000
+    },
+    {
+      "id": "a_scrap_10000",
+      "scope": "achievement",
+      "metric": "scrap_total",
+      "target": 10000,
+      "name_key": "MISSION_ABSORB_SCRAP",
+      "coins": 5000
+    }
+  ],
+  "daily_slots": 3,
+  "weekly_slots": 5,
+  "battlepass": {
+    "_epoch_note": "UTC day index of launch (2026-01-01). Seasons count from here \u2014 without it, season = unix_day/28 and the first season is number 737.",
+    "epoch_day": 20454,
+    "season_length_days": 28,
+    "xp_per_tier": 100,
+    "tiers": 30,
+    "free_every": 3,
+    "free_reward": {
+      "currency": "coins",
+      "amount": 250
+    },
+    "premium_reward": {
+      "currency": "coins",
+      "amount": 500
+    },
+    "premium_gem_tiers": [
+      5,
+      10,
+      15,
+      20,
+      25,
+      30
+    ],
+    "premium_gem_amount": 15,
+    "premium_price_gems": 400,
+    "skin_tiers": {
+      "10": "skin_voltage",
+      "20": "skin_frostbite",
+      "30": "skin_aurora"
+    }
+  },
+  "ranks": [
+    {
+      "id": "bronze",
+      "min": 0,
+      "color": "#c07c42"
+    },
+    {
+      "id": "silver",
+      "min": 400,
+      "color": "#b9c2cc"
+    },
+    {
+      "id": "gold",
+      "min": 900,
+      "color": "#b98a2e"
+    },
+    {
+      "id": "platinum",
+      "min": 1600,
+      "color": "#5e8c82"
+    },
+    {
+      "id": "diamond",
+      "min": 2600,
+      "color": "#5b7fa8"
+    },
+    {
+      "id": "master",
+      "min": 4000,
+      "color": "#7a5e96"
+    }
+  ],
+  "trophies_by_placement": {
+    "1": 30,
+    "2": 22,
+    "3": 16,
+    "5": 8,
+    "8": 2,
+    "99": -12
+  }
+}
