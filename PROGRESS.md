@@ -238,7 +238,7 @@ new screen is built with `tr()` from the start instead of being retrofitted.
 - [x] **§9** WebGL2 single-threaded export, PWA, focus mute, audio gesture unlock — DONE
 - [x] **§9** Branded loader + WASM error/retry screen — DONE (`web/shell.html`), **verified in a real browser**: boots, and the failure path was tested by hiding the wasm
 - [ ] **§9** Web portal ad SDK — BLOCKED (vendor)
-- [x] **§10** Android/iOS export presets, portrait lock, min SDK/iOS — DONE (unbuilt: no signing)
+- [x] **§10** Android: **signed debug APK BUILT** (`build/android/polarity-debug.apk`, 48 MB, io.polarity.arena, arm64 + armv7, signature verified). Never yet RUN — no emulator/device on this machine. · [ ] iOS: BLOCKED, Godot refuses to export without an Apple Developer Team ID.
 - [x] **§10** Store listing scaffold + data-safety answers — DONE (`store/LISTING.md`)
 - [x] **§10** App icons at 9 store sizes — DONE · [~] Store screenshots — PARTIAL: `tools/store_shots.sh` generates the set from the real game, but capture is the window framebuffer and macOS clamps it to the display, so 1290x2796 comes back 1290x1570. Composition is right, pixels are short. Needs a taller display or a SubViewport render pass. · [ ] promo video — TODO
 - [~] **§11** Backend — Supabase provider WRITTEN and unit-tested (`scripts/supabase_provider.gd`, `supabase/schema.sql`). Needs the user to create the project and drop in `supabase.cfg`. Degrades to the local provider until then.

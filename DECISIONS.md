@@ -970,3 +970,32 @@ state, offline while believing you are online is not.
 
 `supabase.cfg` is gitignored. The `service_role` key must never enter the client,
 the repo, or a chat window; nothing here asks for it.
+
+
+## §12ab — first mobile build (2026-07-30)
+
+**Android debug APK built and verified.** `io.polarity.arena`, 48 MB, arm64-v8a +
+armeabi-v7a, signed with the standard debug keystore, manifest and signature checked
+with `apksigner` and `aapt2`. It has **never been run** — there is no emulator, no
+system image and no connected device on this machine, and installing one is a
+multi-GB download against 5.6 GB of free disk.
+
+Three things had to change to get here:
+
+- `gradle_build/use_gradle_build` off. Gradle is only needed for native plugins or
+  custom Android code, and this project deliberately has neither — which is the same
+  reason federated sign-in is a stub. The prebuilt template produces the same APK
+  without a gradle toolchain in the loop. `export_format`, `min_sdk` and `target_sdk`
+  had to be cleared too: under the prebuilt template they are configuration errors
+  rather than no-ops.
+- Package id `com.example.polarity` -> `io.polarity.arena`. **Google Play rejects
+  `com.example.*`**, and changing it after the first upload means a new listing.
+- Export filters were only excluding `tests/*`, so the APK contained `tools/`,
+  `store/` and — absurdly — the **web build's own output**, packaging one platform's
+  export inside another's. Now excludes `tools/*,build/*,store/*,*.md`; 52.5 MB down
+  to 48.5 MB and no foreign artefacts.
+
+**iOS is blocked on an Apple Developer account.** Godot 4.3 refuses to export the
+Xcode project without a Team ID, and a distributable IPA additionally needs a signing
+certificate and provisioning profile in the keychain. Neither is something I can
+create — both require signing into an Apple account, and the membership is $99/year.
