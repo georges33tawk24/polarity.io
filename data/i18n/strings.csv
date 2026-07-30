@@ -123,3 +123,8 @@ UI_REVIVE_BODY,Get back in with some of your mass.,Vuelve con parte de tu masa.,
 UI_REVIVE,CONTINUE,CONTINUAR,CONTINUAR,CONTINUER,WEITER,ПРОДОЛЖИТЬ,DEVAM,LANJUT,つづける,계속하기
 UI_NO_THANKS,NO THANKS,NO GRACIAS,NÃO OBRIGADO,NON MERCI,NEIN DANKE,НЕТ СПАСИБО,HAYIR,TIDAK,やめる,괜찮아요
 UI_SECONDS_LEFT,%ds,%ds,%ds,%ds,%ds,%dс,%ds,%dd,%d秒,%d초
+UI_BOOST_START,+50% START,+50% INICIO,+50% INÍCIO,+50% DÉPART,+50% START,+50% СТАРТ,+50% BAŞLANGIÇ,+50% AWAL,開始+50%,시작 +50%
+UI_BOOST_READY,Boost ready,Impulso listo,Impulso pronto,Bonus prêt,Boost bereit,Бонус готов,Güçlendirme hazır,Boost siap,ブースト準備完了,부스트 준비됨
+UI_DAILY_SPIN,DAILY SPIN,GIRO DIARIO,GIRO DIÁRIO,TOUR DU JOUR,TAGESDREH,КРУТКА ДНЯ,GÜNLÜK ÇEVİR,PUTAR HARIAN,デイリー,일일 뽑기
+UI_TRY,TRY,PROBAR,TESTAR,ESSAYER,TESTEN,ПРОБА,DENE,COBA,おためし,체험
+UI_TRY_ACTIVE,Equipped for one match,Equipado por una partida,Equipado por uma partida,Équipé pour une partie,Für ein Spiel ausgerüstet,Экипировано на один матч,Bir maç için kuşanıldı,Dipakai untuk satu pertandingan,1マッチだけ装備,한 경기 동안 장착

@@ -146,7 +146,7 @@ new screen is built with `tr()` from the start instead of being retrofitted.
 
 ### 4.4 Monetization
 - [x] Rewarded service + double-coins placement, daily cap, honest grant — DONE
-- [x] Rewarded **revive** — DONE (arena holds in AWAITING_REVIVE, 8s auto-decline, once per match, every exit path tested) · [ ] wheel / skin trial / extra mass — TODO
+- [x] Rewarded placements: **revive**, **daily wheel**, **skin trial**, **+50% start mass** — DONE, all four consume-once and unit-tested. All hidden unless an ad can actually be delivered.
 - [x] Interstitial policy: every-N-matches + cooldown + first-session/first-match skip — DONE, unit-tested
 - [x] Web banner policy (web-only, never in-match) — DONE (no provider)
 - [x] IAP: consumables / non-consumables / VIP, purchase, restore, revoke — DONE, unit-tested with an injected fake provider

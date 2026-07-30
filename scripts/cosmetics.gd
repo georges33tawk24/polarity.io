@@ -153,6 +153,14 @@ static func completion() -> Vector2i:
 # --- convenience for gameplay visuals --------------------------------------
 static func skin_colors() -> Array:
 	var s := equipped_item("skin")
+	# A rewarded trial overrides the equipped skin for one match. Read here rather
+	# than by equipping it, so the player's real loadout is never touched and the
+	# trial cannot be made permanent by quitting at the right moment.
+	var trial := String(Game.get_value("trial_skin", ""))
+	if trial != "":
+		var item := get_item(trial)
+		if not item.is_empty():
+			s = item
 	var a := Color(String(s.get("pole_a", "#d94f3d")))
 	var b := Color(String(s.get("pole_b", "#477fff")))
 	if bool(Game.get_value("colorblind", false)):

@@ -28,6 +28,7 @@ func _ready() -> void:
 	test_repel_power()
 	test_save_migration()
 	test_save_sealing()
+	test_rewarded_boosts()
 	test_economy_clamps()
 	test_match_rewards()
 	test_intent_mapping()
@@ -159,6 +160,42 @@ func test_repel_power() -> void:
 ## Encryption at rest. Obfuscation, not security — see game.gd — but it has to
 ## round-trip, has to still load an unsealed save from an older build, and must not
 ## leave the interesting numbers greppable in the file.
+## Rewarded boosts. Each is a one-shot flag consumed by the thing it affects, and
+## the failure modes are opposite and equally bad: granted twice, or silently lost.
+func test_rewarded_boosts() -> void:
+	print("rewarded boosts")
+	Game.set_value("trial_skin", "")
+	Game.set_value("boost_mass", false)
+	Game.set_value("wheel_day", 0)
+
+	# A skin trial overrides the equipped skin WITHOUT equipping it, so the real
+	# loadout is untouched and quitting cannot make the trial permanent.
+	var equipped := Cosmetics.equipped("skin")
+	Game.set_value("trial_skin", "skin_bullion")
+	var trial_colors := Cosmetics.skin_colors()
+	ok(Cosmetics.equipped("skin") == equipped,
+			"a trial does not change the equipped skin")
+	Game.set_value("trial_skin", "")
+	var normal_colors := Cosmetics.skin_colors()
+	ok(trial_colors[0] != normal_colors[0], "a trial actually changes the colours")
+
+	# One match only.
+	Game.set_value("trial_skin", "skin_bullion")
+	Meta.clear_trial()
+	ok(String(Game.get_value("trial_skin", "")) == "", "a trial expires after a match")
+
+	# The wheel marks the day BEFORE granting, so a crash loop cannot farm it.
+	Game.set_value("wheel_day", 0)
+	var before := int(Game.get_value("coins", 0))
+	var first := Meta.spin_wheel()
+	ok(not first.is_empty() or not Ads.rewarded_available(),
+			"a spin either grants or is unavailable")
+	var second := Meta.spin_wheel()
+	ok(second.is_empty(), "the wheel cannot be spun twice in a day")
+	ok(int(Game.get_value("coins", 0)) >= before, "a spin never removes currency")
+	Game.set_value("wheel_day", 0)
+
+
 func test_save_sealing() -> void:
 	print("save sealing")
 	var plain := '{"coins": 1234567, "version": 9}'

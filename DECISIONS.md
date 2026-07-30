@@ -843,3 +843,28 @@ Then it ran inside `_on_ended` before the result assertions, and `revive()` rese
 `placement`, so the suite reported "bad placement 0 for YOU". It now snapshots and
 restores the player state it touches. Worth recording: a test that mutates live game
 state has to be as careful as the code it checks.
+
+
+## §12x — the remaining rewarded placements (2026-07-30)
+
+Three more on top of revive, all sharing one rule: **the grant is consumed by the
+thing it affects, not at the moment the ad completes.** A crash between watching and
+playing therefore cannot lose a reward or duplicate it.
+
+- **+50% start mass.** The flag is cleared inside `_spawn_magnets`, and the bonus is
+  applied AFTER `configure()` because configure sets mass itself.
+- **Skin trial.** Overrides the equipped skin inside `Cosmetics.skin_colors()` rather
+  than equipping it, so the real loadout is untouched and quitting at the right moment
+  cannot make a trial permanent. Cleared in `record_match` — on the way out, not the
+  way in, so backing out of a match does not burn it.
+- **Daily wheel.** Marks the day BEFORE granting. A crash mid-grant costs the player
+  one reward; marking after would let a crash loop farm it indefinitely. Weighted
+  table lives in remote config.
+
+All four placements are hidden unless `Ads.rewarded_available()` — an offer that
+cannot deliver is worse than no offer. With no provider wired that means none of them
+are visible, which is the null-provider rule working rather than a bug.
+
+The screens check earned its keep again here: a block referencing `matches` before its
+declaration broke `Ui` entirely, and `screens.tscn` reported "1 screen checks, 1
+failed" immediately instead of the suite quietly passing 254 logic assertions.

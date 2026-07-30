@@ -446,3 +446,49 @@ func rank() -> Dictionary:
 func bot_skill_bias() -> float:
 	var trophies := float(Game.get_value("trophies", 0))
 	return clampf(trophies / 4000.0, 0.0, 1.0)
+
+
+# --- rewarded boosts --------------------------------------------------------
+
+## One spin per UTC day, and only when an ad can actually be shown.
+func wheel_available() -> bool:
+	return Config.flag("wheel_enabled") and Ads.rewarded_available() \
+			and int(Game.get_value("wheel_day", 0)) != today()
+
+
+## Weighted pick from the remote table, granted immediately. Marks the day BEFORE
+## granting: a crash mid-grant costs the player one reward, whereas marking after
+## would let a crash loop hand out unlimited ones.
+func spin_wheel() -> Dictionary:
+	if not wheel_available():
+		return {}
+	Game.set_value("wheel_day", today())
+	var table: Array = Config.get_value("wheel.rewards", [])
+	if table.is_empty():
+		return {}
+	var total := 0.0
+	for r: Dictionary in table:
+		total += float(r.get("weight", 1))
+	var roll := randf() * total
+	var pick: Dictionary = table[0]
+	for r: Dictionary in table:
+		roll -= float(r.get("weight", 1))
+		if roll <= 0.0:
+			pick = r
+			break
+	var kind := String(pick.get("kind", "coins"))
+	var amount := int(pick.get("amount", 0))
+	match kind:
+		"coins", "gems":
+			Game.add_currency(kind, amount, "wheel")
+		"boost_mass":
+			Game.set_value("boost_mass", true)
+	Analytics.track("wheel_spin", {"kind": kind, "amount": amount})
+	return {"kind": kind, "amount": amount}
+
+
+## The skin trial lasts exactly one match. Cleared on record_match rather than on
+## match start, so a player who backs out of a match keeps what they paid for.
+func clear_trial() -> void:
+	if String(Game.get_value("trial_skin", "")) != "":
+		Game.set_value("trial_skin", "")

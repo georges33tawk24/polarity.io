@@ -16,7 +16,10 @@
     "rating_prompt_enabled": true,
     "share_card_enabled": true,
     "kill_switch_monetisation": false,
-    "revive_enabled": true
+    "revive_enabled": true,
+    "wheel_enabled": true,
+    "boost_enabled": true,
+    "trial_enabled": true
   },
   "ads": {
     "interstitial_every_n_matches": 3,
@@ -71,5 +74,42 @@
   },
   "revive": {
     "mass_fraction": 0.45
+  },
+  "boost": {
+    "mass_fraction": 0.5
+  },
+  "wheel": {
+    "rewards": [
+      {
+        "kind": "coins",
+        "amount": 150,
+        "weight": 34
+      },
+      {
+        "kind": "coins",
+        "amount": 400,
+        "weight": 22
+      },
+      {
+        "kind": "coins",
+        "amount": 1000,
+        "weight": 8
+      },
+      {
+        "kind": "gems",
+        "amount": 10,
+        "weight": 18
+      },
+      {
+        "kind": "gems",
+        "amount": 40,
+        "weight": 6
+      },
+      {
+        "kind": "boost_mass",
+        "amount": 1,
+        "weight": 12
+      }
+    ]
   }
 }

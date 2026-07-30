@@ -243,6 +243,23 @@ func _item_card(item: Dictionary) -> Control:
 		buy.expand_icon = false
 		buy.add_theme_constant_override("h_separation", 10)
 		action = buy
+		# A rewarded trial on locked skins only. Nothing to try on a nameplate.
+		if String(item.get("kind", "")) == "skin" and Config.flag("trial_enabled") \
+				and Ads.rewarded_available() \
+				and String(Game.get_value("trial_skin", "")) == "":
+			var try_btn := UiKit.btn_ghost(tr("UI_TRY"), 110)
+			try_btn.add_theme_font_size_override("font_size", UiKit.T_CAPTION)
+			try_btn.custom_minimum_size.x = 130
+			try_btn.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+			try_btn.pressed.connect(func() -> void:
+				Ads.show_rewarded("skin_trial", func(granted: bool) -> void:
+					if granted:
+						Game.set_value("trial_skin", id)
+						_toast(tr("UI_TRY_ACTIVE"))
+					else:
+						_toast(tr("UI_UNAVAILABLE"))
+					_rebuild()))
+			row.add_child(try_btn)
 		buy.pressed.connect(func() -> void:
 			if Cosmetics.purchase(id):
 				Cosmetics.equip(String(item["kind"]), id)

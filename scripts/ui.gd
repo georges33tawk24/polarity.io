@@ -294,10 +294,28 @@ func _build_menu() -> Control:
 	# one-off call because the pole has to be re-aimed after every layout pass.
 	_pole_target = play
 
+
 	# One secondary row of text links, not a stack of slabs. An .io front end is
 	# a name field and a PLAY button; everything else lives underneath, small.
 	# Progressive unlock (spec §4.7) still applies — a first-timer sees only PLAY.
 	var matches := int(Game.get_value("matches", 0))
+	var boosts := HBoxContainer.new()
+	boosts.alignment = BoxContainer.ALIGNMENT_CENTER
+	boosts.add_theme_constant_override("separation", UiKit.S2)
+	if matches >= 2 and Config.flag("boost_enabled") and Ads.rewarded_available() \
+			and not bool(Game.get_value("boost_mass", false)):
+		var boost := UiKit.btn_ghost(tr("UI_BOOST_START"), 104)
+		boost.add_theme_font_size_override("font_size", UiKit.T_LABEL)
+		boost.pressed.connect(_on_boost)
+		boosts.add_child(boost)
+	if matches >= 2 and Meta.wheel_available():
+		var spin := UiKit.btn_ghost(tr("UI_DAILY_SPIN"), 104)
+		spin.add_theme_font_size_override("font_size", UiKit.T_LABEL)
+		spin.pressed.connect(_on_wheel)
+		boosts.add_child(spin)
+	if boosts.get_child_count() > 0:
+		box.add_child(UiKit.spacer(UiKit.S1))
+		box.add_child(boosts)
 	box.add_child(UiKit.spacer(UiKit.S1))
 
 	# Round icon buttons, not text links. Four words in a row gave no signal that
@@ -1529,3 +1547,33 @@ func _on_player_down() -> void:
 			clock.text = tr("UI_SECONDS_LEFT") % maxi(0, left[0])
 		if left[0] <= 0:
 			answer.call(false))
+
+
+## Rewarded: start the next match heavier.
+func _on_boost() -> void:
+	Ads.show_rewarded("boost_mass", func(granted: bool) -> void:
+		if granted:
+			Game.set_value("boost_mass", true)
+			_flash_toast(tr("UI_BOOST_READY"))
+		else:
+			_flash_toast(tr("UI_COME_BACK"))
+		rebuild())
+
+
+## Rewarded: one spin a day.
+func _on_wheel() -> void:
+	Ads.show_rewarded("wheel", func(granted: bool) -> void:
+		if not granted:
+			_flash_toast(tr("UI_COME_BACK"))
+			return
+		var got := Meta.spin_wheel()
+		if got.is_empty():
+			_flash_toast(tr("UI_COME_BACK"))
+			return
+		var text := ""
+		match String(got["kind"]):
+			"coins": text = "+%s %s" % [Locale.number(int(got["amount"])), tr("UI_COINS")]
+			"gems": text = "+%s %s" % [Locale.number(int(got["amount"])), tr("UI_GEMS")]
+			_: text = tr("UI_BOOST_READY")
+		_flash_toast(text)
+		rebuild())

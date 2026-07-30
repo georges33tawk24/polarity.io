@@ -111,6 +111,12 @@ static func defaults() -> Dictionary:
 		"last_session_day": 0,
 		"consent": 0,
 		"age_bracket": 0,
+		# Rewarded boosts. All one-shot and consumed by the thing they affect, so a
+		# crash between watching the ad and starting the match cannot lose them and
+		# cannot duplicate them either.
+		"boost_mass": false,
+		"trial_skin": "",
+		"wheel_day": 0,
 		"iap_count": 0,
 		"no_ads": false,
 		"iap_owned": [],
@@ -338,6 +344,9 @@ func _apply_audio_settings() -> void:
 # --- match rewards ---------------------------------------------------------
 ## Converts a finished match into currency/XP and folds it into the profile.
 func record_match(result: Dictionary) -> Dictionary:
+	# A skin trial is worth exactly one match. Cleared on the way out rather than
+	# on the way in, so backing out of a match does not burn it.
+	Meta.clear_trial()
 	var t := tuning
 	var kills := int(result.get("kills", 0))
 	var mass := float(result.get("mass", 0.0))

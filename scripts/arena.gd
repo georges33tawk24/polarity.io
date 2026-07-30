@@ -62,6 +62,7 @@ var _last_countdown_call := -1
 var _placement_counter := 0
 var _board_timer := 0.0
 var _revive_used := false
+var _pending_boost := 0.0
 var _alarm_timer := 0.0
 var _fps_accum := 0.0
 var _fps_frames := 0
@@ -389,8 +390,16 @@ func _spawn_magnets() -> void:
 		if is_player:
 			pal = [Color(1.0, 0.25, 0.36), Color(0.28, 0.52, 1.0)]
 		add_child(m)
+		if is_player and bool(Game.get_value("boost_mass", false)):
+			# Consumed here, not when the ad completed: the grant survives a crash
+			# between watching and playing, and cannot be spent twice.
+			Game.set_value("boost_mass", false)
+			_pending_boost = t.start_mass * Config.num("boost.mass_fraction", 0.5)
 		m.configure(t, Game.player_name() if is_player else names[i % names.size()],
 				pal[0], pal[1], is_player)
+		if is_player and _pending_boost > 0.0:
+			m.gain_mass(_pending_boost)
+			_pending_boost = 0.0
 
 		# Ring formation with jitter — spread out, but not visibly geometric.
 		# Kept well inside the boundary: spawn near the edge and a single enemy
