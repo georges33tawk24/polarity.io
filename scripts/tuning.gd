@@ -15,13 +15,15 @@ extends Resource
 @export var radius_exponent := 0.42
 ## Pull radius as a multiple of body radius.
 @export var pull_radius_mult := 4.6
-## Move speed at start_mass.
-@export var base_speed := 10.5
+## Move speed at start_mass. Raised hard after the first device test — at 10.5 a
+## magnet took two full seconds to cross the visible arena, which reads as slow
+## motion on a phone where your thumb has already arrived.
+@export var base_speed := 16.5
 ## speed = base_speed * (start_mass / mass) ^ this. Bigger = slower = the growth tradeoff.
 @export var speed_mass_exponent := 0.17
-@export var accel := 46.0
+@export var accel := 95.0
 ## Deceleration when not steering.
-@export var drag := 6.0
+@export var drag := 9.0
 
 @export_group("Magnetism")
 ## force = base_pull_force * puller_mass / distance ^ falloff_exponent
@@ -36,10 +38,10 @@ extends Resource
 ## Base impulse strength of a release burst.
 @export var repel_impulse := 30.0
 ## Hold this long (seconds) for a full-power release.
-@export var repel_charge_time := 0.7
+@export var repel_charge_time := 0.45
 ## Power floor, so a quick tap still does something.
 @export var repel_min_power := 0.35
-@export var repel_cooldown := 0.5
+@export var repel_cooldown := 0.35
 ## Hard ceiling on how fast a magnet can be flung. Impulses stack — two bots
 ## releasing at once used to put a magnet at 4x its own top speed, which is
 ## unrecoverable and reads as being deleted rather than launched. Keep this
@@ -50,9 +52,11 @@ extends Resource
 ## You must out-mass a rival by this ratio to bite them on contact. Set this
 ## too low and eating two scrap pieces lets you delete a neighbour.
 @export var absorb_mass_ratio := 1.25
-## Fraction of their mass taken per contact bite. At 0.12 a starting magnet
-## survives roughly 3.5s of sustained contact — long enough to fight back.
-@export var absorb_fraction := 0.12
+## Fraction of their mass taken per contact bite. 0.12 gave ~3.5s of sustained
+## contact to kill, which on a phone felt like nothing was happening. At 0.26 with
+## the shorter bite cooldown it is closer to 1.2s — still long enough to break away,
+## short enough that a commitment reads as a commitment.
+@export var absorb_fraction := 0.26
 ## Awarded to the killer as a fraction of the victim's PEAK mass, not their
 ## remaining mass — victims always die at min_mass, so remaining-mass bounties
 ## are worthless and killing a giant has to pay more than killing a rookie.
@@ -63,7 +67,7 @@ extends Resource
 ## How far beyond the ring the victim must be flung for the instant kill.
 @export var launch_kill_margin := 3.0
 ## Seconds of contact invulnerability after being bitten (stops instant chain-drain).
-@export var bite_cooldown := 0.6
+@export var bite_cooldown := 0.38
 
 @export_group("Scrap")
 @export var scrap_count := 420

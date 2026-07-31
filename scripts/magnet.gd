@@ -374,7 +374,7 @@ func fire_repel() -> void:
 	repelled.emit(global_position, _pull_radius, strength, power)
 	if is_player:
 		Audio.play("launch", 1.0 + (1.0 - power) * 0.25, -3.0)
-		Platform.vibrate(28, 0.5 + power * 0.5)
+		Platform.vibrate(14, 0.25 + power * 0.25)
 		Bus.repel_fired.emit(global_position, _pull_radius, power)
 		Bus.shake.emit(t.shake_launch * power)
 
@@ -389,7 +389,9 @@ func gain_mass(amount: float) -> void:
 		Bus.player_absorbed.emit(global_position, amount)
 		Audio.play("absorb" if amount < 4.0 else "absorb_big",
 				1.0 + clampf(amount * 0.04, 0.0, 0.4), -12.0 if amount < 4.0 else -4.0)
-		Platform.vibrate(10, 0.25)
+		# NO haptic here. This fires on every piece of scrap absorbed — many times a
+		# second during normal play — and on a real phone it was a continuous buzz.
+		# The sound and the squash already carry the feedback.
 		# Milestone every doubling — the snowball needs a drumbeat.
 		if floori(log(before / t.start_mass) / log(2.0)) < floori(log(mass / t.start_mass) / log(2.0)):
 			Audio.play("size_up", 1.0, -4.0)

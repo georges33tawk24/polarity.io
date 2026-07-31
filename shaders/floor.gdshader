@@ -54,8 +54,15 @@ void fragment() {
 	c *= 0.96 + hash(floor(w * 6.0)) * 0.08;
 	c *= 0.92 + hash(floor(w * 0.09)) * 0.14;
 
-	float outside = smoothstep(ring_radius - 0.8, ring_radius + 0.8, length(w));
-	c = mix(c, danger_color, outside * 0.88);
+	// Outside the ring used to be flooded with red at 0.88 — a huge saturated slab
+	// that dominated the frame and made the arena look like it was on fire. The
+	// boundary still has to read, so it keeps a narrow painted edge and the ground
+	// beyond it just goes darker, which says "off the plate" without shouting.
+	float d_ring = length(w);
+	float outside = smoothstep(ring_radius - 0.8, ring_radius + 0.8, d_ring);
+	float boundary = smoothstep(ring_radius + 2.6, ring_radius + 0.2, d_ring) * outside;
+	c = mix(c, c * 0.42, outside);
+	c = mix(c, danger_color, boundary * 0.35);
 
 	ALBEDO = c;
 	ROUGHNESS = 0.88;

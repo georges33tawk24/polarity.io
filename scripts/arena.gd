@@ -707,7 +707,7 @@ func _hazard_hit(m: Magnet, amount: float, at: Vector3) -> void:
 		return
 	if m.is_player:
 		Bus.shake.emit(t.shake_hit * 0.6)
-		Platform.vibrate(12, 0.4)
+		Platform.vibrate(8, 0.2)
 	if rng.randf() < 0.25:
 		fx.floater(at + Vector3(0, 0.5, 0), "!", Color(1, 0.5, 0.2))
 
@@ -828,7 +828,9 @@ func _on_eliminated(victim: Magnet, killer: Magnet) -> void:
 	if by_player or victim.is_player:
 		Audio.play("eliminate", 1.0, -4.0)
 		Bus.shake.emit(t.shake_kill)
-		Platform.vibrate(45, 0.9)
+		# An elimination is the one moment that earns a real thump, but 45ms at 0.9
+		# was a jolt rather than a beat.
+		Platform.vibrate(22, 0.45)
 		_hitstop()
 
 	var alive := _alive_count()

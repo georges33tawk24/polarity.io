@@ -43,6 +43,8 @@ var _board_rows: Dictionary = {}
 var _board_ranks: Dictionary = {}
 var _board_toggle: Button
 var _board_collapsed := false
+var _map_toggle: Button
+var _map_collapsed := false
 var _clock_label: Label
 var _alive_label: Label
 var _board: Control
@@ -674,6 +676,21 @@ func _build_hud() -> Control:
 	_minimap.offset_bottom = 0.0
 	root.add_child(_minimap)
 
+	# Minimise toggle, mirroring the leaderboard's. The map is the second largest
+	# thing covering the arena.
+	_map_toggle = UiKit.btn_text("", 56)
+	_map_toggle.custom_minimum_size.x = 56
+	_map_toggle.add_theme_font_size_override("font_size", UiKit.T_LABEL)
+	_map_toggle.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
+	_map_toggle.offset_left = -Minimap.SIZE - 8.0
+	_map_toggle.offset_right = -Minimap.SIZE + 48.0
+	_map_toggle.offset_top = -Minimap.SIZE - 4.0
+	_map_toggle.offset_bottom = -Minimap.SIZE + 52.0
+	_map_toggle.pressed.connect(_toggle_map)
+	root.add_child(_map_toggle)
+	_map_collapsed = bool(Game.get_value("map_collapsed", false))
+	_apply_map_collapsed()
+
 	# --- transient overlays --------------------------------------------------
 	_feed = VBoxContainer.new()
 	# Left column, not centred. Centred at the top it ran straight under the
@@ -826,7 +843,9 @@ func _make_board_row(mine: bool) -> Control:
 	var who := UiKit.lbl("", size, ink)
 	who.name = "Who"
 	who.position = Vector2(70, 4)
-	who.size = Vector2(BOARD_W - 70 - 130, BOARD_ROW_H - 8)
+	# Wider score column: a six-figure mass ran straight into the name because the
+	# column was sized for three digits.
+	who.size = Vector2(BOARD_W - 70 - 200, BOARD_ROW_H - 8)
 	# German UI_FEED_KILL is eight characters longer; clip_text truncates
 	# mid-glyph, an ellipsis says the name continues.
 	who.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
@@ -835,8 +854,9 @@ func _make_board_row(mine: bool) -> Control:
 	var score := UiKit.lbl("", size, UiKit.ACCENT if mine else ink,
 			HORIZONTAL_ALIGNMENT_RIGHT)
 	score.name = "Score"
-	score.position = Vector2(BOARD_W - 130, 4)
-	score.size = Vector2(120, BOARD_ROW_H - 8)
+	score.position = Vector2(BOARD_W - 196, 4)
+	score.size = Vector2(186, BOARD_ROW_H - 8)
+	score.clip_text = true
 	r.add_child(score)
 	return r
 
@@ -877,7 +897,7 @@ func _on_board(rows: Array) -> void:
 				var tw := r.create_tween()
 				tw.tween_property(r, "modulate", Color(1.7, 1.45, 1.05), UiKit.dur(0.08))
 				tw.tween_property(r, "modulate", Color.WHITE, UiKit.dur(0.24))
-				Platform.vibrate(10, 0.3)
+				Platform.vibrate(6, 0.15)
 		_board_ranks[who] = rank
 
 	for who: String in _board_rows.keys():
@@ -995,10 +1015,19 @@ func _build_results() -> Control:
 	var links := HBoxContainer.new()
 	links.alignment = BoxContainer.ALIGNMENT_CENTER
 	links.add_theme_constant_override("separation", UiKit.S3)
-	var share := UiKit.btn_text(tr("UI_SHARE"))
+	# Two real buttons, not text links. On a phone these were ~34dp tall with no box,
+	# sitting directly under a 140px amber slab — impossible to tell they were
+	# controls and awkward to hit.
+	var share := UiKit.btn_secondary(tr("UI_SHARE"), 116)
+	share.custom_minimum_size.x = 330
+	share.icon = Icons.get_icon("bars", UiKit.INK)
+	share.add_theme_constant_override("h_separation", 12)
 	share.pressed.connect(_on_share)
 	links.add_child(share)
-	var home := UiKit.btn_text(tr("UI_MENU"))
+	var home := UiKit.btn_secondary(tr("UI_MENU"), 116)
+	home.custom_minimum_size.x = 330
+	home.icon = Icons.get_icon("gear", UiKit.INK)
+	home.add_theme_constant_override("h_separation", 12)
 	home.pressed.connect(func() -> void: menu_pressed.emit())
 	links.add_child(home)
 	box.add_child(links)
@@ -1208,13 +1237,33 @@ func _flash_toast(text: String) -> void:
 # --- settings --------------------------------------------------------------
 func _build_settings() -> Control:
 	var root := Control.new()
+	# Pinned header with the exit in it. The only way out used to be a button at the
+	# very bottom of a long scroll — on a phone that is a scroll to leave a screen
+	# you opened by mistake.
+	var head := UiKit.row([], UiKit.S2)
+	head.set_anchors_preset(Control.PRESET_TOP_WIDE)
+	head.offset_left = UiKit.S3
+	head.offset_right = -UiKit.S3
+	head.offset_top = UiKit.S2
+	head.offset_bottom = UiKit.S2 + 112
+	var head_back := UiKit.btn_ghost(tr("UI_BACK"), 96)
+	head_back.custom_minimum_size.x = 160
+	head_back.pressed.connect(_close_settings)
+	head.add_child(head_back)
+	var head_title := _lbl(tr("UI_SETTINGS"), UiKit.T_TITLE, UiKit.INK,
+			HORIZONTAL_ALIGNMENT_CENTER)
+	head_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	head.add_child(head_title)
+	head.add_child(UiKit.spacer(160))
+	root.add_child(head)
+
 	var scroll := ScrollContainer.new()
 	scroll.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	# Every other screen breathes at the edges; this one ran flush to them, so the
 	# dropdown arrows and the toggle pills sat against the bezel.
 	scroll.offset_left = UiKit.S3
 	scroll.offset_right = -UiKit.S3
-	scroll.offset_top = UiKit.S2
+	scroll.offset_top = UiKit.S2 + 152   # clear of the pinned header
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	root.add_child(scroll)
 
@@ -1223,7 +1272,6 @@ func _build_settings() -> Control:
 	box.add_theme_constant_override("separation", 22)
 	scroll.add_child(box)
 
-	box.add_child(_lbl(tr("UI_SETTINGS"), UiKit.T_TITLE, UiKit.INK, HORIZONTAL_ALIGNMENT_CENTER))
 	box.add_child(_slider(tr("UI_MUSIC"), "music", func(v: float) -> void: Audio.set_volume("Music", v)))
 	box.add_child(_slider(tr("UI_SOUND"), "sfx", func(v: float) -> void: Audio.set_volume("SFX", v)))
 	box.add_child(_toggle(tr("UI_HAPTICS"), "haptics"))
@@ -1832,3 +1880,20 @@ func _setting_row(label: String, control: Control) -> HBoxContainer:
 		(control as Button).clip_text = true
 	row.add_child(control)
 	return row
+
+
+## Hide the minimap. Same reasoning as the leaderboard: on a phone the map covers a
+## corner of the arena you may want to see, and whether that trade is worth it is
+## the player's call, not mine.
+func _toggle_map() -> void:
+	_map_collapsed = not _map_collapsed
+	Game.set_value("map_collapsed", _map_collapsed)
+	_apply_map_collapsed()
+	Audio.play("ui_tap", 1.05, -14.0)
+
+
+func _apply_map_collapsed() -> void:
+	if _minimap != null and is_instance_valid(_minimap):
+		_minimap.visible = not _map_collapsed
+	if _map_toggle != null and is_instance_valid(_map_toggle):
+		_map_toggle.text = "+" if _map_collapsed else "\u2013"

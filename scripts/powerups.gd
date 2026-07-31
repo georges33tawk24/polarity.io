@@ -145,5 +145,5 @@ func _apply(m: Magnet, kind: int, magnets: Array) -> void:
 
 	if m.is_player:
 		Audio.play("size_up", 1.2, -6.0)
-		Platform.vibrate(18, 0.5)
+		Platform.vibrate(10, 0.25)
 		Bus.powerup_taken.emit(kind, t.powerup_duration, color)

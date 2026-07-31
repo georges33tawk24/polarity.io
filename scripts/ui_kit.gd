@@ -259,7 +259,7 @@ class Plate extends PanelContainer:
 static func _press_feel(b: Button, primary: bool) -> void:
 	b.button_down.connect(func() -> void:
 		Audio.play("ui_tap", 0.92 if primary else 1.14, -9.0 if primary else -14.0)
-		Platform.vibrate(14 if primary else 7, 0.45 if primary else 0.2)
+		Platform.vibrate(8 if primary else 4, 0.20 if primary else 0.10)
 		# b.create_tween, not create_tween: a locale change frees every screen, and
 		# a tween owned by the caller would outlive its target.
 		snap(b.create_tween()).tween_property(b, "scale", Vector2(0.975, 0.94), dur(0.05)))
