@@ -65,7 +65,7 @@ var _result_pose: Control
 
 ## Store review requires a working support contact on both platforms. Replace with
 ## a real address before submitting — a dead mailto is a rejection.
-const SUPPORT_EMAIL := "support@example.com"
+const SUPPORT_EMAIL := "polarity.io.io@gmail.com"
 var _wallet: Label
 var _result_rows: VBoxContainer
 var _result_title: Stencil.StencilLabel
@@ -1422,7 +1422,7 @@ func _build_settings() -> Control:
 	var privacy := UiKit.btn_ghost(tr("UI_PRIVACY_POLICY"))
 	privacy.pressed.connect(func() -> void:
 		# Replace with the real hosted policy URL before store submission.
-		OS.shell_open("https://example.com/polarity/privacy"))
+		OS.shell_open("https://georges33tawk24.github.io/polarity.io/privacy.html"))
 	data.add_child(privacy)
 	# Deletion is irreversible, so it is two taps and the confirm is the
 	# non-default action. It is also the ONLY danger-styled control on the screen.

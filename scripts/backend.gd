@@ -209,7 +209,7 @@ func referral_code() -> String:
 
 
 func referral_link() -> String:
-	return "https://example.com/polarity?ref=%s" % referral_code()
+	return "https://georges33tawk24.github.io/polarity.io/?ref=%s" % referral_code()
 
 
 ## Applies someone else's code. Returns false with a reason for the UI.
