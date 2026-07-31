@@ -39,6 +39,7 @@ func _ready() -> void:
 	test_match_rewards()
 	test_intent_mapping()
 	test_haptics_rate_limit()
+	test_spawn_spacing()
 	test_scrap_field()
 	test_localization()
 	test_cosmetics()
@@ -592,6 +593,43 @@ func test_intent_mapping() -> void:
 	i.handle_event(jitter)
 	i.update(vp)
 	ok(i.dir == Vector2.ZERO, "a thumb twitching in place does not steer")
+
+
+## Nobody may start the match already inside someone else's pull.
+##
+## Spawn radii used to be randomised per magnet across a third of the arena, with
+## an angular jitter of +/-0.12rad against a 0.27rad slot — so two magnets could
+## start about one unit apart while the pull radius was 5.3. The player reported it
+## as dying the instant they spawned in, and no test looked at spawn geometry at
+## all.
+func test_spawn_spacing() -> void:
+	print("spawn spacing")
+	var t: Tuning = Game.tuning
+	var pull := t.pull_radius_for(t.start_mass)
+
+	# Several seeds: this is randomised, so one lucky layout proves nothing.
+	var worst := INF
+	for seed_n in [1, 7, 4242, 99991, 123456]:
+		var a := Arena.new()
+		add_child(a)
+		a.setup(t, null, seed_n)
+		ok(a.magnets.size() == t.bot_count + 1,
+				"seed %d spawns the whole lobby (%d)" % [seed_n, a.magnets.size()])
+		for i in a.magnets.size():
+			for j in range(i + 1, a.magnets.size()):
+				var d: float = a.magnets[i].global_position.distance_to(
+						a.magnets[j].global_position)
+				worst = minf(worst, d)
+			# ...and inside the arena, not through the wall.
+			var from_centre := Vector2(a.magnets[i].global_position.x,
+					a.magnets[i].global_position.z).length()
+			ok(from_centre < t.ring_start_radius * 0.9,
+					"seed %d magnet %d starts inside the boundary" % [seed_n, i]) \
+					if i == 0 else null
+		a.queue_free()
+	ok(worst > pull * 2.0,
+			"closest spawn pair is %.1f units apart, clear of a %.1f pull radius"
+			% [worst, pull])
 
 
 ## Haptics are rate-limited in Platform, not at each call site, because the bug

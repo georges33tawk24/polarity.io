@@ -23,6 +23,14 @@ front end, .io results screen, sentence-cased prose, unified light UI surface.
 
 ## NEXT UP
 
+- (2026-07-31) Feel round 2: shake cut to ~20% + capped, closing ring removed
+  (mechanic, floor ring and HUD bar), buff pickups now report in the kill feed,
+  arena x10 (r=185, 91 magnets, 7000 scrap), spawn placement rebuilt as concentric
+  rings, settings regrouped into plated sections. DECISIONS §12ao.
+  342 + 196 checks, smoke --real green.
+  UNVERIFIED ON DEVICE: 90 bots + 7000 scrap has never been profiled on a phone.
+  If it drops frames, `bot_count` in `data/default_tuning.tres` is the first knob.
+  Median eliminations fell from 7-9 to ~4-5 as a direct result of the x10 arena.
 - (2026-07-31) Fixed: claiming the daily reward left a full-screen black scrim
   over the menu (`_close_daily` freed the modal box instead of the wrapper, so the
   shade was orphaned). Modal scrims also now cover the full viewport instead of

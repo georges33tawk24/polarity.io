@@ -36,8 +36,6 @@ const BOARD_ROW_H := 44
 var _mass_label: Stencil.StencilLabel
 var _mass_shown := 0.0
 var _mass_target := 0.0
-var _ring_bar: ProgressBar
-var _ring_shown := -1.0
 var _last_clock := -1
 var _alive_caption: Label
 var _board_rows: Dictionary = {}
@@ -183,7 +181,7 @@ func _connect_bus() -> void:
 	# leaderboard's own row for the same player (1200 vs 1,200, both on screen).
 	Bus.player_mass_changed.connect(func(m: float) -> void: _mass_target = m)
 	Bus.player_absorbed.connect(func(_p: Vector3, _a: float) -> void: _punch_mass())
-	Bus.ring_changed.connect(_on_ring)
+	Bus.powerup_taken.connect(_on_powerup_taken)
 	Bus.player_down.connect(_on_player_down)
 	Bus.clock_changed.connect(_on_clock)
 	Bus.alive_count_changed.connect(_on_alive)
@@ -645,8 +643,8 @@ func _build_hud() -> Control:
 	# The ring closes for most of the match and the only previous cue was the clock
 	# going red under 15 seconds — i.e. after you were already dying. ring_changed
 	# was emitted every frame and had zero consumers.
-	_ring_bar = UiKit.bar(1.0, UiKit.BRASS, 6)
-	board_panel.add_child(_ring_bar)
+	# The ring-close bar went with the closing ring. A bar pinned at 100% for the
+	# whole match is worse than no bar: it claims something is being tracked.
 
 	# A plain Control, NOT a container: rows are positioned by hand so a rank
 	# change can be tweened. A container would overwrite position every layout
@@ -814,22 +812,6 @@ func _on_clock(seconds: float) -> void:
 			UiKit.DANGER_LINE if seconds < 15.0 else UiKit.INK)
 
 
-## Same gate: ring_changed is also emitted every frame.
-func _on_ring(radius: float) -> void:
-	if _ring_bar == null or Game.tuning == null:
-		return
-	var t: Tuning = Game.tuning
-	var span: float = maxf(0.001, t.ring_start_radius - t.ring_end_radius)
-	var v := clampf((radius - t.ring_end_radius) / span, 0.0, 1.0)
-	if absf(v - _ring_shown) < 0.004:
-		return
-	_ring_shown = v
-	_ring_bar.value = v
-	var sb := _ring_bar.get_theme_stylebox("fill") as StyleBoxFlat
-	if sb != null:
-		sb.bg_color = UiKit.DANGER if v < 0.35 else UiKit.BRASS
-
-
 func _on_charge(charge01: float, ready: bool) -> void:
 	# Cooldown fills in steel rather than emptying in amber, so the half second
 	# after a repel stops looking identical to standing still.
@@ -944,13 +926,39 @@ func _on_board(rows: Array) -> void:
 func _on_eliminated(victim: String, killer: String, by_player: bool) -> void:
 	var text: String = (tr("UI_FEED_KILL") % [killer, victim]) if killer != "" \
 			else (tr("UI_FEED_DEATH") % victim)
-	var l := UiKit.hud_lbl(text, UiKit.T_LABEL,
-			UiKit.SIGNAL_GOOD if by_player else UiKit.INK_DIM)
+	_feed_line(text, UiKit.SIGNAL_GOOD if by_player else UiKit.INK_DIM,
+			UiKit.SIGNAL_GOOD if by_player else UiKit.STEEL_50)
+
+
+## Picking up a buff had NO on-screen notice at all — Bus.powerup_taken was
+## emitted and nothing in the game listened to it. You got a hidden stat change
+## and a sound.
+##
+## It reports in the kill feed because that is the one place the player already
+## watches for "something just happened", and in the powerup's own colour so a
+## buff is never mistaken for a kill at a glance. Same corner, different hue,
+## which is what was asked for.
+func _on_powerup_taken(kind: int, seconds: float, color: Color) -> void:
+	var names := {
+		Powerups.Kind.SURGE: "UI_PU_SURGE",
+		Powerups.Kind.SPEED: "UI_PU_SPEED",
+		Powerups.Kind.SHIELD: "UI_PU_SHIELD",
+		Powerups.Kind.MEGA_REPEL: "UI_PU_MEGA_REPEL",
+		Powerups.Kind.FREEZE: "UI_PU_FREEZE",
+	}
+	var key := String(names.get(kind, "UI_PU_SURGE"))
+	_feed_line(tr("UI_FEED_BUFF") % [tr(key), maxi(1, roundi(seconds))], color, color)
+
+
+## One row of the feed. Both callers share it so a buff line can never drift out
+## of alignment with an elimination line.
+func _feed_line(text: String, ink: Color, mark_color: Color) -> void:
+	var l := UiKit.hud_lbl(text, UiKit.T_LABEL, ink)
 	# clip_text truncates mid-glyph; the German kill string is eight characters
 	# longer, so DE/RU/TR clipped on every single elimination.
 	l.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	var mark := ColorRect.new()
-	mark.color = UiKit.SIGNAL_GOOD if by_player else UiKit.STEEL_50
+	mark.color = mark_color
 	mark.set_anchors_and_offsets_preset(Control.PRESET_LEFT_WIDE)
 	mark.offset_right = 3
 	mark.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -1293,11 +1301,32 @@ func _build_settings() -> Control:
 
 	var box := VBoxContainer.new()
 	box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	box.add_theme_constant_override("separation", 22)
+	box.add_theme_constant_override("separation", 10)
 	scroll.add_child(box)
 
-	box.add_child(_slider(tr("UI_MUSIC"), "music", func(v: float) -> void: Audio.set_volume("Music", v)))
-	box.add_child(_slider(tr("UI_SOUND"), "sfx", func(v: float) -> void: Audio.set_volume("SFX", v)))
+	# --- AUDIO ---------------------------------------------------------------
+	var audio := _settings_section(box, tr("UI_SEC_AUDIO"))
+	audio.add_child(_slider(tr("UI_MUSIC"), "music",
+			func(v: float) -> void: Audio.set_volume("Music", v)))
+	audio.add_child(_rule())
+	audio.add_child(_slider(tr("UI_SOUND"), "sfx",
+			func(v: float) -> void: Audio.set_volume("SFX", v)))
+
+	# --- CONTROLS ------------------------------------------------------------
+	var controls := _settings_section(box, tr("UI_SEC_CONTROLS"))
+	var ctrl_opt := OptionButton.new()
+	const SCHEMES := ["drag", "joystick", "toggle"]
+	for key: String in ["UI_CONTROL_DRAG", "UI_CONTROL_JOYSTICK", "UI_CONTROL_TOGGLE"]:
+		ctrl_opt.add_item(tr(key))
+	ctrl_opt.selected = maxi(0, SCHEMES.find(String(Game.get_value("control_scheme", "drag"))))
+	ctrl_opt.item_selected.connect(func(i: int) -> void:
+		Game.set_value("control_scheme", SCHEMES[i]))
+	controls.add_child(_setting_row(tr("UI_CONTROLS"), ctrl_opt))
+	controls.add_child(_rule())
+	controls.add_child(_toggle(tr("UI_JOYSTICK"), "joystick"))
+	controls.add_child(_rule())
+	controls.add_child(_toggle(tr("UI_LEFT_HANDED"), "left_handed"))
+	controls.add_child(_rule())
 	# Three levels, not a switch. "Off" is a real need and so is "quieter than
 	# default" — the player who reported this wanted less, not none, and a boolean
 	# forced them to choose between a phone that rattled and no feedback at all.
@@ -1314,10 +1343,10 @@ func _build_settings() -> Control:
 		Game.set_value("haptics", level != "off")
 		if level != "off":
 			Platform.vibrate(12, 0.5))   # so the choice is audible in the hand
-	box.add_child(_setting_row(tr("UI_HAPTICS"), haptic_opt))
-	box.add_child(_toggle(tr("UI_REDUCED_MOTION"), "reduced_motion"))
+	controls.add_child(_setting_row(tr("UI_HAPTICS"), haptic_opt))
 
-	var language_row_label := tr("UI_LANGUAGE")
+	# --- DISPLAY -------------------------------------------------------------
+	var display := _settings_section(box, tr("UI_SEC_DISPLAY"))
 	var lang_opt := OptionButton.new()
 	for n: String in Locale.names():
 		lang_opt.add_item(n)
@@ -1327,27 +1356,23 @@ func _build_settings() -> Control:
 		Game.set_value("locale", code)
 		Locale.apply(code)
 		Bus.locale_changed.emit())
-	box.add_child(_setting_row(language_row_label, lang_opt))
+	display.add_child(_setting_row(tr("UI_LANGUAGE"), lang_opt))
+	display.add_child(_rule())
 
-	var quality_row_label := tr("UI_QUALITY")
 	var opt := OptionButton.new()
 	for q in ["auto", "low", "medium", "high"]:
 		opt.add_item(tr("UI_QUALITY_" + q.to_upper()))
-	var current := String(Game.get_value("quality", "auto"))
-	opt.selected = maxi(0, ["auto", "low", "medium", "high"].find(current))
+	opt.selected = maxi(0, ["auto", "low", "medium", "high"].find(
+			String(Game.get_value("quality", "auto"))))
 	opt.item_selected.connect(func(i: int) -> void:
 		Game.set_value("quality", ["auto", "low", "medium", "high"][i]))
-	box.add_child(_setting_row(quality_row_label, opt))
+	display.add_child(_setting_row(tr("UI_QUALITY"), opt))
+	display.add_child(_rule())
+	display.add_child(_toggle(tr("UI_COLORBLIND"), "colorblind"))
+	display.add_child(_rule())
+	display.add_child(_toggle(tr("UI_REDUCED_MOTION"), "reduced_motion"))
+	display.add_child(_rule())
 
-	box.add_child(_toggle(tr("UI_COLORBLIND"), "colorblind"))
-	box.add_child(_toggle(tr("UI_LEFT_HANDED"), "left_handed"))
-	box.add_child(_toggle(tr("UI_JOYSTICK"), "joystick"))
-
-	var scale_row := HBoxContainer.new()
-	scale_row.add_theme_constant_override("separation", 24)
-	var scale_lbl := _lbl(tr("UI_UI_SCALE"), 40, UiKit.INK_DIM)
-	scale_lbl.custom_minimum_size = Vector2(300, 0)
-	scale_row.add_child(scale_lbl)
 	var scale_slider := HSlider.new()
 	scale_slider.min_value = 0.75
 	scale_slider.max_value = 1.5
@@ -1358,24 +1383,10 @@ func _build_settings() -> Control:
 	scale_slider.value_changed.connect(func(v: float) -> void:
 		Game.set_value("ui_scale", v)
 		_relayout())
-	scale_row.add_child(scale_slider)
-	box.add_child(scale_row)
+	display.add_child(_setting_row(tr("UI_UI_SCALE"), scale_slider))
 
-	var controls_row_label := tr("UI_CONTROLS")
-	var ctrl_opt := OptionButton.new()
-	const SCHEMES := ["drag", "joystick", "toggle"]
-	for key: String in ["UI_CONTROL_DRAG", "UI_CONTROL_JOYSTICK", "UI_CONTROL_TOGGLE"]:
-		ctrl_opt.add_item(tr(key))
-	ctrl_opt.selected = maxi(0, SCHEMES.find(String(Game.get_value("control_scheme", "drag"))))
-	ctrl_opt.item_selected.connect(func(i: int) -> void:
-		Game.set_value("control_scheme", SCHEMES[i]))
-	box.add_child(_setting_row(controls_row_label, ctrl_opt))
-
-	box.add_child(_toggle(tr("UI_NOTIFICATIONS"), "notifications"))
-	box.add_child(UiKit.spacer(24))
-	box.add_child(_lbl(tr("UI_ACCOUNT"), UiKit.T_TITLE, UiKit.INK,
-			HORIZONTAL_ALIGNMENT_CENTER))
-
+	# --- ACCOUNT -------------------------------------------------------------
+	var account := _settings_section(box, tr("UI_ACCOUNT"))
 	# Federated sign-in. Shown only where a plugin could actually service it, so
 	# the section never offers a button that cannot work.
 	for pair in [["google", "UI_SIGN_IN_GOOGLE"], ["apple", "UI_SIGN_IN_APPLE"]]:
@@ -1385,18 +1396,20 @@ func _build_settings() -> Control:
 		sign_btn.pressed.connect(func() -> void:
 			Backend.sign_in_federated(String(pair[0]), func(ok: bool) -> void:
 				_flash_toast(tr("UI_SIGNED_IN") if ok else tr("UI_UNAVAILABLE"))))
-		box.add_child(sign_btn)
-
-	var restore_iap := _btn(tr("UI_RESTORE"))
+		account.add_child(sign_btn)
+	account.add_child(_toggle(tr("UI_NOTIFICATIONS"), "notifications"))
+	account.add_child(_rule())
+	var restore_iap := UiKit.btn_secondary(tr("UI_RESTORE"))
 	restore_iap.pressed.connect(func() -> void:
 		Store.restore(func(n: int) -> void: _flash_toast("%s %d" % [tr("UI_RESTORE"), n])))
-	box.add_child(restore_iap)
+	account.add_child(restore_iap)
 
-	var about_btn := UiKit.btn_ghost(tr("UI_CREDITS"))
-	about_btn.pressed.connect(func() -> void: _build_about())
-	box.add_child(about_btn)
-
-	var export_btn := _btn(tr("UI_EXPORT_DATA"))
+	# --- DATA & PRIVACY ------------------------------------------------------
+	# Demoted out of the main column: these were six identical full-width buttons
+	# sharing the weight of PLAY, so "delete everything I own" looked exactly as
+	# routine as "credits".
+	var data := _settings_section(box, tr("UI_SEC_DATA"))
+	var export_btn := UiKit.btn_ghost(tr("UI_EXPORT_DATA"))
 	export_btn.pressed.connect(func() -> void:
 		var path := "user://polarity_data_export.json"
 		var f := FileAccess.open(path, FileAccess.WRITE)
@@ -1405,27 +1418,30 @@ func _build_settings() -> Control:
 			f.close()
 			DisplayServer.clipboard_set(ProjectSettings.globalize_path(path))
 			_flash_toast(tr("UI_SAVED_TO")))
-	box.add_child(export_btn)
-
-	# Deletion is irreversible, so it is two taps and the confirm is the
-	# non-default action.
-	var delete_btn := UiKit.btn_danger(tr("UI_DELETE_DATA"))
-	delete_btn.pressed.connect(func() -> void: _confirm_delete())
-	box.add_child(delete_btn)
-
-	var privacy := _btn(tr("UI_PRIVACY_POLICY"))
+	data.add_child(export_btn)
+	var privacy := UiKit.btn_ghost(tr("UI_PRIVACY_POLICY"))
 	privacy.pressed.connect(func() -> void:
 		# Replace with the real hosted policy URL before store submission.
 		OS.shell_open("https://example.com/polarity/privacy"))
-	box.add_child(privacy)
+	data.add_child(privacy)
+	# Deletion is irreversible, so it is two taps and the confirm is the
+	# non-default action. It is also the ONLY danger-styled control on the screen.
+	var delete_btn := UiKit.btn_danger(tr("UI_DELETE_DATA"))
+	delete_btn.pressed.connect(func() -> void: _confirm_delete())
+	data.add_child(delete_btn)
 
-	box.add_child(UiKit.spacer(16))
-	var replay := _btn(tr("UI_REPLAY_TUTORIAL"))
+	# --- ABOUT ---------------------------------------------------------------
+	var about := _settings_section(box, tr("UI_SEC_ABOUT"))
+	var replay := UiKit.btn_ghost(tr("UI_REPLAY_TUTORIAL"))
 	replay.pressed.connect(func() -> void:
 		Game.set_value("seen_tutorial", false)
 		_flash_toast(tr("UI_REPLAY_TUTORIAL")))
-	box.add_child(replay)
+	about.add_child(replay)
+	var about_btn := UiKit.btn_ghost(tr("UI_CREDITS"))
+	about_btn.pressed.connect(func() -> void: _build_about())
+	about.add_child(about_btn)
 
+	box.add_child(UiKit.spacer(16))
 	box.add_child(_lbl("v%s · %s" % [
 			ProjectSettings.get_setting("application/config/version", "0.1.0"),
 			Platform.os_name], 30, UiKit.INK_DIM, HORIZONTAL_ALIGNMENT_CENTER))
@@ -1867,8 +1883,6 @@ func _apply_board_collapsed() -> void:
 		# A glyph rather than a word: it sits in a 52px cell and has to work in ten
 		# languages.
 		_board_toggle.text = "+" if _board_collapsed else "\u2013"
-	if _ring_bar != null and is_instance_valid(_ring_bar):
-		_ring_bar.visible = not _board_collapsed
 	_refresh_board_height()
 
 
@@ -1915,6 +1929,40 @@ func _close_settings() -> void:
 ## One settings row: a fixed-width label and a control that fills the rest. The
 ## label width is fixed rather than EXPAND_FILL so every row lines up, and the
 ## control clips rather than demanding the width of its longest item.
+## One titled group of settings, on its own plate.
+##
+## Settings was a single flat column: thirteen rows and eight identical
+## full-width buttons, every control carrying the same visual weight, with
+## nothing to say which of them the player actually came here for. The header
+## sits OUTSIDE the plate so the plate stays a clean block of rows, and the
+## plate's own S3 padding is what finally keeps the dropdowns off the bezel and
+## out from under the scrollbar.
+func _settings_section(column: VBoxContainer, title: String) -> VBoxContainer:
+	column.add_child(UiKit.spacer(14))
+	column.add_child(_lbl(title.to_upper(), UiKit.T_CAPTION, UiKit.INK_MUTE))
+	var plate := UiKit.plate()
+	column.add_child(plate)
+	var inner := VBoxContainer.new()
+	inner.add_theme_constant_override("separation", 6)
+	plate.add_child(inner)
+	return inner
+
+
+## Hairline between rows inside a plate. Contact shadow rather than a drawn line:
+## a lit lip under a dark seam, which is how every other seam in this game reads.
+func _rule() -> Control:
+	var wrap := VBoxContainer.new()
+	wrap.add_theme_constant_override("separation", 0)
+	wrap.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	for c: Color in [Color(0, 0, 0, 0.30), Color(UiKit.STEEL_50, 0.22)]:
+		var line := ColorRect.new()
+		line.color = c
+		line.custom_minimum_size = Vector2(0, 1)
+		line.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		wrap.add_child(line)
+	return wrap
+
+
 func _setting_row(label: String, control: Control) -> HBoxContainer:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", UiKit.S2)

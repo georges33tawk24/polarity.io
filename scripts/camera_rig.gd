@@ -65,10 +65,21 @@ func _process(delta: float) -> void:
 		camera.v_offset = 0.0
 
 
+## Shake is now a hint rather than an effect. The tuning values are ~20% of what
+## they were, and REDUCED MOTION switches it off outright instead of quartering it —
+## "remove the camera shake or make it very minimal" does not have a setting where
+## a quarter of a big shake is an acceptable answer.
+##
+## Capped as well as scaled: trauma is squared on the way out, so several sources
+## landing in one frame (a kill inside a hazard while repelling) used to stack into
+## exactly the jolt the player was complaining about.
+const TRAUMA_CAP := 0.34
+
+
 func add_trauma(amount: float) -> void:
 	if Game.profile.get("reduced_motion", false):
-		amount *= 0.25
-	_trauma = clampf(_trauma + amount, 0.0, 1.0)
+		return
+	_trauma = clampf(_trauma + amount, 0.0, TRAUMA_CAP)
 
 
 func _on_clip(_pos: Vector3) -> void:

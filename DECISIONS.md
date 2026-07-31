@@ -1404,3 +1404,56 @@ One more instance of the standing lesson: a check that measures something
 adjacent to what matters is worse than no check. "The modal opened" was adjacent.
 "The modal went away" was the thing.
 
+### §12ao — game feel round: shake, ring, buff notice, arena, settings
+
+**Camera shake** cut to ~20% (launch 0.12->0.025, kill 0.22->0.05, hit 0.08->0.015),
+REDUCED MOTION now switches it off outright instead of quartering it, and trauma
+is capped at 0.34. The cap matters as much as the values: trauma is squared on the
+way out and several sources landing in one frame — a kill, inside a hazard, while
+repelling — used to stack into exactly the jolt being complained about.
+
+**The closing ring is gone.** No shrink, no brass ring drawn on the floor, no
+ring-close bar in the HUD (a bar pinned at 100% all match is worse than no bar).
+`_ring_pressure` survives as `_boundary_pressure` — the arena still needs a wall,
+or a launched magnet travels into empty space forever. Note this changes how a
+match resolves: with no shrink there is no forced convergence, so the clock is now
+the only thing that ends a match.
+
+**Buff pickups report in the kill feed.** `Bus.powerup_taken` was emitted and
+NOTHING in the game listened to it — picking up a shield was a silent stat change
+and a sound effect. Same corner the player already watches, in the powerup's own
+colour so a buff is never read as a kill at a glance.
+
+**Arena x10** (radius 58 -> 185, area x10.2) with the lobby at 91 and scrap at 7000
+to hold ~65 pieces per 1000 sq units, against 69 at the original radius 44. Sparse
+scrap was visible in the first capture and would have made growth crawl.
+
+The honest cost, measured over five full `smoke --real` matches: 1, 4, 4, 13, 18
+eliminations, median ~4-5, against a consistent 7-9 before. A ten-times-bigger
+arena with no ring cannot have the same encounter rate without ten times the
+players, and 900 bots is not a thing a phone will do. Three values in
+`data/default_tuning.tres` revert it.
+
+**Spawn spacing was the actual bug** behind "i die right as i spawn in", and it was
+not about map size at all. Radii were randomised per magnet across a third of the
+arena and the angular jitter was +/-0.12rad against a 0.27rad slot — nearly half
+the spacing. Two magnets could start ~1 unit apart with a 5.3-unit pull radius: one
+of them was dead before touching the screen. Now concentric rings, spaced by the
+gap they enforce, filled outward and shuffled so the player is not always nearest
+the centre. Asserted across five seeds: closest pair 12.7 units, 2.4x the pull
+radius.
+
+Fixing that surfaced a **determinism bug**: `_bot_names` called `Array.shuffle()`,
+which draws from Godot's GLOBAL rng rather than the arena's seeded one, so the same
+seed produced a different name order, a different number of dedupe retries, and
+therefore a different layout. §4.14 had been quietly broken since the bot-name
+work. Latent at 23 names from a 60-name pool — collisions were rare enough that the
+draw count usually matched by luck — and it only appeared when the lobby grew.
+Growing the arena is what caught it.
+
+**Settings** regrouped from one flat column of thirteen rows and eight identical
+full-width buttons into plated sections (AUDIO / CONTROLS / DISPLAY / ACCOUNT /
+DATA & PRIVACY / ABOUT). The plate's own padding is what finally keeps dropdowns
+off the bezel and out from under the scrollbar. DELETE is now the only
+danger-styled control on the screen; it used to share its weight with CREDITS.
+

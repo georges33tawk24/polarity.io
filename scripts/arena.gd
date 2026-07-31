@@ -50,8 +50,6 @@ var intent := Intent.new()
 var _hazard_vibe_at := 0.0
 
 var _floor_mat: ShaderMaterial
-var _ring_mat: ShaderMaterial
-var _ring_node: MeshInstance3D
 var _saws: Array[Dictionary] = []
 var _spikes: Array[Dictionary] = []
 var _hazard_nodes: Array[Node3D] = []
@@ -177,20 +175,11 @@ func _build_world() -> void:
 	ground.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(ground)
 
-	_ring_mat = ShaderMaterial.new()
-	_ring_mat.shader = load("res://shaders/ring.gdshader")
-	_ring_mat.set_shader_parameter("tint", Color(0.95, 0.82, 0.45))
-	_ring_mat.set_shader_parameter("inner", 0.955)
-	_ring_mat.set_shader_parameter("thickness", 0.035)
-	_ring_mat.set_shader_parameter("strength", 1.0)
-	var ring_plane := PlaneMesh.new()
-	ring_plane.size = Vector2(2.0, 2.0)
-	_ring_node = MeshInstance3D.new()
-	_ring_node.mesh = ring_plane
-	_ring_node.material_override = _ring_mat
-	_ring_node.position.y = 0.08
-	_ring_node.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	add_child(_ring_node)
+	# No closing ring. The arena boundary is now fixed and shown only by the floor
+	# shader's edge falloff — the brass ring that used to be drawn here, and the
+	# shrink that drove it, were both removed at the player's request. The boundary
+	# ITSELF stays (see _boundary_pressure): without a wall a launched magnet flies
+	# into empty space forever.
 
 	scrap = ScrapField.new()
 	add_child(scrap)
@@ -402,9 +391,72 @@ func _hazard_node(radius: float, tint: Color, saw: bool) -> Node3D:
 
 
 # --- spawning --------------------------------------------------------------
+## How far a spawn may wander from its slot, as a fraction of the slot. Shared by
+## the placement and by _spawn_ring, which has to size the ring around it.
+const SPAWN_JITTER := 0.12
+
+
+## Spawn positions: concentric rings, filled outward, everyone outside everyone
+## else's pull radius at the whistle.
+##
+## Spawn radii used to be randomised per magnet across a third of the arena, with
+## an angular jitter of +/-0.12rad against a 0.27rad slot — so two magnets could
+## start about one unit apart while the pull radius was 5.3. That is the player
+## report of dying the instant they spawned in, and nothing tested spawn geometry.
+##
+## One ring is not enough for a big lobby: at 91 magnets the ring needed to be
+## wider than the arena, so it clamped and everyone bunched up again. Rings are
+## separated by the same gap they enforce along their own circumference, so the
+## guarantee holds radially as well as tangentially.
+func _spawn_slots(total: int) -> Array:
+	var inner: float = t.ring_start_radius * 0.35
+	var limit: float = t.ring_start_radius * 0.82
+	var gap: float = t.pull_radius_for(t.start_mass) * 2.4
+	# Only if the arena genuinely cannot seat the lobby at a comfortable gap do we
+	# tighten it — far better than the old behaviour of stacking magnets together,
+	# and it still terminates.
+	for attempt in 8:
+		var slots := _slots_at(total, inner, limit, gap)
+		if slots.size() >= total:
+			return slots
+		gap *= 0.8
+	return _slots_at(total, inner, limit, gap)
+
+
+func _slots_at(total: int, inner: float, limit: float, gap: float) -> Array:
+	# Jitter can close up to 2*SPAWN_JITTER of a slot, so each magnet is given
+	# that much more room along the circumference than the bare gap.
+	var per: float = gap / (1.0 - 2.0 * SPAWN_JITTER)
+	var out: Array = []
+	var ring_i := 0
+	while out.size() < total:
+		var r: float = inner + float(ring_i) * gap
+		if r > limit:
+			break
+		var cap: int = maxi(1, int(floor(TAU * r / per)))
+		var take: int = mini(cap, total - out.size())
+		var step: float = TAU / float(take)
+		# Rotated per ring so neighbouring rings do not line up into spokes.
+		var phase: float = rng.randf() * TAU
+		for k in take:
+			var a: float = phase + step * float(k) \
+					+ rng.randf_range(-step * SPAWN_JITTER, step * SPAWN_JITTER)
+			out.append(Vector3(cos(a) * r, Magnet.BODY_Y, sin(a) * r))
+		ring_i += 1
+	return out
+
+
 func _spawn_magnets() -> void:
 	var total: int = t.bot_count + 1
 	var names := _bot_names(total)
+	var slots := _spawn_slots(total)
+	# Fisher-Yates through the seeded rng: rings fill inward-out, so without this
+	# the player is always the magnet nearest the centre.
+	for i in range(slots.size() - 1, 0, -1):
+		var j := rng.randi() % (i + 1)
+		var swap: Variant = slots[i]
+		slots[i] = slots[j]
+		slots[j] = swap
 	for i in total:
 		var m := Magnet.new()
 		var is_player := i == 0
@@ -423,12 +475,7 @@ func _spawn_magnets() -> void:
 			m.gain_mass(_pending_boost)
 			_pending_boost = 0.0
 
-		# Ring formation with jitter — spread out, but not visibly geometric.
-		# Kept well inside the boundary: spawn near the edge and a single enemy
-		# repel launches you straight out for an unearned instant kill.
-		var angle := TAU * float(i) / total + rng.randf_range(-0.12, 0.12)
-		var dist: float = t.ring_start_radius * rng.randf_range(0.35, 0.65)
-		m.position = Vector3(cos(angle) * dist, Magnet.BODY_Y, sin(angle) * dist)
+		m.position = slots[i] if i < slots.size() else Vector3(0, Magnet.BODY_Y, 0)
 
 		if not is_player:
 			# Skill spread so the lobby feels like real players of mixed ability.
@@ -506,14 +553,13 @@ func _tick_match(delta: float) -> void:
 	time_left = maxf(0.0, time_left - delta)
 	Bus.clock_changed.emit(time_left)
 
-	_shrink_ring(delta)
 	_apply_intent()
 	_think_bots(delta)
 	_magnet_interactions(delta)
 	_step_scrap(delta)
 	powerups.step(delta, magnets, ring_radius)
 	_hazards(delta)
-	_ring_pressure(delta)
+	_boundary_pressure(delta)
 	_update_board(delta)
 
 	# The attract hum rises as you charge — the audio tells you when to release.
@@ -525,19 +571,6 @@ func _tick_match(delta: float) -> void:
 
 	if time_left <= 0.0:
 		_finish()
-
-
-func _shrink_ring(delta: float) -> void:
-	if elapsed < t.ring_shrink_delay:
-		return
-	var span: float = maxf(t.match_duration - t.ring_shrink_delay, 1.0)
-	var rate: float = (t.ring_start_radius - t.ring_end_radius) / span
-	if state == State.SUDDEN_DEATH:
-		rate *= t.sudden_death_shrink_mult
-	ring_radius = maxf(t.ring_end_radius, ring_radius - rate * delta)
-	_ring_node.scale = Vector3(ring_radius, 1.0, ring_radius)
-	_floor_mat.set_shader_parameter("ring_radius", ring_radius)
-	Bus.ring_changed.emit(ring_radius)
 
 
 func _apply_intent() -> void:
@@ -722,7 +755,10 @@ func _hazard_hit(m: Magnet, amount: float, at: Vector3) -> void:
 		fx.floater(at + Vector3(0, 0.5, 0), "!", Color(1, 0.5, 0.2))
 
 
-func _ring_pressure(delta: float) -> void:
+## The arena wall. Kept after the closing ring was removed: `ring_radius` is now a
+## constant boundary, and something still has to stop a magnet that gets launched
+## past the edge from travelling forever.
+func _boundary_pressure(delta: float) -> void:
 	for m in magnets:
 		if not m.alive:
 			continue
@@ -962,7 +998,17 @@ func _bot_name_pool() -> Array:
 ## same in every locale a real player would use them in.
 func _bot_names(count: int) -> Array:
 	var base := _bot_name_pool()
-	base.shuffle()
+	# Fisher-Yates through THIS arena's rng. Array.shuffle() draws from Godot's
+	# global RNG, so the same seed produced a different name order, a different
+	# number of dedupe retries below, and therefore a different spawn layout —
+	# §4.14 determinism silently broken. Latent until the lobby grew: at 23 names
+	# out of a 60-name pool collisions were rare enough that the retry count
+	# usually matched by luck.
+	for i in range(base.size() - 1, 0, -1):
+		var j := rng.randi() % (i + 1)
+		var swap: Variant = base[i]
+		base[i] = base[j]
+		base[j] = swap
 	var decor := _bot_decor()
 	var prefixes: Array = decor.get("prefixes", [])
 	var suffixes: Array = decor.get("suffixes", [])
