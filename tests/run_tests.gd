@@ -38,6 +38,7 @@ func _ready() -> void:
 	test_economy_clamps()
 	test_match_rewards()
 	test_intent_mapping()
+	test_haptics_rate_limit()
 	test_scrap_field()
 	test_localization()
 	test_cosmetics()
@@ -504,19 +505,63 @@ func test_intent_mapping() -> void:
 	var i := Intent.new()
 	var vp := Vector2(1080, 1920)
 	var centre := Vector2(540, 960)
+	# The throw the stick is built around. update() no longer takes the magnet's
+	# screen position at ALL — that is the whole point of the change, and the
+	# signature is what enforces it.
+	var reach: float = minf(vp.x, vp.y) * Intent.REACH_FRACTION
 
-	i.update(centre, vp)
+	i.update(vp)
 	ok(i.dir == Vector2.ZERO and not i.held, "no input means no intent")
 
+	# Landing a thumb anywhere must not steer. Under the old point-at-the-thumb
+	# model, pressing 300px below the magnet was instantly a hard downward input,
+	# so a tap meant to repel also threw you.
 	var touch := InputEventScreenTouch.new()
 	touch.index = 0
 	touch.pressed = true
 	touch.position = centre + Vector2(0, 300)
 	i.handle_event(touch)
-	i.update(centre, vp)
+	i.update(vp)
 	ok(i.held, "a touch is a hold")
-	ok(i.dir.y > 0.5, "dragging below the magnet steers down")
+	ok(i.dir == Vector2.ZERO, "the stick is born centred under the thumb")
+	ok(i.anchor == centre + Vector2(0, 300), "the stick anchors where the thumb landed")
+
+	# One throw-length of travel is full tilt. This is the fix: it used to take a
+	# throw-length measured from the MAGNET, which the camera kept dragging out
+	# from under the player.
+	var drag := InputEventScreenDrag.new()
+	drag.index = 0
+	drag.position = i.anchor + Vector2(reach, 0)
+	i.handle_event(drag)
+	i.update(vp)
+	ok(about(i.dir.x, 1.0) and absf(i.dir.y) < 0.001, "one throw of travel is full tilt")
 	ok(i.dir.length() <= 1.0001, "intent is normalised to at most 1")
+
+	# Push well past the rim: the stick follows the thumb instead of pinning, so
+	# the throw needed to reverse never grows.
+	var far := InputEventScreenDrag.new()
+	far.index = 0
+	far.position = i.anchor + Vector2(reach * 4.0, 0)
+	i.handle_event(far)
+	i.update(vp)
+	ok(about(i.dir.x, 1.0), "holding past the rim stays at full tilt")
+	ok(about(i.anchor.x, far.position.x - reach), "the anchor re-centres behind the thumb")
+
+	# ...and reversing therefore costs one throw, not the whole screen.
+	var back := InputEventScreenDrag.new()
+	back.index = 0
+	back.position = i.anchor - Vector2(reach, 0)
+	i.handle_event(back)
+	i.update(vp)
+	ok(about(i.dir.x, -1.0), "one throw back is full tilt the other way")
+
+	# Half a throw is half input, so fine steering still exists.
+	var half := InputEventScreenDrag.new()
+	half.index = 0
+	half.position = i.anchor + Vector2(0, reach * 0.5)
+	i.handle_event(half)
+	i.update(vp)
+	ok(about(i.dir.y, 0.5), "half a throw is half tilt")
 
 	# A second finger must not hijack or cancel the active hold.
 	var second := InputEventScreenTouch.new()
@@ -524,24 +569,66 @@ func test_intent_mapping() -> void:
 	second.pressed = false
 	second.position = centre
 	i.handle_event(second)
-	i.update(centre, vp)
+	i.update(vp)
 	ok(i.held, "a stray second finger does not release the hold")
 
 	var up := InputEventScreenTouch.new()
 	up.index = 0
 	up.pressed = false
 	i.handle_event(up)
-	i.update(centre, vp)
+	i.update(vp)
 	ok(not i.held, "lifting the original finger releases")
 
-	# Dead zone: the same gesture must be scale-independent across screens.
+	# Dead zone, as a fraction of the throw so the same gesture behaves the same
+	# on a phone and a tablet.
 	var t2 := InputEventScreenTouch.new()
 	t2.index = 0
 	t2.pressed = true
-	t2.position = centre + Vector2(3, 0)
+	t2.position = centre
 	i.handle_event(t2)
-	i.update(centre, vp)
-	ok(i.dir == Vector2.ZERO, "a thumb resting on the magnet does not steer")
+	var jitter := InputEventScreenDrag.new()
+	jitter.index = 0
+	jitter.position = centre + Vector2(reach * Intent.DEAD_FRACTION * 0.5, 0)
+	i.handle_event(jitter)
+	i.update(vp)
+	ok(i.dir == Vector2.ZERO, "a thumb twitching in place does not steer")
+
+
+## Haptics are rate-limited in Platform, not at each call site, because the bug
+## was one call site buzzing every physics frame — and the next one to do that
+## will be a different call site.
+func test_haptics_rate_limit() -> void:
+	print("haptics")
+	var before := String(Game.get_value("haptics_level", "light"))
+	Game.set_value("haptics", true)
+	Game.set_value("haptics_level", "full")
+
+	Platform._last_vibe = -999.0
+	Platform.vibrate(10, 0.5)
+	var first := Platform._last_vibe
+	ok(first > -999.0, "a first buzz is accepted")
+	# Arena._hazard_hit used to do exactly this, sixty times a second.
+	for n in 40:
+		Platform.vibrate(10, 0.5)
+	ok(about(Platform._last_vibe, first),
+			"40 immediate repeats collapse into the one buzz already playing")
+	ok(Platform.MIN_GAP >= 0.1, "the gap is long enough to be felt as separate taps")
+
+	Game.set_value("haptics_level", "off")
+	Platform._last_vibe = -999.0
+	Platform.vibrate(10, 0.5)
+	ok(about(Platform._last_vibe, -999.0), "off means nothing fires at all")
+
+	Game.set_value("haptics", false)
+	Game.set_value("haptics_level", "full")
+	ok(Platform.haptics_level() == "off",
+			"a profile saved before the level existed still honours its off switch")
+
+	Game.set_value("haptics", true)
+	Game.set_value("haptics_level", before)
+	var light: Vector2 = Platform.LEVELS["light"]
+	ok(light.x < 1.0 and light.y < 1.0,
+			"light shortens AND softens — a strength-only cut was not enough")
 
 
 ## Cloud merge is the single most damaging thing to get wrong: the failure mode

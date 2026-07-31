@@ -46,6 +46,8 @@ var scrap: ScrapField
 var fx: Fx
 var rig: CameraRig
 var intent := Intent.new()
+## Last time a hazard buzzed. See _hazard_hit.
+var _hazard_vibe_at := 0.0
 
 var _floor_mat: ShaderMaterial
 var _ring_mat: ShaderMaterial
@@ -460,11 +462,11 @@ func _process(delta: float) -> void:
 		_hitstop_until = 0
 		Engine.time_scale = 1.0
 	_update_quality(delta)
-	# Steering is relative to where the magnet is on screen, so it has to be
-	# read after the camera has moved this frame.
+	# The stick is anchored where the thumb landed, so it no longer depends on the
+	# camera having moved — but it still runs here, once per frame, so `dir` is one
+	# consistent value for the whole physics step.
 	if player != null and player.alive and rig != null:
-		var vp := get_viewport().get_visible_rect().size
-		intent.update(rig.screen_point(player.global_position), vp)
+		intent.update(get_viewport().get_visible_rect().size)
 
 	for i in _saws.size():
 		var node := _hazard_nodes[i]
@@ -706,7 +708,16 @@ func _hazard_hit(m: Magnet, amount: float, at: Vector3) -> void:
 		return
 	if m.is_player:
 		Bus.shake.emit(t.shake_hit * 0.6)
-		Platform.vibrate(8, 0.2)
+		# Hazard damage is dealt per frame (the callers pass `amount * delta`), so an
+		# unguarded buzz here fired sixty times a second for as long as the player
+		# touched a saw. Platform.vibrate now rate-limits as a backstop, but standing
+		# in a hazard should read as a slow grind rather than the fastest rattle that
+		# backstop permits — and a haptic every 0.14s would also crowd out the
+		# elimination thump, which is the one that actually means something.
+		var now := float(Time.get_ticks_msec()) * 0.001
+		if now - _hazard_vibe_at >= 0.5:
+			_hazard_vibe_at = now
+			Platform.vibrate(7, 0.18)
 	if rng.randf() < 0.25:
 		fx.floater(at + Vector3(0, 0.5, 0), "!", Color(1, 0.5, 0.2))
 

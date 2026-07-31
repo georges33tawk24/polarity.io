@@ -110,11 +110,53 @@ func federated_auth_available(kind: String) -> bool:
 		_: return false
 
 
+## Shortest gap between two buzzes. Closer together than this and a phone does not
+## reproduce them as separate taps — it just rattles.
+##
+## Guarded here rather than at each call site because the bug this fixes was
+## `Arena._hazard_hit` calling vibrate EVERY PHYSICS FRAME while the player stood
+## on a saw: sixty haptic events a second, each one restarting the iOS haptic
+## engine's pattern. That is the "my phone was gonna explode" report, and it is a
+## mistake any future call site can make just as easily. One check covers them all.
+const MIN_GAP := 0.14
+
+## duration and amplitude multipliers per level.
+##
+## Both are scaled, not just amplitude. Godot honours amplitude on iOS 13+ (via
+## CHHapticEngine) and on Android API 26+ (via VibrationEffect), so turning it down
+## really does turn the motor down — but the complaint that survived a
+## strength-only reduction was about how MUCH buzzing there was, so duration comes
+## down with it.
+const LEVELS := {
+	"off": Vector2.ZERO,
+	"light": Vector2(0.55, 0.45),
+	"full": Vector2(1.0, 1.0),
+}
+
+var _last_vibe := -999.0
+
+
+## "off" / "light" / "full". Honours the old boolean toggle so a profile saved
+## before this setting existed still means what the player chose.
+func haptics_level() -> String:
+	if not bool(Game.profile.get("haptics", true)):
+		return "off"
+	var level := String(Game.get_value("haptics_level", "light"))
+	return level if LEVELS.has(level) else "light"
+
+
 func vibrate(ms: int, strength := 0.6) -> void:
-	if not Game.profile.get("haptics", true):
+	var scale: Vector2 = LEVELS[haptics_level()]
+	if scale == Vector2.ZERO:
 		return
+	# Time, not frame count: the same guard has to hold at 30fps and at 120.
+	var now := float(Time.get_ticks_msec()) * 0.001
+	if now - _last_vibe < MIN_GAP:
+		return
+	_last_vibe = now
 	if kind == Kind.MOBILE:
-		Input.vibrate_handheld(ms, strength)
+		Input.vibrate_handheld(maxi(1, roundi(float(ms) * scale.x)),
+				clampf(strength * scale.y, 0.0, 1.0))
 	# Desktop/web: no-op. Web Vibration API needs a JS bridge — see DECISIONS.md.
 
 

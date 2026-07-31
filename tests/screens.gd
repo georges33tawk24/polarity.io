@@ -124,12 +124,88 @@ func _ready() -> void:
 	if ui._meta_panel != null:
 		ui._meta_panel.visible = false
 
+	await _check_hud_layout(ui)
 	await _check_scrolling(ui)
 	await _check_modals(ui)
 	_check_board_collapse(ui)
 	_check_icons()
 	_check_audio()
 	_finish()
+
+
+## Nothing hides under the minimap, and the stick cannot eat the game's own input.
+##
+## The map grew from 230 to 320 to 460 across three requests. Each time it grew it
+## swallowed more of the bottom-right corner, and the emote button was already
+## overlapping the map circle at 320 — nothing was checking, because on desktop you
+## simply do not look at that corner.
+func _check_hud_layout(ui) -> void:
+	ui.show_screen("hud")
+	for i in 3:
+		await get_tree().process_frame
+
+	var stick: Control = ui._stick
+	ok(stick != null and is_instance_valid(stick), "the floating stick exists")
+	if stick != null:
+		# If this control ever accepted input it would swallow every touch before
+		# the arena saw it, and the game would be unplayable.
+		ok(stick.mouse_filter == Control.MOUSE_FILTER_IGNORE,
+				"the stick is untouchable, so it cannot steal the steering gesture")
+		ok(stick.size.x > 100.0 and stick.size.y > 100.0,
+				"the stick spans the viewport (%.0fx%.0f)" % [stick.size.x, stick.size.y])
+
+	# ...and it must not survive into the results screen, which is exactly what
+	# would happen if the player died mid-hold.
+	ui.show_screen("results")
+	await get_tree().process_frame
+	ok(stick == null or not stick.visible, "the stick is gone once the match ends")
+	ui.show_screen("hud")
+	await get_tree().process_frame
+	ok(stick == null or stick.visible, "the stick returns with the HUD")
+
+	var map: Control = ui._minimap
+	ok(map != null and is_instance_valid(map), "minimap exists")
+	if map == null:
+		return
+	# The map draws as a circle inscribed in its square, so the corners are free —
+	# the map toggle deliberately sits in one. Testing against the circle is what
+	# the player actually sees.
+	var centre := map.get_global_rect().get_center()
+	var radius := map.size.x * 0.5
+
+	var probes := [["emote button", ui._emote_btn], ["emote row", ui._emote_row],
+			["hint line", ui._hint]]
+	var was: Array[bool] = []
+	for pair in probes:
+		var ctl := pair[1] as Control
+		was.append(ctl.visible if ctl != null else false)
+		if ctl != null:
+			ctl.visible = true
+	await get_tree().process_frame
+
+	for idx in probes.size():
+		var name := String(probes[idx][0])
+		var ctl := probes[idx][1] as Control
+		ok(ctl != null, "%s exists" % name)
+		if ctl == null:
+			continue
+		var rect := ctl.get_global_rect()
+		ok(rect.size.x > 1.0 and rect.size.y > 1.0,
+				"%s has a real rect (%.0fx%.0f)" % [name, rect.size.x, rect.size.y])
+		ok(not _rect_hits_circle(rect, centre, radius),
+				"%s clears the minimap" % name)
+	for idx in probes.size():
+		var ctl := probes[idx][1] as Control
+		if ctl != null:
+			ctl.visible = was[idx]
+
+
+## Closest point on the rect to the centre; inside the radius means they overlap.
+func _rect_hits_circle(rect: Rect2, centre: Vector2, radius: float) -> bool:
+	var closest := Vector2(
+			clampf(centre.x, rect.position.x, rect.position.x + rect.size.x),
+			clampf(centre.y, rect.position.y, rect.position.y + rect.size.y))
+	return closest.distance_to(centre) < radius
 
 
 ## Every long list, dragged for real.

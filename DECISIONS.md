@@ -1291,3 +1291,85 @@ not).
 The check drags for real (`InputEventScreenTouch` + `InputEventScreenDrag`) and
 asserts the list moved, because the failure is invisible to a screenshot.
 
+### §12ak — steering was measured from the wrong point
+
+"i move in slowmotion", then "i need to litteraly drag my thumb all the way
+across my screen to be able to move".
+
+`Intent.update()` took the magnet's on-screen position and set
+`dir = (thumb - magnet) / reach`. The camera follows the magnet, so the magnet is
+always near the middle of the display: full input required the thumb a whole
+`reach` (0.16 × viewport height, ~307px) from the CENTRE of the screen. Worse, the
+moment you started moving, the magnet slid toward your thumb and shrank the very
+vector driving it. Steady state was a fraction of full tilt — accelerate, input
+decays, settle at a crawl — and the only way to keep going was to keep dragging
+further out. That is the reported bug exactly, and it was a design error rather
+than a tuning one: no value of `reach` fixes an input that decays as it succeeds.
+
+Now the touch-down point becomes a floating stick anchor. `dir = (thumb - anchor)
+/ reach` with `reach` = 0.15 × the SHORTER viewport axis (~162px, about 1cm of
+thumb). The magnet catching up changes nothing, because the anchor does not move
+with it. Past the rim the anchor is dragged along behind the thumb, so a reversal
+always costs one throw instead of unwinding the whole swipe, and a long drag can
+never walk the thumb off the display.
+
+`update()` no longer accepts the magnet's screen position at all. The signature is
+what stops this coming back.
+
+The hold still both steers and attracts — one thumb, "hold to attract, release to
+repel" intact. A stick that needed a second finger would have been a different
+game.
+
+**The stick is drawn** (`Ui.Stick`), semi-transparent, on by default, switchable
+off in settings. `tests/stick_shot.tscn` renders it at four deflections, because
+it only draws while a finger is down and therefore no existing harness could ever
+have produced it — the same blind spot that shipped five never-rendered modals.
+
+### §12al — the haptics were one call site buzzing 60 times a second
+
+`Arena._hazard_hit` is called every physics frame while the player touches a saw or
+spike (its callers pass `amount * delta`), and it called `Platform.vibrate`
+unconditionally on each one. Sixty haptic events a second, each restarting the iOS
+haptic engine's pattern. That is "my phone was gonna explode", and it is why a
+first round of turning the strength numbers down changed nothing that mattered.
+
+Checked rather than assumed: Godot 4.3 on iOS 13+ routes `vibrate_handheld` to
+`vibrate_haptic_engine(duration, amplitude)` and DOES honour amplitude, falling
+back to `AudioServicesPlaySystemSound` (fixed strength) only below iOS 13. So the
+amplitude argument was never the problem. Frequency was.
+
+Fixed in `Platform.vibrate` with a 0.14s floor between buzzes, not at the call
+site — the next call site to make this mistake will be a different one, and one
+guard covers every present and future caller. The hazard site additionally paces
+itself at 0.5s, because "as fast as the backstop allows" is still a rattle, and
+because a hazard buzzing constantly crowds out the elimination thump, which is the
+one that means something.
+
+Haptics also became Off / Light / Full (default Light) instead of a boolean. The
+player asked for less, not none, and a switch made them choose between a phone
+that rattled and no feedback at all. Light scales duration AND amplitude, since
+the complaint that survived a strength-only cut was about how much buzzing there
+was.
+
+### §12am — "much much bigger" map, read both ways
+
+Ambiguous between the HUD minimap and the play arena, so both grew, because
+guessing wrong here costs another round trip on a report already made twice.
+
+Minimap 320 → 460, with every hard-coded pixel figure in `_draw` now expressed in
+units of `SIZE/320`. Growing the constant alone would have produced a bigger empty
+circle containing the same unreadable 3px specks.
+
+Arena `ring_start_radius` 44 → 58 (area ×1.74), with `bot_count` 14 → 22 and
+`scrap_count` 420 → 700 so density is preserved within ~10%. Every consumer already
+derives from `ring_start_radius` — floor mesh, floor shader, scrap extent, powerup
+extent, all spawn rings, ring-close rate, minimap scale — so nothing hard-coded had
+to move. Verified by a full-length `smoke --real` run, which does NOT apply the
+compressed overrides and therefore played a real match at the shipped numbers.
+
+The enlargement also exposed a layout bug that predated it: the emote button had
+been overlapping the minimap circle since the map was 230. Every bottom-right
+offset now derives from `Minimap.SIZE`, the emote row grows away from the corner
+instead of back across the map, and `screens.tscn` asserts rect-vs-circle
+clearance for all three neighbours.
+

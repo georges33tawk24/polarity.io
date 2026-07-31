@@ -20,6 +20,7 @@ var theme_res: Theme
 ## child's anchors every layout pass, which silently discarded the landscape
 ## width clamp below.
 var _safe: Control
+var _stick: Stick
 var _layout: Control
 var _backdrop: ColorRect
 var _menu: Control
@@ -44,6 +45,7 @@ var _board_ranks: Dictionary = {}
 var _board_toggle: Button
 var _board_collapsed := false
 var _map_toggle: Button
+var _emote_btn: Button
 var _map_collapsed := false
 var _clock_label: Label
 var _alive_label: Label
@@ -104,6 +106,14 @@ func _ready() -> void:
 	_layout.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_safe.add_child(_layout)
 
+	# Outside _safe, like the backdrop: the thumb can land inside the safe-area
+	# margin, and a stick drawn in inset coordinates would sit visibly offset from
+	# the finger. Added last so it is over the arena; draws nothing unless a hold
+	# is live, so it costs nothing on the menu.
+	_stick = Stick.new()
+	_stick.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_stick.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
 	_menu = _build_menu()
 	_hud = _build_hud()
 	_results = _build_results()
@@ -112,6 +122,8 @@ func _ready() -> void:
 		_layout.add_child(c)
 		c.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 		c.visible = false
+
+	add_child(_stick)
 
 	get_viewport().size_changed.connect(_relayout)
 	_relayout()
@@ -725,8 +737,16 @@ func _build_hud() -> Control:
 	_emote_row = HBoxContainer.new()
 	_emote_row.add_theme_constant_override("separation", UiKit.S1)
 	_emote_row.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
-	_emote_row.offset_left = -560.0
-	_emote_row.offset_right = -250.0
+	# Clear of the map's left edge rather than a constant that only happened to
+	# work at one map size. The emote button was already overlapping the map circle
+	# before it grew — these offsets were tuned when the map was 230.
+	_emote_row.offset_right = -(Minimap.SIZE + 14.0)
+	_emote_row.offset_left = _emote_row.offset_right - 340.0
+	# The row's four buttons measure wider and taller than the box reserved for
+	# them, and a container grows toward its grow direction — which by default was
+	# back across the map. Grow away from the corner instead.
+	_emote_row.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	_emote_row.grow_vertical = Control.GROW_DIRECTION_BEGIN
 	_emote_row.offset_top = -330.0
 	_emote_row.offset_bottom = -242.0
 	_emote_row.visible = false
@@ -738,15 +758,15 @@ func _build_hud() -> Control:
 		e.pressed.connect(func() -> void: _send_emote(i))
 		_emote_row.add_child(e)
 
-	var emote_btn := UiKit.icon_btn("star", 92)
-	emote_btn.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
-	emote_btn.offset_left = -356.0
-	emote_btn.offset_right = -264.0
-	emote_btn.offset_top = -228.0
-	emote_btn.offset_bottom = -136.0
-	emote_btn.pressed.connect(func() -> void:
+	_emote_btn = UiKit.icon_btn("star", 92)
+	_emote_btn.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
+	_emote_btn.offset_right = -(Minimap.SIZE + 14.0)
+	_emote_btn.offset_left = _emote_btn.offset_right - 92.0
+	_emote_btn.offset_top = -228.0
+	_emote_btn.offset_bottom = -136.0
+	_emote_btn.pressed.connect(func() -> void:
 		_emote_row.visible = not _emote_row.visible)
-	root.add_child(emote_btn)
+	root.add_child(_emote_btn)
 
 	_hint = UiKit.hud_lbl("", UiKit.T_CAPTION, UiKit.INK_DIM, HORIZONTAL_ALIGNMENT_CENTER)
 	_hint.anchor_left = 0.0
@@ -755,8 +775,10 @@ func _build_hud() -> Control:
 	_hint.anchor_bottom = 1.0
 	_hint.offset_left = 300.0
 	_hint.offset_right = -300.0
-	_hint.offset_top = -78.0
-	_hint.offset_bottom = -30.0
+	# Above the map, not beside it: squeezing it into the strip left of the map
+	# would cost most of its width, and it is a full sentence.
+	_hint.offset_top = -(Minimap.SIZE + 86.0)
+	_hint.offset_bottom = -(Minimap.SIZE + 38.0)
 	_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	root.add_child(_hint)
 	return root
@@ -766,6 +788,8 @@ func _build_hud() -> Control:
 ## needs the tuning. Ui held neither.
 func attach_arena(a: Arena) -> void:
 	_arena = a
+	if _stick != null and is_instance_valid(_stick):
+		_stick.intent = a.intent
 
 
 func attach_minimap(a: Arena) -> void:
@@ -1270,7 +1294,23 @@ func _build_settings() -> Control:
 
 	box.add_child(_slider(tr("UI_MUSIC"), "music", func(v: float) -> void: Audio.set_volume("Music", v)))
 	box.add_child(_slider(tr("UI_SOUND"), "sfx", func(v: float) -> void: Audio.set_volume("SFX", v)))
-	box.add_child(_toggle(tr("UI_HAPTICS"), "haptics"))
+	# Three levels, not a switch. "Off" is a real need and so is "quieter than
+	# default" — the player who reported this wanted less, not none, and a boolean
+	# forced them to choose between a phone that rattled and no feedback at all.
+	var haptic_levels := ["off", "light", "full"]
+	var haptic_opt := OptionButton.new()
+	for h: String in haptic_levels:
+		haptic_opt.add_item(tr("UI_HAPTICS_" + h.to_upper()))
+	haptic_opt.selected = maxi(0, haptic_levels.find(Platform.haptics_level()))
+	haptic_opt.item_selected.connect(func(i: int) -> void:
+		var level: String = haptic_levels[i]
+		Game.set_value("haptics_level", level)
+		# Keep the legacy boolean consistent, or a profile saved before this setting
+		# existed would keep vetoing the dropdown.
+		Game.set_value("haptics", level != "off")
+		if level != "off":
+			Platform.vibrate(12, 0.5))   # so the choice is audible in the hand
+	box.add_child(_setting_row(tr("UI_HAPTICS"), haptic_opt))
 	box.add_child(_toggle(tr("UI_REDUCED_MOTION"), "reduced_motion"))
 
 	var language_row_label := tr("UI_LANGUAGE")
@@ -1297,6 +1337,7 @@ func _build_settings() -> Control:
 
 	box.add_child(_toggle(tr("UI_COLORBLIND"), "colorblind"))
 	box.add_child(_toggle(tr("UI_LEFT_HANDED"), "left_handed"))
+	box.add_child(_toggle(tr("UI_JOYSTICK"), "joystick"))
 
 	var scale_row := HBoxContainer.new()
 	scale_row.add_theme_constant_override("separation", 24)
@@ -1451,6 +1492,12 @@ func show_screen(which: String) -> void:
 	_menu.visible = which == "menu"
 	_hud.visible = which == "hud"
 	_results.visible = which == "results"
+	# The stick lives outside _safe so it draws over everything, and Intent.release()
+	# is never called by anyone — so a finger still down at the moment you die would
+	# leave a stick painted across the results screen. Tie it to the HUD instead of
+	# trusting the input state to have been cleaned up.
+	if _stick != null and is_instance_valid(_stick):
+		_stick.visible = which == "hud"
 	if which != "results":
 		_settings.visible = false
 	if which == "hud":
@@ -1893,3 +1940,50 @@ func _apply_map_collapsed() -> void:
 		_minimap.visible = not _map_collapsed
 	if _map_toggle != null and is_instance_valid(_map_toggle):
 		_map_toggle.text = "+" if _map_collapsed else "\u2013"
+
+
+## The floating stick, drawn where the thumb is.
+##
+## On by default, and switchable off in settings for anyone who wants the arena
+## unobstructed: the control is invisible without it, and a control you cannot see
+## is one you have to discover by accident. Deliberately faint — it sits on top of
+## the thing the player is actually looking at.
+class Stick extends Control:
+	var intent: Intent
+
+	func _init() -> void:
+		# The stick moves every frame a hold is live, so it has to redraw every
+		# frame — but only while a hold is live.
+		set_process(true)
+
+	func _process(_delta: float) -> void:
+		if intent != null and (intent.pointer_down or _was_down):
+			_was_down = intent.pointer_down
+			queue_redraw()
+
+	var _was_down := false
+
+	func _draw() -> void:
+		if intent == null or not intent.pointer_down:
+			return
+		if not bool(Game.get_value("joystick", true)):
+			return
+		var vp := get_viewport_rect().size
+		var reach := maxf(minf(vp.x, vp.y) * Intent.REACH_FRACTION, 1.0)
+		var a := intent.anchor
+		var knob := a + intent.throw() * reach
+		var kr := reach * 0.34
+
+		# Base. A dark disc rather than a bright one: the arena underneath is warm
+		# and mid-toned, so darkening reads as "under glass" while a light wash
+		# would compete with the magnets for attention.
+		draw_circle(a, reach, Color(0.043, 0.039, 0.035, 0.20))
+		draw_arc(a, reach, 0.0, TAU, 56, Color(UiKit.INK, 0.16), 3.0, true)
+		# Dead zone, so the centre is a place and not just an absence.
+		draw_arc(a, reach * Intent.DEAD_FRACTION, 0.0, TAU, 20,
+				Color(UiKit.INK, 0.10), 2.0, true)
+		# Knob, poled like everything else: holding is attract, so it carries the
+		# attract pole's colour and the player learns the mapping from the control.
+		draw_circle(knob, kr, Color(UiKit.POLE_POS, 0.22))
+		draw_arc(knob, kr, 0.0, TAU, 32, Color(UiKit.POLE_POS, 0.42), 3.0, true)
+

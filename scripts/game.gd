@@ -100,6 +100,8 @@ static func defaults() -> Dictionary:
 		"music": 0.6,
 		"sfx": 0.85,
 		"haptics": true,
+		"haptics_level": "light",
+		"joystick": true,
 		"reduced_motion": false,
 		"colorblind": false,
 		"quality": "auto",

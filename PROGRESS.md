@@ -23,6 +23,14 @@ front end, .io results screen, sentence-cased prose, unified light UI surface.
 
 ## NEXT UP
 
+- (2026-07-31) Game feel round: touch steering rebuilt as a floating stick
+  (`Intent`), optional semi-transparent on-screen joystick (`Ui.Stick`, settings
+  toggle), haptics rate-limited in `Platform` + Off/Light/Full setting, minimap
+  320 -> 460 with contents scaled, arena 44 -> 58 with bots 14 -> 22 and scrap
+  420 -> 700. DECISIONS §12ak-§12am. 331 + 191 checks, smoke --real green.
+  UNCONFIRMED ON DEVICE: the arena enlargement is a guess at what "make the map
+  bigger" meant — if the player meant only the minimap, revert the three values in
+  `data/default_tuning.tres`.
 - (2026-07-31) Touch scrolling fixed on the shop / missions / pass / store /
   settings lists. Two bugs: a drag starting on a card never reached the
   ScrollContainer (Godot delivers touches to the topmost Control), and the panel

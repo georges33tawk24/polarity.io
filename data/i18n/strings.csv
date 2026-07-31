@@ -139,3 +139,7 @@ UI_CREDITS_BODY,"Built with Godot. All art, sound and music generated in-engine.
 UI_SIGNED_IN,Signed in,Sesión iniciada,Conectado,Connecté,Angemeldet,Вы вошли,Giriş yapıldı,Masuk,ログインしました,로그인됨
 UI_DAILY_SHORT,DAILY,DIARIO,DIÁRIO,QUOTIDIEN,TÄGLICH,ЕЖЕДНЕВНО,GÜNLÜK,HARIAN,デイリー,일일
 UI_COME_BACK_TOMORROW,Claimed — come back tomorrow,Reclamado — vuelve mañana,Resgatado — volte amanhã,Récupéré — revenez demain,Abgeholt — komm morgen wieder,Получено — возвращайтесь завтра,Alındı — yarın tekrar gel,Diklaim — kembali besok,受取済み — また明日,수령 완료 — 내일 다시
+UI_HAPTICS_OFF,OFF,DESACTIVADO,DESLIGADO,DÉSACTIVÉ,AUS,ВЫКЛ,KAPALI,MATI,オフ,끄기
+UI_HAPTICS_LIGHT,LIGHT,SUAVE,LEVE,LÉGÈRE,LEICHT,СЛАБАЯ,HAFİF,RINGAN,弱,약하게
+UI_HAPTICS_FULL,FULL,FUERTE,FORTE,FORTE,STARK,СИЛЬНАЯ,GÜÇLÜ,KUAT,強,강하게
+UI_JOYSTICK,JOYSTICK,JOYSTICK,JOYSTICK,MANETTE,JOYSTICK,ДЖОЙСТИК,KUMANDA,JOYSTICK,スティック,조이스틱
