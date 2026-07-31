@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+# Signed release AAB for Google Play.
+#
+#   POLARITY_KEYSTORE=~/polarity-upload.jks POLARITY_KEYSTORE_PASS='...' \
+#     bash tools/build_aab.sh
+#
+# The password is read from the environment and never written to disk. Godot 4.2+
+# reads GODOT_ANDROID_KEYSTORE_RELEASE_* when the export preset's own fields are
+# blank, which is why they are blank — export_presets.cfg is committed, and a
+# signing password in it is the same class of mistake as a leaked service key.
+set -euo pipefail
+
+GODOT="${GODOT:-/Applications/Godot.app/Contents/MacOS/Godot}"
+OUT="build/android/polarity.aab"
+
+: "${POLARITY_KEYSTORE:?set POLARITY_KEYSTORE to your upload .jks path}"
+: "${POLARITY_KEYSTORE_PASS:?set POLARITY_KEYSTORE_PASS to the keystore password}"
+
+export GODOT_ANDROID_KEYSTORE_RELEASE_PATH="$POLARITY_KEYSTORE"
+export GODOT_ANDROID_KEYSTORE_RELEASE_USER="${POLARITY_KEYSTORE_ALIAS:-upload}"
+export GODOT_ANDROID_KEYSTORE_RELEASE_PASSWORD="$POLARITY_KEYSTORE_PASS"
+
+mkdir -p build/android
+"$GODOT" --headless --export-release "Android" "$OUT"
+
+# Verify what actually shipped, rather than trusting the exit code — an earlier
+# Android export "succeeded" while silently producing an unsigned artifact.
+[ -f "$OUT" ] || { echo "!! no AAB produced"; exit 1; }
+echo "AAB: $(du -h "$OUT" | cut -f1)  $OUT"
+unzip -l "$OUT" | grep -q "META-INF" && echo "   signed: yes" || { echo "!! UNSIGNED"; exit 1; }

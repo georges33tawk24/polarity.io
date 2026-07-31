@@ -23,6 +23,11 @@ front end, .io results screen, sentence-cased prose, unified light UI surface.
 
 ## NEXT UP
 
+- (2026-07-31) Upload keystore wired via GODOT_ANDROID_KEYSTORE_RELEASE_* env vars
+  — nothing secret in export_presets.cfg. `tools/build_aab.sh` builds and verifies
+  the signed AAB. Play feature graphic generated (`store/feature_graphic.png`).
+- **BLOCKED: disk.** 198 GB used of 228, ~2.5 GB free. The Godot 4.5+ upgrade
+  (needed for targetSdk 35, which gates every Play upload) wants ~6 GB.
 - (2026-07-31) AdMob wired: rewarded + interstitial + UMP consent, test units in
   debug, real IDs in release, Gradle build + AAB export on. Debug AAB builds clean
   (50 MB, 0 script errors). DECISIONS §12as.
