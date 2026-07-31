@@ -16,28 +16,18 @@ enum Result { SUCCESS, CANCELLED, UNAVAILABLE, ALREADY_OWNED, FAILED }
 signal purchase_finished(product_id: String, result: Result)
 signal entitlements_changed
 
-## Billing seam. Assign a different object to plug in Play Billing / StoreKit /
-## a portal store. Tests inject a fake to exercise the grant path.
-class Provider:
-	## Calls back with (ok, receipt). A real provider validates server-side first.
-	func purchase(_product_id: String, cb: Callable) -> void:
-		cb.call(false, "")
-	func restore(cb: Callable) -> void:
-		cb.call([])
-	func available() -> bool:
-		return false
-	## Localised price string from the live store, or "" to use the fallback.
-	func price_string(_product_id: String) -> String:
-		return ""
-
-
-var provider := Provider.new()
+## Billing seam — see StoreProvider. Lifted out of this file rather than left as
+## an inner class: a GDScript inner class CANNOT be extended from another file, so
+## the seam could never have had a real implementation. Backend hit this exact
+## wall (§12) and the fix is the same.
+var provider: StoreProvider = StoreProvider.new()
 var _catalogue: Dictionary = {}
 var _offers: Array = []
 
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	_select_provider()
 	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(PATH))
 	var data: Dictionary = parsed if parsed is Dictionary else {}
 	for p: Dictionary in data.get("products", []):
@@ -45,6 +35,20 @@ func _ready() -> void:
 	_offers = data.get("offers", [])
 	if _catalogue.is_empty():
 		push_error("store.json missing or malformed — IAP disabled")
+
+
+## Google Play Billing on Android when the plugin is present; the null provider
+## everywhere else, which reports unavailable and grants nothing rather than
+## faking a purchase.
+func _select_provider() -> void:
+	if Platform.os_name != "Android":
+		return
+	if not ResourceLoader.exists("res://addons/GodotGooglePlayBilling/plugin.cfg"):
+		push_warning("[iap] billing addon missing — purchases unavailable")
+		return
+	var p := PlayBillingProvider.new()
+	add_child(p)
+	provider = p
 
 
 # --- catalogue -------------------------------------------------------------

@@ -43,6 +43,7 @@ func _ready() -> void:
 	test_mission_rotation()
 	test_broad_phase()
 	test_friends()
+	test_product_types()
 	test_scrap_field()
 	test_localization()
 	test_cosmetics()
@@ -598,6 +599,36 @@ func test_intent_mapping() -> void:
 	ok(i.dir == Vector2.ZERO, "a thumb twitching in place does not steer")
 
 
+## Every product must declare whether it is consumed.
+##
+## This is the money bug in Play Billing. A consumable that is acknowledged
+## instead of consumed can never be bought a second time — Play still thinks the
+## player owns the coin pack. An entitlement that is consumed instead of
+## acknowledged is auto-refunded by Play after three days, so the player keeps
+## `remove_ads` and gets their money back. PlayBillingProvider decides which call
+## to make from `type` in store.json, so a missing or wrong type here is a real
+## financial defect that no Android device is needed to catch.
+func test_product_types() -> void:
+	print("product types")
+	var consumable_ids := ["coins_small", "coins_medium", "coins_large",
+			"gems_small", "gems_medium", "gems_large"]
+	var entitlement_ids := ["remove_ads", "vip"]
+
+	for p: Dictionary in Store.products(true):
+		var id := String(p.get("id", ""))
+		var kind := String(p.get("type", ""))
+		ok(kind != "", "%s declares a type" % id)
+		if consumable_ids.has(id):
+			ok(kind == "consumable",
+					"%s is consumable, or it can only ever be bought once" % id)
+		elif entitlement_ids.has(id):
+			ok(kind != "consumable",
+					"%s is an entitlement, or Play auto-refunds it after 3 days" % id)
+
+	# The entitlement that costs the most to get wrong.
+	ok(not Store.product("remove_ads").is_empty(), "remove_ads exists in the catalogue")
+
+
 ## Friends must never be invented.
 ##
 ## Every other leaderboard scope falls back to a seeded local board of bot names
@@ -1127,7 +1158,7 @@ func test_leaderboards() -> void:
 ## exercised. The shipped provider always fails, which would leave every one of
 ## these paths untested until the day a real SDK is wired in.
 
-class FakeBilling extends Store.Provider:
+class FakeBilling extends StoreProvider:
 	var succeed := true
 	var owned: Array = []
 	func purchase(product_id: String, cb: Callable) -> void:
@@ -1223,7 +1254,7 @@ func test_store() -> void:
 	Game.set_value("offer", {"id": "x", "product": "coins_medium", "expires": 1})
 	ok(Store.active_offer().get("id") != "x", "an expired offer is replaced")
 
-	Store.provider = Store.Provider.new()
+	Store.provider = StoreProvider.new()
 	Game.set_value("iap_owned", [])
 	Game.set_value("no_ads", false)
 

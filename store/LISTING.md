@@ -1,105 +1,121 @@
-# Store listing scaffold
+# Google Play listing — Polarity.io
 
-Everything a submission needs that is **not** code. Nothing here is submitted
-automatically — publishing is an irreversible action and is the owner's call
-(spec §16).
+Copy-paste into Play Console. Character limits are Play's own.
 
----
+## App name (30)
 
-## Identity
-
-| Field | Value |
-|---|---|
-| Title | POLARITY |
-| Subtitle / short description | One-thumb magnet combat. Hold to attract, release to repel. |
-| Bundle / package id | `com.example.polarity` — **change before submission** |
-| Category | Games › Action / Arcade |
-| Content rating | Expect IARC "Everyone" / PEGI 3 — no violence against characters, no gambling, no user-generated content |
-
-## Full description (EN)
-
-> You are a magnet in a shrinking arena full of rivals.
->
-> **Hold to attract.** Pull loose scrap in to grow bigger and stronger.
-> **Release to repel.** Time the burst to launch rivals into saw blades, spike
-> pits — or clean out of the ring.
->
-> The same thumb does both, so every second you spend growing is a second you
-> are not armed. The arena closes in. Last magnet standing wins.
->
-> • 15-magnet arenas, 100-second matches
-> • Saw blades, spike pits, electric fences, conveyors and reverse-polarity zones
-> • Power-ups: surge, speed, shield, mega-repel, freeze
-> • 35 cosmetics — skins, trails, launch effects, nameplates, arena themes
-> • Daily rewards, missions, a 30-tier season pass and a six-rank ladder
-> • Ten languages
->
-> No sign-in. No wait timers. Cosmetics are cosmetic — nothing you buy makes
-> your magnet stronger.
-
-**Do not claim live PvP.** Opponents are bots (spec §7); several store policies
-treat "multiplayer" claims about bot lobbies as misleading.
-
-## Keywords
-
-`magnet, arena, io, battle royale, one thumb, casual, physics, shrinking ring`
-
----
-
-## Required assets — NOT YET PRODUCED
-
-| Asset | Spec | Status |
-|---|---|---|
-| App icon | 1024×1024 PNG, no alpha, no rounded corners | **TODO** — `icon.svg` is a placeholder |
-| Adaptive icon (Android) | 432×432 foreground + background | **TODO** |
-| Feature graphic (Play) | 1024×500 | **TODO** |
-| Phone screenshots | ≥3, 1080×1920 | Capturable via `tests/menu_shot.tscn` and `tests/smoke.tscn --shot=` |
-| Tablet screenshots | ≥1, 1536×2048 | **TODO** |
-| iPhone 6.7" / 6.5" | 1290×2796 / 1242×2688 | **TODO** |
-| Promo video | 15-30s | **TODO** — the clip-cam moment is the hook |
-
-Screenshots can be produced today:
-
-```bash
-/Applications/Godot.app/Contents/MacOS/Godot res://tests/smoke.tscn -- --real --shot=/tmp/shot1.png
+```
+Polarity.io
 ```
 
+## Short description (80)
+
+```
+Hold to attract, release to repel. Grow your magnet and outlast the arena.
+```
+(74 characters)
+
+## Full description (4000)
+
+```
+POLARITY.IO — a magnet arena you can learn in one tap.
+
+Hold to pull everything toward you. Release to blast it away. That is the whole
+control, and the whole game is what you do with it.
+
+Start as the smallest magnet in a lobby of 90. Drag scrap into your field, grow,
+and start pulling rivals in instead. Get too greedy and someone bigger does the
+same to you.
+
+• ONE THUMB, NO TUTORIAL
+Hold anywhere to attract and steer. Let go to repel. That is it.
+
+• GROW OR GET EATEN
+Absorb scrap to gain mass. Absorb rivals to gain a lot more. The bigger you get
+the harder you are to move — and the more everyone wants you gone.
+
+• A LOBBY THAT FEELS ALIVE
+Ninety rivals, saws, spike fields, reverse-polarity zones and power-ups scattered
+across an arena you can actually get lost in.
+
+• PLAY IN SECONDS
+No sign-in. No account. No ads before your first match. Open it and you are
+playing.
+
+• MAKE IT YOURS
+Unlock skins, trails and nameplates. Climb the ranks. Chase daily missions that
+change every day.
+
+• FRIENDS
+Share your code, add theirs, and see exactly where you sit against the people you
+actually know.
+
+Free to play. Optional ads for bonuses you choose to watch.
+```
+
+## Category
+
+Games → Arcade
+
+## Tags
+
+arcade, io, casual, multiplayer-style, magnet, physics
+
+## Contact
+
+- Email: `polarity.io.io@gmail.com`
+- Privacy policy: `https://georges33tawk24.github.io/polarity.io/privacy.html`
+- Website: `https://georges33tawk24.github.io/polarity.io/`
+
+## Graphics
+
+| Asset | Size | File |
+|---|---|---|
+| App icon | 512×512 | `store/icons/icon_512.png` |
+| Feature graphic | 1024×500 | `store/feature_graphic.png` |
+| Phone screenshots | min 2, max 8 | `store/screenshots/` |
+
 ---
 
-## Data safety / privacy nutrition labels
+## Data safety form answers
 
-Answer these from what the code **actually** does today, not from what it might
-do once a vendor is wired in.
+Play asks these one by one. Answers below reflect what the build actually does —
+gameplay analytics are a null provider that writes to a local file and never
+transmit, so they are NOT declared as collected.
 
-| Question | Answer today |
-|---|---|
-| Collects personal info? | **No** |
-| Collects device identifiers? | **No** — `install_id` is generated locally and never transmitted (all providers are Null) |
-| Collects analytics? | **Not transmitted.** Events are queued and written to a local file only |
-| Shares data with third parties? | **No** |
-| Data encrypted in transit? | N/A — nothing is transmitted |
-| Can users request deletion? | **Yes** — Settings › Account › Delete My Data wipes every local file |
-| Ads? | **No** — no ad SDK is integrated |
-| In-app purchases? | **No** — no billing provider is integrated |
+**Does your app collect or share any of the required user data types?** — Yes
 
-**These answers change the moment a real provider is wired in.** Ads, analytics
-and IAP all become "yes", and identifiers/purchase history become collected
-categories. Re-answer before any submission that includes a live SDK.
+### Collected
 
-## Legal
+| Data type | Collected | Shared | Processed ephemerally | Required | Purpose |
+|---|---|---|---|---|---|
+| Device or other IDs | Yes | Yes | No | Optional | Advertising |
+| App activity — in-app search history | No | — | — | — | — |
+| App activity — other actions (scores, progress) | Yes | No | No | Optional | App functionality |
+| App info and performance | No | — | — | — | — |
+| Personal info — name | Yes | No | No | Optional | App functionality |
+| Personal info — email, address, phone | No | — | — | — | — |
+| Location | No | — | — | — | — |
+| Photos, files, contacts, calendar, messages | No | — | — | — | — |
+| Financial info | No | — | — | — | — |
 
-- Privacy policy URL — **TODO**, currently `https://example.com/polarity/privacy` in Settings
-- Terms of service URL — **TODO**
-- Support / contact email — **TODO**
-- COPPA: an age gate ships and under-13 disables personalised ads and IAP entirely
+Notes for each "Yes":
 
-## Pre-submission checklist
+- **Device or other IDs** — the advertising ID, collected by Google AdMob to serve
+  ads. Shared with Google. Optional in the sense that the player can reset or
+  limit it in device settings.
+- **App activity (other actions)** — cloud save payload and leaderboard score,
+  stored in Supabase against an anonymous identifier.
+- **Personal info — name** — the display name the player types for the
+  leaderboard. Free text, never verified, never required to be a real name.
+  Declare it because Play treats any user-entered name as personal info.
 
-- [ ] Bundle id changed from `com.example.polarity`
-- [ ] App icons produced at every required size
-- [ ] Privacy policy and ToS hosted, URLs updated in `ui.gd`
-- [ ] Data-safety answers re-checked against wired providers
-- [ ] Android keystore configured (never committed — see README "Signing")
-- [ ] iOS team id set in `export_presets.cfg`
-- [ ] Store copy does not claim live multiplayer
-- [ ] Tested on a real low-end device, not only the simulator
+### Security practices
+
+- **Is data encrypted in transit?** Yes (HTTPS to Supabase and Google).
+- **Can users request data deletion?** Yes — in-game Settings → Data & Privacy →
+  Delete data, and by email.
+
+### Ads
+
+- **Does your app contain ads?** Yes — rewarded video and one interstitial.
