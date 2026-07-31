@@ -1,5 +1,5 @@
 {
-  "_comment": "Daily calendar, mission pool, battle pass and rank ladder. Adding content here requires no code change (spec \u00a716).",
+  "_comment": "Daily calendar, mission pool, battle pass and rank ladder. Adding content here requires no code change (spec §16).",
   "daily_rewards": [
     {
       "day": 1,
@@ -203,12 +203,102 @@
       "target": 10000,
       "name_key": "MISSION_ABSORB_SCRAP",
       "coins": 5000
+    },
+    {
+      "id": "d_absorb_70",
+      "scope": "daily",
+      "metric": "scrap",
+      "target": 70,
+      "name_key": "MISSION_ABSORB_SCRAP",
+      "coins": 90,
+      "bp_xp": 45
+    },
+    {
+      "id": "d_absorb_200",
+      "scope": "daily",
+      "metric": "scrap",
+      "target": 200,
+      "name_key": "MISSION_ABSORB_SCRAP",
+      "coins": 180,
+      "bp_xp": 80
+    },
+    {
+      "id": "d_kill_5",
+      "scope": "daily",
+      "metric": "kills",
+      "target": 5,
+      "name_key": "MISSION_ELIMINATE",
+      "coins": 110,
+      "bp_xp": 55
+    },
+    {
+      "id": "d_kill_12",
+      "scope": "daily",
+      "metric": "kills",
+      "target": 12,
+      "name_key": "MISSION_ELIMINATE",
+      "coins": 220,
+      "bp_xp": 95
+    },
+    {
+      "id": "d_play_5",
+      "scope": "daily",
+      "metric": "matches",
+      "target": 5,
+      "name_key": "MISSION_PLAY",
+      "coins": 120,
+      "bp_xp": 60
+    },
+    {
+      "id": "d_mass_120",
+      "scope": "daily",
+      "metric": "mass",
+      "target": 120,
+      "name_key": "MISSION_REACH_MASS",
+      "coins": 170,
+      "bp_xp": 75
+    },
+    {
+      "id": "d_top3_2",
+      "scope": "daily",
+      "metric": "top3",
+      "target": 2,
+      "name_key": "MISSION_TOP_THREE",
+      "coins": 200,
+      "bp_xp": 90
+    },
+    {
+      "id": "d_win_2",
+      "scope": "daily",
+      "metric": "wins",
+      "target": 2,
+      "name_key": "MISSION_WIN",
+      "coins": 260,
+      "bp_xp": 120
+    },
+    {
+      "id": "w_kill_25",
+      "scope": "weekly",
+      "metric": "kills",
+      "target": 25,
+      "name_key": "MISSION_ELIMINATE",
+      "coins": 400,
+      "bp_xp": 200
+    },
+    {
+      "id": "w_absorb_900",
+      "scope": "weekly",
+      "metric": "scrap",
+      "target": 900,
+      "name_key": "MISSION_ABSORB_SCRAP",
+      "coins": 420,
+      "bp_xp": 210
     }
   ],
   "daily_slots": 3,
   "weekly_slots": 5,
   "battlepass": {
-    "_epoch_note": "UTC day index of launch (2026-01-01). Seasons count from here \u2014 without it, season = unix_day/28 and the first season is number 737.",
+    "_epoch_note": "UTC day index of launch (2026-01-01). Seasons count from here — without it, season = unix_day/28 and the first season is number 737.",
     "epoch_day": 20454,
     "season_length_days": 28,
     "xp_per_tier": 100,

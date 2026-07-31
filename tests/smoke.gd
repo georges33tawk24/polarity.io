@@ -10,6 +10,8 @@ var _main: Node
 var _done := false
 var _elapsed := 0.0
 var _shot_path := ""
+var _frames: Array[float] = []
+var _magnet_count := 0
 var _shot_at := 4.0
 var _shot_taken := false
 var _eliminations := 0
@@ -115,6 +117,11 @@ func _process(_delta: float) -> void:
 	# so a delta-based clock falls behind and the match can end before the
 	# screenshot ever fires.
 	_elapsed = float(Time.get_ticks_msec() - _started_ms) / 1000.0
+	# Skip the first second: shader compilation and scene build are not gameplay.
+	if _elapsed > 1.0:
+		_frames.append(_delta)
+		if _main != null and is_instance_valid(_main) and _main.arena != null:
+			_magnet_count = _main.arena.magnets.size()
 	if not _shot_taken and _shot_path != "" and _elapsed > _shot_at:
 		_shot_taken = true
 		_capture()
@@ -266,5 +273,14 @@ func _on_ended(result: Dictionary) -> void:
 			fails += 1
 		seen[m.placement] = true
 
+	# Frame time, so "optimise it" has a number attached instead of a feeling.
+	# A sorted percentile rather than a mean: the mean hides exactly the hitches a
+	# player notices.
+	_frames.sort()
+	if not _frames.is_empty():
+		var p50: float = _frames[_frames.size() / 2]
+		var p99: float = _frames[mini(_frames.size() - 1, int(_frames.size() * 0.99))]
+		print("smoke: frame ms p50=%.2f p99=%.2f over %d frames, %d magnets"
+				% [p50 * 1000.0, p99 * 1000.0, _frames.size(), _magnet_count])
 	print("\nsmoke: %d eliminations, %d failures" % [_eliminations, fails])
 	get_tree().quit(1 if fails > 0 else 0)

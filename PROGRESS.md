@@ -23,6 +23,18 @@ front end, .io results screen, sentence-cased prose, unified light UI surface.
 
 ## NEXT UP
 
+- (2026-07-31) Perf + balance round: uniform-grid broad phase (checked against
+  brute force), bot AI level-of-detail, bots 90 -> 60, pull reach decoupled from
+  body growth, trail now emits off the body and scales with it, missions countdown
+  ticks, daily pool 8 -> 16. Frame-time reporting added to smoke.
+  DECISIONS §12ap. 374 + 196 checks green.
+- NOT DONE, still owed to the player:
+  - **Friends / add-a-friend.** Needs a Supabase table + RLS, a friend-code or
+    handle lookup, and a screen. Real feature, not a tweak.
+  - **The magnet does not look like a magnet** ("a circle cut in a place"). The
+    body is a sphere with a two-tone split. Wants a horseshoe read like the app
+    icon, which is mesh + shader + art iteration.
+  - **On-device profiling.** The desktop frame numbers are noise (see §12ap).
 - (2026-07-31) Feel round 2: shake cut to ~20% + capped, closing ring removed
   (mechanic, floor ring and HUD bar), buff pickups now report in the kill feed,
   arena x10 (r=185, 91 magnets, 7000 scrap), spawn placement rebuilt as concentric

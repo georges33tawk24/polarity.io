@@ -40,6 +40,8 @@ func _ready() -> void:
 	test_intent_mapping()
 	test_haptics_rate_limit()
 	test_spawn_spacing()
+	test_mission_rotation()
+	test_broad_phase()
 	test_scrap_field()
 	test_localization()
 	test_cosmetics()
@@ -593,6 +595,89 @@ func test_intent_mapping() -> void:
 	i.handle_event(jitter)
 	i.update(vp)
 	ok(i.dir == Vector2.ZERO, "a thumb twitching in place does not steer")
+
+
+## The broad phase must not miss anyone.
+##
+## Magnet interactions moved from testing every ordered pair to a uniform grid.
+## The failure mode of a wrong broad phase is not a crash: two magnets simply stop
+## attracting each other at certain positions, which on a phone is indistinguishable
+## from bad tuning and would never be traced back to here.
+func test_broad_phase() -> void:
+	print("broad phase")
+	var a := Arena.new()
+	add_child(a)
+	a.setup(Game.tuning, null, 31337)
+	# Spread them over the whole arena, including across cell boundaries, rather
+	# than trusting the tidy spawn ring to exercise the grid.
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 909
+	# Clustered deliberately. Scattered over the full 370-unit arena almost nothing
+	# overlaps, and a broad-phase test where nothing is in range proves nothing —
+	# the first version of this fixture found 12 interactions total.
+	var r: float = Game.tuning.ring_start_radius * 0.13
+	for m in a.magnets:
+		m.global_position = Vector3(rng.randf_range(-r, r), Magnet.BODY_Y,
+				rng.randf_range(-r, r))
+		m.gain_mass(rng.randf_range(0.0, Game.tuning.start_mass * 30.0))
+	a._rebuild_grid()
+
+	var missed := 0
+	var total := 0
+	for i in a.magnets.size():
+		var found := {}
+		for j: int in a.neighbours(i):
+			found[j] = true
+		# Brute force: everyone this magnet can actually reach.
+		for j in a.magnets.size():
+			if j == i:
+				continue
+			var d: float = a.magnets[i].global_position.distance_to(
+					a.magnets[j].global_position)
+			var reach: float = maxf(a.magnets[i].pull_radius(),
+					a.magnets[i].radius() + a.magnets[j].radius())
+			if d <= reach:
+				total += 1
+				if not found.has(j):
+					missed += 1
+	ok(total > 400, "the fixture actually exercises the grid (%d interactions)" % total)
+	ok(missed == 0, "the grid finds every reachable magnet (%d missed of %d)"
+			% [missed, total])
+	a.queue_free()
+
+
+## Dailies must actually rotate.
+##
+## The pick is seeded by the day number, so it was never random-per-launch — but
+## with 8 missions over 3 slots consecutive days repeated constantly and the
+## player reported getting "the same ones every day". A seeded shuffle over too
+## small a pool is indistinguishable from no shuffle.
+func test_mission_rotation() -> void:
+	print("mission rotation")
+	var day: int = Meta.today()
+	var seen := {}
+	var repeats := 0
+	for offset in 14:
+		var picked: Array = Meta._pick("daily", 3, day + offset)
+		ok(picked.size() == 3, "day +%d hands out 3 dailies" % offset)
+		var ids: Array = []
+		for m: Dictionary in picked:
+			ids.append(String(m["id"]))
+		ids.sort()
+		var key := ",".join(ids)
+		if seen.has(key):
+			repeats += 1
+		seen[key] = true
+		# Same day, same missions — restarting the app must not reroll them.
+		var again: Array = Meta._pick("daily", 3, day + offset)
+		var again_ids: Array = []
+		for m: Dictionary in again:
+			again_ids.append(String(m["id"]))
+		again_ids.sort()
+		ok(",".join(again_ids) == key, "day +%d is stable across calls" % offset)
+	ok(seen.size() >= 10,
+			"14 days give at least 10 distinct daily sets (%d)" % seen.size())
+	ok(repeats <= 3, "few outright repeats in a fortnight (%d)" % repeats)
 
 
 ## Nobody may start the match already inside someone else's pull.

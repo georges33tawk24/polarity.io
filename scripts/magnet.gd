@@ -48,6 +48,7 @@ var _hurt := 0.0
 var _charge_pinged := false
 var _skin_emission := 0.0
 var _trail: GPUParticles3D = null
+var _trail_mat: ParticleProcessMaterial = null
 ## kind -> seconds remaining. Bots use these too; a pickup a bot cannot use is
 ## set dressing rather than a mechanic.
 var buffs: Dictionary = {}
@@ -169,6 +170,12 @@ func _build_trail() -> void:
 	if not bool(cfg.get("enabled", false)):
 		return
 	var mat := ParticleProcessMaterial.new()
+	# Emit off the BODY, not out of the centre point. A GPUParticles3D sits at its
+	# parent's origin, so with no emission shape every particle was born inside the
+	# magnet and the trail read as a small puff stuck in the middle of it. A sphere
+	# surface sized to the body means the wake comes off the rim, which is where a
+	# wake comes from.
+	mat.emission_shape = ParticleProcessMaterial.EMISSION_SHAPE_SPHERE_SURFACE
 	mat.direction = Vector3(0, 1, 0)
 	mat.spread = 25.0
 	mat.initial_velocity_min = 0.4
@@ -199,6 +206,25 @@ func _build_trail() -> void:
 	_trail.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	_trail.emitting = false
 	add_child(_trail)
+	_trail_mat = mat
+	_fit_trail()
+
+
+## Sizes the trail to the magnet.
+##
+## Particle scale and emission radius were fixed at build time, so the trail a
+## player was born with was the trail they had at fifty times the mass — a tiny
+## smudge under a large body. Both now follow the body radius.
+func _fit_trail() -> void:
+	if _trail_mat == null or t == null:
+		return
+	var k: float = maxf(1.0, _radius / t.base_radius)
+	_trail_mat.emission_sphere_radius = maxf(0.05, _radius * 0.82)
+	_trail_mat.scale_min = 0.5 * k
+	_trail_mat.scale_max = 1.0 * k
+	# A bigger magnet displaces more, so its wake lasts longer as well as being
+	# larger — a scaled-up puff that vanishes as fast still reads as small.
+	_trail.lifetime = clampf(0.7 * sqrt(k), 0.7, 1.8)
 
 
 func _set_mass(v: float) -> void:
@@ -209,6 +235,7 @@ func _set_mass(v: float) -> void:
 	_radius = t.radius_for(mass)
 	_pull_radius = t.pull_radius_for(mass)
 	_sphere.radius = _radius
+	_fit_trail()
 	if _aura != null:
 		_aura.scale = Vector3(_pull_radius, 1.0, _pull_radius)
 	_label.position.y = _radius * 0.5 + 1.5

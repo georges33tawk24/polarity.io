@@ -1457,3 +1457,54 @@ DATA & PRIVACY / ABOUT). The plate's own padding is what finally keeps dropdowns
 off the bezel and out from under the scrollbar. DELETE is now the only
 danger-styled control on the screen; it used to share its weight with CREDITS.
 
+### §12ap — performance, pull balance, trail, missions
+
+**Pull reach was growing on the body's exponent.** `pull_radius_for` was
+`radius_for(mass) * pull_radius_mult`, so a leader's field grew as fast as its
+body: at 200x start mass the reach was 49 units, a quarter of the arena radius,
+and nothing could approach from any direction. Pull now has its own
+`pull_radius_exponent` (0.24 against the body's 0.42): identical at start mass,
+18.9 instead of 49.0 at 200x. It also caps the broad phase's scan width, so the
+balance fix and the perf fix are the same change.
+
+**Magnet interactions moved from every-ordered-pair to a uniform grid.** The old
+loop ran n(n-1)/2 `length()` calls in GDScript every frame regardless of where
+anything was. The pass is now one-directional — each magnet pulls what is in ITS
+reach — with contact resolved once per pair. Buckets are emptied and refilled
+rather than reallocated: per-frame garbage in GDScript surfaces as p99 hitches,
+which is the half of "keep the fps high" that an average frame time hides.
+
+`neighbours()` is a separate function specifically so it can be checked against
+brute force. A broad phase that misses a pair does not crash — two magnets just
+stop attracting each other at certain positions, which on a phone is
+indistinguishable from bad tuning and would never be traced back here. Asserted
+over a deliberately clustered fixture: 414 interactions, 0 missed. The first
+version of that fixture scattered magnets over the whole arena and found 12
+interactions, which would have proved nothing.
+
+**Bot AI runs at level of detail**, the way an .io server does it: bots beyond a
+third of the arena from the player decide at a quarter rate, staggered by index so
+the cheap ones do not all think on the same frame. Bot count dropped 90 -> 60 as
+asked.
+
+**Frame time is now measured** in `smoke --real` (p50/p99, sorted percentiles
+rather than a mean). Honest caveat: the numbers move between 1.39ms and 16.67ms
+p50 across runs of IDENTICAL code, because the window is backgrounded and the
+machine is loaded. The harness is real; the desktop figures are not evidence of
+anything yet, and nothing has been profiled on a device.
+
+**The trail** emitted from the magnet's centre point and never grew. A
+GPUParticles3D sits at its parent's origin, and with no emission shape every
+particle was born inside the body — a small puff stuck in the middle of a large
+magnet. It now emits off a sphere surface sized to the body, and particle scale
+and lifetime follow the radius.
+
+**The missions countdown was a frozen string.** It was computed once when the tab
+was built and never touched again, unlike the store offer clock which had a timer.
+There is now one shared 1s clock for every countdown on the panel, and a rollover
+while the player is looking rebuilds the list. The daily pool went 8 -> 16 against
+3 slots: the pick was always seeded by day number, but a seeded shuffle over a
+pool barely larger than the slot count is indistinguishable from no shuffle.
+Asserted: 14 consecutive days give 14 distinct sets, 0 repeats, and the same day
+always gives the same three.
+

@@ -16,6 +16,8 @@ var _tab_row: Control
 var _scroll: ScrollContainer
 var _offer_clock: Label
 var _offer_timer: Timer
+## {label, scope} per live "resets in" countdown on the panel.
+var _reset_clocks: Array = []
 var _focus_child: Control
 var _chips: Array[Control] = []
 var _toast_host: Control
@@ -112,6 +114,7 @@ func _rebuild() -> void:
 	_scrolled_tab = _tab
 	# The offer clock is about to be freed with the rest of the content.
 	_offer_clock = null
+	_reset_clocks.clear()
 	_focus_child = null
 	for c in _tab_row.get_children():
 		c.queue_free()
@@ -465,28 +468,61 @@ func _offer_card(offer: Dictionary) -> Control:
 	if pid != "":
 		box.add_child(UiKit.spacer(UiKit.S1))
 		box.add_child(_buy_control(pid, Store.owns(pid)))
+	_ensure_clock()
+	return card
+
+
+## Seconds until each scope rolls over. Weekly rolls on the same clock as daily,
+## just further out.
+func _reset_seconds(scope: String) -> int:
+	var secs := Meta.seconds_to_rollover()
+	if scope == "weekly":
+		secs += (6 - (Meta.today() % 7)) * Meta.DAY_SECONDS
+	return secs
+
+
+## One shared 1s timer for every countdown on the panel. It used to belong to the
+## store offer alone and stopped itself the moment that label went away, so a
+## missions countdown could not have used it even if it had asked.
+func _ensure_clock() -> void:
 	if _offer_timer == null:
 		_offer_timer = Timer.new()
 		_offer_timer.wait_time = 1.0
 		_offer_timer.autostart = true
-		_offer_timer.timeout.connect(_tick_offer)
+		_offer_timer.timeout.connect(_tick_clocks)
 		add_child(_offer_timer)
 	_offer_timer.start()
-	return card
 
 
-## Re-texts one Label per second. A full _rebuild() every second would rebuild the
-## whole catalogue and fight the player's scroll position.
-func _tick_offer() -> void:
-	if _offer_clock == null or not is_instance_valid(_offer_clock):
+## Re-texts a handful of Labels per second. A full _rebuild() every second would
+## rebuild the whole catalogue and fight the player's scroll position.
+func _tick_clocks() -> void:
+	var live := false
+
+	if _offer_clock != null and is_instance_valid(_offer_clock):
+		var left := Store.offer_seconds_left()
+		if left <= 0:
+			_offer_timer.stop()
+			_rebuild()
+			return
+		_offer_clock.text = tr("UI_RESETS_IN") % Locale.duration(left)
+		live = true
+
+	for entry: Dictionary in _reset_clocks:
+		var lbl: Label = entry.get("label")
+		if lbl == null or not is_instance_valid(lbl):
+			continue
+		var secs := _reset_seconds(String(entry.get("scope", "daily")))
+		if secs <= 1:
+			# Rolled over while the player was looking at it: the missions on
+			# screen are now the wrong ones.
+			_rebuild()
+			return
+		lbl.text = tr("UI_RESETS_IN") % Locale.duration(secs)
+		live = true
+
+	if not live:
 		_offer_timer.stop()
-		return
-	var left := Store.offer_seconds_left()
-	if left <= 0:
-		_offer_timer.stop()
-		_rebuild()
-		return
-	_offer_clock.text = tr("UI_RESETS_IN") % Locale.duration(left)
 
 
 # --- missions --------------------------------------------------------------
@@ -499,11 +535,14 @@ func _build_missions() -> void:
 		h.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		header.add_child(h)
 		if scope != "achievement":
-			var secs := Meta.seconds_to_rollover()
-			if scope == "weekly":
-				secs += (6 - (Meta.today() % 7)) * Meta.DAY_SECONDS
-			header.add_child(UiKit.lbl(tr("UI_RESETS_IN") % Locale.duration(secs),
-					28, UiKit.INK_DIM, HORIZONTAL_ALIGNMENT_RIGHT))
+			# Registered with the panel's clock instead of being written once at
+			# build time. This label used to be a frozen string: it showed whatever
+			# the countdown happened to be when the tab was opened and never moved
+			# again, which is indistinguishable from a broken timer.
+			var clock := UiKit.lbl("", 28, UiKit.INK_DIM, HORIZONTAL_ALIGNMENT_RIGHT)
+			header.add_child(clock)
+			_reset_clocks.append({"label": clock, "scope": scope})
+			_ensure_clock()
 		_content.add_child(UiKit.spacer(10))
 		_content.add_child(header)
 

@@ -13,8 +13,16 @@ extends Resource
 @export var base_radius := 1.15
 ## radius = base_radius * (mass / start_mass) ^ this. Sub-linear, so growth stays readable.
 @export var radius_exponent := 0.42
-## Pull radius as a multiple of body radius.
+## Pull radius as a multiple of body radius, AT START MASS.
 @export var pull_radius_mult := 4.6
+## Pull radius grows on this exponent, not radius_exponent.
+##
+## It used to be `radius_for(mass) * pull_radius_mult`, so reach grew on the
+## body's own 0.42 — the leader's field covered a large part of the screen and
+## nothing could approach it from any direction. Reach still grows, visibly, but
+## far slower than the body does, so being huge stops being a win condition on
+## its own.
+@export var pull_radius_exponent := 0.24
 ## Move speed at start_mass. Raised hard after the first device test — at 10.5 a
 ## magnet took two full seconds to cross the visible arena, which reads as slow
 ## motion on a phone where your thumb has already arrived.
@@ -177,7 +185,8 @@ func speed_for(mass: float) -> float:
 
 
 func pull_radius_for(mass: float) -> float:
-	return radius_for(mass) * pull_radius_mult
+	return base_radius * pull_radius_mult \
+			* pow(maxf(mass, 0.01) / start_mass, pull_radius_exponent)
 
 
 ## Attraction force a magnet of `mass` exerts at `distance`.

@@ -581,19 +581,48 @@ func _apply_intent() -> void:
 
 
 func _think_bots(delta: float) -> void:
-	for m in magnets:
-		if m.alive and m.brain != null:
+	# Level of detail, the way an .io server does it: what the player can see gets
+	# full attention, the rest of the world runs coarser. A bot on the far side of
+	# a 370-unit arena is invisible and nobody can tell it is deciding four times a
+	# second instead of sixty — but at 90 bots that is most of the AI budget.
+	#
+	# Staggered by index so the cheap bots do not all think on the same frame and
+	# produce a stutter every fourth one.
+	_ai_tick += 1
+	var focus := player.global_position if player != null and player.alive \
+			else Vector3.ZERO
+	var near: float = t.ring_start_radius * 0.32
+	var near_sq := near * near
+	for i in magnets.size():
+		var m := magnets[i]
+		if not m.alive or m.brain == null:
+			continue
+		if m.global_position.distance_squared_to(focus) > near_sq:
+			if (_ai_tick + i) % AI_SKIP != 0:
+				continue
+			m.brain.think(delta * float(AI_SKIP), magnets, ring_radius)
+		else:
 			m.brain.think(delta, magnets, ring_radius)
+
+
+## How many frames a distant bot skips between decisions.
+const AI_SKIP := 4
+
+var _ai_tick := 0
 
 
 ## Attraction and contact bites between magnets. O(n^2) over ~15 bodies.
 func _magnet_interactions(delta: float) -> void:
-	var n := magnets.size()
-	for i in n:
+	_rebuild_grid()
+	for i in magnets.size():
 		var a := magnets[i]
 		if not a.alive:
 			continue
-		for j in range(i + 1, n):
+		# One directional pass: `a` pulls everyone in ITS reach. The old loop tested
+		# every ordered pair and applied both directions at once — the same result
+		# for n(n-1)/2 length() calls in GDScript every frame, whether or not
+		# anything was anywhere near anything.
+		for j: int in neighbours(i):
 			var b := magnets[j]
 			if not b.alive:
 				continue
@@ -603,16 +632,71 @@ func _magnet_interactions(delta: float) -> void:
 			if d < 0.001:
 				continue
 			var dir := to / d
-
 			if a.is_attracting() and d < a.pull_radius():
-				b.velocity -= dir * t.pull_force(a.mass, d) * a.pull_strength_mult() \
-						/ _resist(b) * delta
-			if b.is_attracting() and d < b.pull_radius():
-				a.velocity += dir * t.pull_force(b.mass, d) * b.pull_strength_mult() \
-						/ _resist(a) * delta
-
-			if d < a.radius() + b.radius():
+				b.velocity -= dir * t.pull_force(a.mass, d) \
+						* a.pull_strength_mult() / _resist(b) * delta
+			# Contact is symmetric, so resolve it once per pair.
+			if j > i and d < a.radius() + b.radius():
 				_contact(a, b, dir)
+
+
+## Uniform grid over the arena, rebuilt each frame.
+##
+## Cell size is a compromise: too small and a big magnet scans hundreds of cells,
+## too large and every cell holds everyone. Reach is dominated by pull radius,
+## which after the pull_radius_exponent change tops out near 19 units even for a
+## huge magnet, so cells a little wider than that keep the usual scan to 3x3.
+const CELL := 28.0
+
+var _grid: Dictionary = {}
+var _max_radius := 0.0
+
+
+func _rebuild_grid() -> void:
+	# Buckets are emptied and refilled, never reallocated. Rebuilding the whole
+	# Dictionary allocated ~40 Arrays every frame, and per-frame garbage in
+	# GDScript shows up as p99 hitches rather than a lower average — which is the
+	# half of "keep the fps high" that an average frame time hides.
+	for key: Vector2i in _grid:
+		(_grid[key] as Array).clear()
+	_max_radius = 0.0
+	for i in magnets.size():
+		var m := magnets[i]
+		if not m.alive:
+			continue
+		_max_radius = maxf(_max_radius, m.radius())
+		var key := _cell_key(m.global_position)
+		var bucket: Variant = _grid.get(key)
+		if bucket == null:
+			_grid[key] = [i]
+		else:
+			(bucket as Array).append(i)
+
+
+func _cell_key(p: Vector3) -> Vector2i:
+	return Vector2i(int(floor(p.x / CELL)), int(floor(p.z / CELL)))
+
+
+## Indices of every magnet that could possibly interact with `i`.
+##
+## Separate from the loop that uses it so it can be checked against brute force —
+## a broad phase that quietly misses a pair does not crash, it just stops magnets
+## attracting each other sometimes, which is indistinguishable from bad tuning.
+func neighbours(i: int) -> Array:
+	var a := magnets[i]
+	var reach: float = maxf(a.pull_radius(), a.radius() + _max_radius)
+	var span := int(ceil(reach / CELL))
+	var base := _cell_key(a.global_position)
+	var out: Array = []
+	for cx in range(base.x - span, base.x + span + 1):
+		for cy in range(base.y - span, base.y + span + 1):
+			var bucket: Variant = _grid.get(Vector2i(cx, cy))
+			if bucket == null:
+				continue
+			for j: int in bucket:
+				if j != i:
+					out.append(j)
+	return out
 
 
 ## Heavier magnets are dragged around less. Never below 1 or light magnets
