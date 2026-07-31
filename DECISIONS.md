@@ -1076,3 +1076,39 @@ The trap was `_on_board`, which rewrites row visibility three times a second and
 undid the collapse instantly. Visibility now flows through one function that both the
 toggle and the refresh call. Asserted rather than screenshotted: a headless check
 proves the refresh does not undo it, which a screenshot cannot show.
+
+
+## §12ae — the IPA, and three defects static checks missed (2026-07-31)
+
+An unsigned IPA builds on this machine after all. I was wrong twice before getting
+there — first claiming it needed the $99 Apple account, then inventing an explanation
+about a deleted iOS runtime when the user said they had never installed one. What
+settled it was opening `RoadRush.ipa`, an IPA built here on 29 July: unsigned, no
+`Assets.car`, loose icon PNGs. That is proof the toolchain never needed a runtime,
+because the two tools that DO need one were never involved.
+
+`actool` (asset catalog) and `ibtool` (launch storyboard) both require a simulator
+runtime even when targeting a device. Removing both from the Xcode build phase lets
+everything else compile — the binary was never the problem:
+
+- `Images.xcassets` out of Resources; icons ship as loose PNGs.
+- `Launch Screen.storyboard` out of Resources; `UILaunchScreen` in Info.plist
+  instead, which is the iOS 13+ way and needs no compilation.
+
+**Then three defects in a row, each caught only by the user asking a sceptical
+question, and each one something I had "verified" in the wrong place:**
+
+1. `CFBundleIconFiles` declared 11 icons; the bundle contained **zero**. I had copied
+   them into the source folder, not the Resources build phase. Verified the files
+   existed — not that they shipped.
+2. With the files shipping, the icon was still blank: I had written the list to the
+   TOP-LEVEL `CFBundleIconFiles`, which is the iOS 3.2 key that modern iOS ignores.
+   iOS 7+ reads `CFBundleIcons -> CFBundlePrimaryIcon`. Godot leaves that empty
+   because it expects the asset catalog to supply `CFBundleIconName` — which I had
+   just deleted. Verified the key existed — not that iOS reads it.
+3. `DeviceFamilyNotSupported` on install: the preset was set to **iPad only**
+   (`targeted_device_family=1` in Godot's enum), giving `UIDeviceFamily = [2]` against
+   an iPhone's family 1. Verified the build succeeded — not that it could install.
+
+Every one passed a static check while failing the only test that counted. The pattern
+worth keeping: **"the artefact exists" is not "the platform accepts it."**
