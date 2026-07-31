@@ -124,10 +124,77 @@ func _ready() -> void:
 	if ui._meta_panel != null:
 		ui._meta_panel.visible = false
 
+	await _check_modals(ui)
 	_check_board_collapse(ui)
 	_check_icons()
 	_check_audio()
 	_finish()
+
+
+## Every modal, opened for real.
+##
+## This exists because an audit found that FIVE of the six modals in the game had
+## never been rendered by anything — no test, no screenshot, no device. Settings
+## drawing on top of the menu was exactly that bug: a screen nobody had ever looked
+## at. A modal that has never been opened is a screen that has never been checked.
+func _check_modals(ui) -> void:
+	ui.show_screen("menu")
+	await get_tree().process_frame
+
+	# name -> a callable that opens it. Anything reachable by a player belongs here.
+	# Minimal arena so the revive offer has something to call back into.
+	var stub := Arena.new()
+	add_child(stub)
+	stub.setup(Game.tuning, null, 4242)
+	ui.attach_arena(stub)
+
+	var openers := {
+		"daily": func() -> void: ui.show_daily_if_due(true),
+		"credits": func() -> void: ui._build_about(),
+		"delete_confirm": func() -> void: ui._confirm_delete(),
+		# _on_player_down returns early with no arena attached, which is exactly why
+		# this modal had never been rendered by anything.
+		"revive": func() -> void: ui._on_player_down(),
+	}
+	var base_children: int = ui._layout.get_child_count()
+	for name: String in openers.keys():
+		base_children = int(ui._layout.get_child_count())
+		var before := _descendants(ui._layout)
+		(openers[name] as Callable).call()
+		for i in 3:
+			await get_tree().process_frame
+		var after := _descendants(ui._layout)
+		ok(after > before, "%s modal built something (%d -> %d nodes)"
+				% [name, before, after])
+		# A modal with no readable text is a blank rectangle over the game.
+		ok(_visible_text(ui._layout) >= 1, "%s modal has readable text" % name)
+		# HIDE what this modal added; do not free it. Two earlier attempts went
+		# wrong here: matching on "@Control" (Godot's auto-name for any unnamed
+		# Control) also deleted the real screens, and free()ing a popup mid-tween
+		# hung the run outright. Hiding is enough — the assertion is that the modal
+		# BUILT something, and a hidden node cannot obscure a later check.
+		for idx in range(base_children, ui._layout.get_child_count()):
+			var extra: Node = ui._layout.get_child(idx)
+			if extra is CanvasItem:
+				(extra as CanvasItem).visible = false
+		await get_tree().process_frame
+
+	# The codex lives on the meta panel, not the main layout.
+	ui.open_meta("shop")
+	for i in 3:
+		await get_tree().process_frame
+	var panel = ui._meta_panel
+	if panel != null:
+		var before_codex := _descendants(panel)
+		panel._open_codex()
+		for i in 3:
+			await get_tree().process_frame
+		ok(_descendants(panel) > before_codex, "codex modal built something")
+		panel.visible = false
+	ui.show_screen("menu")
+	await get_tree().process_frame
+	stub.queue_free()
+	await get_tree().process_frame
 
 
 ## The in-match leaderboard covers the top-right quadrant of the arena, which is
@@ -136,6 +203,15 @@ func _ready() -> void:
 ## a second and would otherwise undo it immediately.
 func _check_board_collapse(ui) -> void:
 	ui.show_screen("hud")
+	# Start from a known board. This check used to inherit rows from whatever ran
+	# before it, which is the same defect as depending on the machine's config.
+	for k: String in ui._board_rows.keys():
+		var stale: Control = ui._board_rows[k]
+		if is_instance_valid(stale):
+			stale.queue_free()
+	ui._board_rows.clear()
+	ui._board_ranks.clear()
+	ui._board_collapsed = false
 	# One player row plus two rivals is enough to prove the rule.
 	ui._on_board([
 		{"name": "Ferro", "mass": 90.0, "is_player": false, "rank": 1},

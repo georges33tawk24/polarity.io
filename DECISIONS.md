@@ -1175,3 +1175,52 @@ Opening it properly then exposed layout that had never been rendered: an
 settings column off the right edge — taking the toggles laid out after it with it.
 All rows now go through one `_setting_row` builder with a fixed label width and
 clipping, and the screen is inset from the bezel like every other one.
+
+
+## §12ah — game feel from the device, and an audit of what was never rendered
+(2026-07-31)
+
+Device feedback, all of it acted on:
+
+- **"I move in slow motion."** `base_speed` 10.5 -> 16.5, `accel` 46 -> 95. At 10.5 a
+  magnet took two full seconds to cross the visible arena. On a phone your thumb has
+  already arrived; the magnet catching up two seconds later is the whole complaint.
+- **"Takes way too long to kill someone."** `absorb_fraction` 0.12 -> 0.26,
+  `bite_cooldown` 0.6 -> 0.38. ~3.5s of sustained contact became ~1.2s.
+- **"The vibrations, my phone was gonna explode."** The cause was one line:
+  `Platform.vibrate(10, 0.25)` on EVERY piece of scrap absorbed — many times a
+  second. Removed entirely; the sound and the squash already carry it. Every other
+  pulse roughly halved.
+- **"Remove the red border things."** Outside the ring was flooded with red at 0.88 —
+  a saturated slab across a third of the frame. The ground simply darkens now, with a
+  narrow painted edge so the boundary still reads.
+- Minimap gets a minimise toggle. Leaderboard score column 120 -> 186px, because a
+  six-figure mass ran into the name. Settings gets a pinned BACK — the only exit was
+  at the bottom of a long scroll. Results SHARE/MENU became real buttons instead of
+  34dp text links under an amber slab.
+
+### The audit: five of six modals had never been rendered by anything
+
+Asked to look for more of my own mistakes, the useful question turned out not to be
+"read the code again" but **"what has no path that ever draws it?"** A grep of every
+`UiKit.modal()` call site against the test and screenshot harnesses found that the
+credits screen, the delete-data confirm, the codex, the revive offer and the rating
+prompt had never been built by any check. Settings-over-menu was exactly that bug.
+
+`screens.tscn` now opens every modal and asserts each builds content with readable
+text. The revive offer needed a stub arena to render at all — which is precisely why
+it had never been covered.
+
+**Three self-inflicted bugs while writing that check**, worth recording because they
+are all the same shape:
+
+1. Cleanup matched `@Control`, Godot's auto-name for any unnamed Control — so it
+   deleted the real screens, and a later check failed on a freed `_board`.
+2. Replaced that with `free()` by index; the suite then appeared to hang and I
+   diagnosed "freeing mid-tween". **That was wrong.** The script had a type-inference
+   parse error, so the scene never ran at all and simply sat there.
+3. `ui` is untyped in the harness, so every expression read off it is Variant and
+   needs an explicit type. Two declarations did not have one.
+
+The pattern in all three: a plausible explanation adopted before checking. The parse
+error was one `--check-only` away the whole time.
