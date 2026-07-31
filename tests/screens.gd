@@ -70,7 +70,7 @@ func _ready() -> void:
 	for screen: String in ["menu", "hud", "results", "settings"]:
 		if screen == "settings":
 			ui.show_screen("menu")
-			ui._settings.visible = true
+			ui._open_settings()
 		else:
 			ui.show_screen(screen)
 		await get_tree().process_frame
@@ -87,6 +87,25 @@ func _ready() -> void:
 		ok(root.size.x > 100.0 and root.size.y > 100.0,
 				"%s: has a real rect (%.0fx%.0f)" % [screen, root.size.x, root.size.y])
 		ok(_visible_text(root) >= 1, "%s: has readable text" % screen)
+
+	# Screens are mutually exclusive. Settings used to be shown by flipping its own
+	# visibility while the menu stayed up, so the wordmark and PLAY button showed
+	# through it — none of the screenshots caught it because the harness was driving
+	# settings through a path that hid it entirely.
+	ui.show_screen("menu")
+	ui._open_settings()
+	await get_tree().process_frame
+	ok(not ui._menu.visible, "opening settings hides the menu")
+	ui._close_settings()
+	await get_tree().process_frame
+	ok(ui._menu.visible and not ui._settings.visible, "closing settings restores the menu")
+
+	var lit: Array[String] = []
+	for pair in [["menu", ui._menu], ["hud", ui._hud], ["results", ui._results],
+			["settings", ui._settings]]:
+		if (pair[1] as Control).visible:
+			lit.append(String(pair[0]))
+	ok(lit.size() <= 1, "at most one top-level screen is visible (%s)" % ", ".join(lit))
 
 	# --- meta tabs ----------------------------------------------------------
 	ui.show_screen("menu")

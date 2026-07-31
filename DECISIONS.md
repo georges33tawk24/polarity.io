@@ -1147,3 +1147,31 @@ were not wrong when written — the contract changed.
 gitignored `build/` and the next export would have wiped it. It verifies what actually
 shipped and fails on the exact three defects that reached a device — icons under the
 dead key, icons absent from the bundle, wrong device family.
+
+
+## §12ag — settings drew on top of the menu (2026-07-31)
+
+Reported from the device: opening Settings showed the wordmark, the name field and
+the PLAY button straight through it.
+
+`_settings.visible = true` was set while `_menu` stayed visible. Settings is a later
+sibling with no opaque surface of its own, so it composited over a fully visible
+menu. Settings is a SCREEN, not an overlay — `_open_settings` / `_close_settings`
+now toggle the pair together, and `_relayout` restores the pairing too.
+
+**Why no screenshot ever caught it — and this is the worse half.** `menu_shot`
+drove settings through `show_screen("settings")`, which contains
+`if which != "results": _settings.visible = false`. It was *hiding* the screen it
+claimed to capture. Every settings screenshot in this project was of an empty
+backdrop, and I reported them as `ok=True` because the harness only ever told me the
+PNG had saved. I never opened one.
+
+Two guards now. The harness uses the same `_open_settings()` the gear button uses, so
+it exercises the real path. And `screens.tscn` asserts that **at most one top-level
+screen is visible at a time**, which is the invariant that was silently violated.
+
+Opening it properly then exposed layout that had never been rendered: an
+`OptionButton` sizes itself to its WIDEST item, and the language list pushed the
+settings column off the right edge — taking the toggles laid out after it with it.
+All rows now go through one `_setting_row` builder with a fixed label width and
+clipping, and the screen is inset from the bezel like every other one.

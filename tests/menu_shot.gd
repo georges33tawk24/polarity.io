@@ -87,6 +87,9 @@ func _ready() -> void:
 		if _kind != "" and main.ui._meta_panel != null:
 			main.ui._meta_panel._shop_kind = _kind
 			main.ui._meta_panel._rebuild()
+	elif _screen == "settings":
+		main.ui.show_screen("menu")
+		main.ui._open_settings()
 	elif _screen != "menu":
 		main.ui.show_screen(_screen)
 	# Six frames used to be enough because nothing on any screen moved. Now the

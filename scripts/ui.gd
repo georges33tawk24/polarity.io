@@ -157,6 +157,9 @@ func rebuild() -> void:
 	_relayout()
 	show_screen(current)
 	_settings.visible = settings_open
+	# Menu and settings are mutually exclusive; a rebuild must not leave both up.
+	if settings_open:
+		_menu.visible = false
 	_update_backdrop()
 
 
@@ -361,9 +364,7 @@ func _build_menu() -> Control:
 	if matches >= 3:
 		row.add_child(_nav_tile("bars", "UI_LEADERBOARD",
 				func() -> void: open_meta("board"), false))
-	row.add_child(_nav_tile("gear", "UI_SETTINGS", func() -> void:
-		_settings.visible = true
-		_update_backdrop(), false))
+	row.add_child(_nav_tile("gear", "UI_SETTINGS", _open_settings, false))
 	box.add_child(row)
 
 	box.add_child(UiKit.spacer(UiKit.S3))
@@ -1209,6 +1210,11 @@ func _build_settings() -> Control:
 	var root := Control.new()
 	var scroll := ScrollContainer.new()
 	scroll.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	# Every other screen breathes at the edges; this one ran flush to them, so the
+	# dropdown arrows and the toggle pills sat against the bezel.
+	scroll.offset_left = UiKit.S3
+	scroll.offset_right = -UiKit.S3
+	scroll.offset_top = UiKit.S2
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	root.add_child(scroll)
 
@@ -1223,8 +1229,7 @@ func _build_settings() -> Control:
 	box.add_child(_toggle(tr("UI_HAPTICS"), "haptics"))
 	box.add_child(_toggle(tr("UI_REDUCED_MOTION"), "reduced_motion"))
 
-	var language := HBoxContainer.new()
-	language.add_child(_lbl(tr("UI_LANGUAGE"), 40, UiKit.INK_DIM))
+	var language_row_label := tr("UI_LANGUAGE")
 	var lang_opt := OptionButton.new()
 	for n: String in Locale.names():
 		lang_opt.add_item(n)
@@ -1234,12 +1239,9 @@ func _build_settings() -> Control:
 		Game.set_value("locale", code)
 		Locale.apply(code)
 		Bus.locale_changed.emit())
-	lang_opt.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	language.add_child(lang_opt)
-	box.add_child(language)
+	box.add_child(_setting_row(language_row_label, lang_opt))
 
-	var quality := HBoxContainer.new()
-	quality.add_child(_lbl(tr("UI_QUALITY"), 40, UiKit.INK_DIM))
+	var quality_row_label := tr("UI_QUALITY")
 	var opt := OptionButton.new()
 	for q in ["auto", "low", "medium", "high"]:
 		opt.add_item(tr("UI_QUALITY_" + q.to_upper()))
@@ -1247,9 +1249,7 @@ func _build_settings() -> Control:
 	opt.selected = maxi(0, ["auto", "low", "medium", "high"].find(current))
 	opt.item_selected.connect(func(i: int) -> void:
 		Game.set_value("quality", ["auto", "low", "medium", "high"][i]))
-	opt.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	quality.add_child(opt)
-	box.add_child(quality)
+	box.add_child(_setting_row(quality_row_label, opt))
 
 	box.add_child(_toggle(tr("UI_COLORBLIND"), "colorblind"))
 	box.add_child(_toggle(tr("UI_LEFT_HANDED"), "left_handed"))
@@ -1272,8 +1272,7 @@ func _build_settings() -> Control:
 	scale_row.add_child(scale_slider)
 	box.add_child(scale_row)
 
-	var controls := HBoxContainer.new()
-	controls.add_child(_lbl(tr("UI_CONTROLS"), 40, UiKit.INK_DIM))
+	var controls_row_label := tr("UI_CONTROLS")
 	var ctrl_opt := OptionButton.new()
 	const SCHEMES := ["drag", "joystick", "toggle"]
 	for key: String in ["UI_CONTROL_DRAG", "UI_CONTROL_JOYSTICK", "UI_CONTROL_TOGGLE"]:
@@ -1281,9 +1280,7 @@ func _build_settings() -> Control:
 	ctrl_opt.selected = maxi(0, SCHEMES.find(String(Game.get_value("control_scheme", "drag"))))
 	ctrl_opt.item_selected.connect(func(i: int) -> void:
 		Game.set_value("control_scheme", SCHEMES[i]))
-	ctrl_opt.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	controls.add_child(ctrl_opt)
-	box.add_child(controls)
+	box.add_child(_setting_row(controls_row_label, ctrl_opt))
 
 	box.add_child(_toggle(tr("UI_NOTIFICATIONS"), "notifications"))
 	box.add_child(UiKit.spacer(24))
@@ -1345,9 +1342,8 @@ func _build_settings() -> Control:
 			Platform.os_name], 30, UiKit.INK_DIM, HORIZONTAL_ALIGNMENT_CENTER))
 
 	var back := _btn(tr("UI_BACK"), ACCENT)
-	back.pressed.connect(func() -> void:
-		root.visible = false
-		_update_backdrop())
+	UiKit.cap_width(back, 700)
+	back.pressed.connect(_close_settings)
 	box.add_child(back)
 	return root
 
@@ -1374,8 +1370,9 @@ func _confirm_delete() -> void:
 func _slider(label: String, key: String, on_change: Callable) -> Control:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 24)
-	var l := _lbl(label, 40, UiKit.INK_DIM)
+	var l := _lbl(label, 36, UiKit.INK_DIM)
 	l.custom_minimum_size = Vector2(300, 0)
+	l.clip_text = true
 	row.add_child(l)
 	var s := HSlider.new()
 	s.min_value = 0.0
@@ -1393,7 +1390,9 @@ func _slider(label: String, key: String, on_change: Callable) -> Control:
 
 func _toggle(label: String, key: String) -> Control:
 	var row := HBoxContainer.new()
-	var l := _lbl(label, 40, UiKit.INK_DIM)
+	var l := _lbl(label, 36, UiKit.INK_DIM)
+	l.custom_minimum_size = Vector2(300, 0)
+	l.clip_text = true
 	l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(l)
 	var c := CheckButton.new()
@@ -1795,3 +1794,41 @@ func _refresh_board_height() -> void:
 		if r.visible:
 			shown += 1
 	_board.custom_minimum_size.y = maxf(BOARD_ROW_H, float(maxi(shown, 1)) * BOARD_ROW_H)
+
+
+## Settings is a SCREEN, not an overlay. It used to be shown by flipping its own
+## visibility while leaving the menu visible underneath, and because it has no
+## opaque surface of its own the wordmark, the name field and the PLAY button all
+## showed through it. On desktop screenshots this was never noticed because the
+## harness only ever reported that the PNG saved.
+func _open_settings() -> void:
+	_settings.visible = true
+	_menu.visible = false
+	_settings.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_update_backdrop()
+	UiKit.enter(_settings)
+
+
+func _close_settings() -> void:
+	_settings.visible = false
+	_menu.visible = true
+	_menu.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_update_backdrop()
+	UiKit.enter(_menu)
+
+
+## One settings row: a fixed-width label and a control that fills the rest. The
+## label width is fixed rather than EXPAND_FILL so every row lines up, and the
+## control clips rather than demanding the width of its longest item.
+func _setting_row(label: String, control: Control) -> HBoxContainer:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", UiKit.S2)
+	var l := _lbl(label, 36, UiKit.INK_DIM)
+	l.custom_minimum_size = Vector2(300, 0)
+	l.clip_text = true
+	row.add_child(l)
+	control.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	if control is Button:
+		(control as Button).clip_text = true
+	row.add_child(control)
+	return row
