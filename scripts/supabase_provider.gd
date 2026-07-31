@@ -207,6 +207,65 @@ func save_cloud(payload: Dictionary, cb: Callable) -> void:
 			func(ok: bool, _d: Variant) -> void: cb.call(ok))
 
 
+# --- friends ----------------------------------------------------------------
+
+func friends_available() -> bool:
+	return _configured and user_id != ""
+
+
+## Claims this account's profile row so the player's code can be resolved by
+## somebody else. Called after every sign-in: the code comes from the install id
+## and is stable, so re-claiming is a no-op that also refreshes the display name.
+func claim_profile(code: String, display_name: String, cb := Callable()) -> void:
+	_request(HTTPClient.METHOD_POST, "/rest/v1/rpc/claim_profile",
+			{"p_code": code, "p_name": display_name},
+			func(ok: bool, data: Variant) -> void:
+				if cb.is_valid():
+					cb.call(ok, String(data) if data is String else code))
+
+
+func add_friend(code: String, cb: Callable) -> void:
+	if user_id == "":
+		cb.call(false, "", "offline")
+		return
+	_request(HTTPClient.METHOD_POST, "/rest/v1/rpc/add_friend_by_code",
+			{"p_code": code},
+			func(ok: bool, data: Variant) -> void:
+				if ok:
+					cb.call(true, String(data) if data is String else "", "")
+					return
+				# The function raises for every rejection, so the reason has to
+				# come back as a UI key rather than a Postgres error string.
+				var msg := ""
+				if data is Dictionary:
+					msg = String((data as Dictionary).get("message", ""))
+				var reason := "unavailable"
+				if msg.contains("no such code"):
+					reason = "no_code"
+				elif msg.contains("your own code"):
+					reason = "self"
+				elif msg.contains("limit"):
+					reason = "limit"
+				cb.call(false, "", reason))
+
+
+func list_friends(cb: Callable) -> void:
+	if user_id == "":
+		cb.call([])
+		return
+	_request(HTTPClient.METHOD_POST, "/rest/v1/rpc/friend_scores", {},
+			func(ok: bool, data: Variant) -> void:
+				if not ok or not (data is Array):
+					cb.call([])
+					return
+				var rows: Array = []
+				for r: Variant in data as Array:
+					if r is Dictionary:
+						rows.append({"name": String((r as Dictionary).get("name", "?")),
+								"score": int((r as Dictionary).get("score", 0))})
+				cb.call(rows))
+
+
 # --- leaderboards -----------------------------------------------------------
 
 func submit_score(score: int, cb: Callable) -> void:
@@ -221,6 +280,9 @@ func submit_score(score: int, cb: Callable) -> void:
 
 
 func fetch_board(scope: int, cb: Callable) -> void:
+	if scope == 1:   # Backend.Scope.FRIENDS
+		list_friends(cb)
+		return
 	var q := "/rest/v1/leaderboard?select=name,score&order=score.desc&limit=50"
 	if scope == 2:   # Backend.Scope.WEEKLY
 		q = "/rest/v1/leaderboard_weekly?select=name,score&order=score.desc&limit=50"

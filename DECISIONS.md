@@ -1508,3 +1508,50 @@ pool barely larger than the slot count is indistinguishable from no shuffle.
 Asserted: 14 consecutive days give 14 distinct sets, 0 repeats, and the same day
 always gives the same three.
 
+### §12aq — the magnet became a magnet, and friends became real
+
+**The body was a 320-degree annulus** — a band with a 40-degree notch, which the
+player described exactly as "a circle cut in a place". It is now a true U: a
+semicircular bend with two straight parallel legs and flat pole faces, with the
+gap as wide as the arms. At the size a magnet occupies on a phone the silhouette
+is the entire identity, and an almost-closed ring reads as a ring whatever colours
+are painted on it.
+
+The shader's pole split moved from `local_pos.z` to `local_pos.x`. The legs run
+along -Z, so the arms separate left/right; splitting on Z had put one colour on
+the bend and the other on both legs, which is not what a magnet's poles look like.
+
+**Friends.** Two tables, three functions, all in `supabase/schema.sql`.
+
+`profiles` is readable only by its owner. Resolving somebody else's code happens
+inside `add_friend_by_code`, a SECURITY DEFINER function — the alternative is
+letting every client scan the profiles table, which is a directory of every
+player's uuid. `friendships` has SELECT and DELETE policies but deliberately **no
+INSERT policy**: rows are only ever written by that function, because a client
+that could insert directly could befriend an arbitrary uuid and read that
+player's score. There is a 200-friend cap on the one call that writes rows on
+another user's behalf.
+
+Both directions are written at once. This is a leaderboard scope, not a social
+graph — a pending-invite flow nobody confirms is a friends list that is always
+empty.
+
+The friend code is the SAME code as the referral one. Two six-character codes
+identifying the same person is one more than anyone needs.
+
+`claim_profile` runs on every sign-in. Without it a player hands out a code that
+answers "no such code" forever, and the feature looks broken from the side of the
+person being ADDED rather than the one adding — which is the harder failure to
+report.
+
+**FRIENDS no longer falls back to the seeded local board.** Every other scope
+invents plausible rivals when offline so there is something to climb; for friends
+that same fallback presented a list of people who do not exist as the player's
+friends. The empty state now distinguishes "no friends yet, share your code" from
+"friends need a connection", because those are different problems and the player
+cannot act on the wrong one.
+
+The player's own code is shown on the board, not hidden behind the add button:
+one side reads it out and the other types it in, so a screen that only accepts
+input means nobody can ever be first to share.
+

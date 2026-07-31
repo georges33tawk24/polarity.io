@@ -39,7 +39,10 @@ void fragment() {
 	// horizontal and model Z is the screen vertical — splitting on X put the divide
 	// on a vertical line. Z gives the horizontal 50/50 divide a bar magnet actually
 	// has. The narrow smoothstep keeps it a hard edge rather than a gradient.
-	float split = smoothstep(-0.05, 0.05, local_pos.z);
+	// Split on X, not Z: the body is a U with its legs along -Z, so the two arms
+	// separate left/right. Splitting on Z put one colour on the bend and the other
+	// on both legs, which is not what a magnet's poles look like.
+	float split = smoothstep(-0.05, 0.05, local_pos.x);
 	vec3 c = mix(pole_b, pole_a, split);
 
 	// Never a full white-out: colours must stay identifiable while being hit,

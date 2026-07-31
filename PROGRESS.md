@@ -23,6 +23,16 @@ front end, .io results screen, sentence-cased prose, unified light UI surface.
 
 ## NEXT UP
 
+- (2026-07-31) Both owed features landed. Magnet body rebuilt as a true U with
+  straight legs (was a 320-degree annulus); friends shipped end to end — schema
+  with RLS, SECURITY DEFINER code lookup, provider methods, board scope, add-by-code
+  modal. DECISIONS §12aq. 382 + 200 checks green.
+- **ACTION REQUIRED FROM THE USER:** the friends tables do not exist in the live
+  Supabase project yet. Run the new section at the bottom of `supabase/schema.sql`
+  in the Supabase SQL editor. Until then the FRIENDS tab correctly reports that it
+  needs a connection rather than failing.
+- Still open: on-device profiling (desktop frame numbers are noise, §12ap);
+  rotate the exposed service_role key.
 - (2026-07-31) Perf + balance round: uniform-grid broad phase (checked against
   brute force), bot AI level-of-detail, bots 90 -> 60, pull reach decoupled from
   body growth, trail now emits off the body and scales with it, missions countdown

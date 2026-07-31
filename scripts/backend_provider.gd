@@ -23,3 +23,18 @@ func fetch_board(_scope: int, cb: Callable) -> void:
 	cb.call([])
 func available() -> bool:
 	return false
+
+## --- friends ---------------------------------------------------------------
+##
+## Local default is "cannot", not "empty". A friends feature that silently
+## reports success with nobody in it looks identical to a friends feature that
+## works and has no friends yet, and the player has no way to tell which they are
+## looking at.
+func friends_available() -> bool:
+	return false
+## Calls back with (ok, friend_name, reason). `reason` is a UI key, not prose.
+func add_friend(_code: String, cb: Callable) -> void:
+	cb.call(false, "", "offline")
+## Calls back with an Array of {name, score}.
+func list_friends(cb: Callable) -> void:
+	cb.call([])

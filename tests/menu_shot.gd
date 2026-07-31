@@ -90,6 +90,11 @@ func _ready() -> void:
 	elif _screen == "settings":
 		main.ui.show_screen("menu")
 		main.ui._open_settings()
+	elif _screen == "friends":
+		main.ui.show_screen("menu")
+		main.ui.open_meta("board")
+		main.ui._meta_panel._board_scope = Backend.Scope.FRIENDS
+		main.ui._meta_panel._rebuild()
 	elif _screen == "daily":
 		# The one modal that had no capture path, which is how a bug that blacked
 		# out the entire menu after claiming reached a device.

@@ -200,6 +200,27 @@ func _check_hud_layout(ui) -> void:
 			ctl.visible = was[idx]
 
 
+func _finds_text(n: Node, needle: String) -> bool:
+	for c in n.get_children():
+		if c is Label and (c as Label).text.findn(needle) >= 0:
+			return true
+		if c is Button and (c as Button).text.findn(needle) >= 0:
+			return true
+		if _finds_text(c, needle):
+			return true
+	return false
+
+
+func _find_line_edit(n: Node) -> LineEdit:
+	for c in n.get_children():
+		if c is LineEdit:
+			return c as LineEdit
+		var found := _find_line_edit(c)
+		if found != null:
+			return found
+	return null
+
+
 ## The near-opaque ColorRect a modal puts over everything.
 ##
 ## Size is part of the definition, not an optimisation: the first version matched
@@ -399,6 +420,31 @@ func _check_modals(ui) -> void:
 			if extra is CanvasItem:
 				(extra as CanvasItem).visible = false
 		await get_tree().process_frame
+
+	# Friends: a board scope, a header with the player's own code, and an add-by-code
+	# modal. None of it had ever been rendered by anything.
+	ui.open_meta("board")
+	for i in 3:
+		await get_tree().process_frame
+	var mp = ui._meta_panel
+	if mp != null:
+		mp._board_scope = Backend.Scope.FRIENDS
+		mp._rebuild()
+		for i in 3:
+			await get_tree().process_frame
+		ok(_visible_text(mp) >= 2, "friends board has readable text")
+		# The player's own code has to be ON SCREEN: one side reads it out, the
+		# other types it in, so a screen that only accepts input means nobody can
+		# ever be first to share.
+		ok(_finds_text(mp, Backend.friend_code()),
+				"the friends board shows the player's own code (%s)" % Backend.friend_code())
+		var before_add := _descendants(mp)
+		mp._open_add_friend()
+		for i in 3:
+			await get_tree().process_frame
+		ok(_descendants(mp) > before_add, "the add-friend modal builds")
+		ok(_find_line_edit(mp) != null, "the add-friend modal has a code field")
+		mp.visible = false
 
 	# The codex lives on the meta panel, not the main layout.
 	ui.open_meta("shop")

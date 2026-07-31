@@ -60,6 +60,12 @@ func sign_in_guest() -> void:
 			return
 		account_id = id if id != "" else Game.install_id()
 		signed_in = true
+		# Claim the profile row immediately. Until this exists nobody can resolve
+		# this player's code, so a player who had never signed in would hand out a
+		# code that always answered "no such code" — the friends feature would look
+		# broken from the side of the person being added, not the one adding.
+		if provider.has_method("claim_profile"):
+			provider.call("claim_profile", friend_code(), Game.player_name())
 		auth_changed.emit(true))
 
 
@@ -263,9 +269,38 @@ func submit(score: int) -> void:
 
 func fetch(scope: Scope) -> void:
 	provider.fetch_board(int(scope), func(rows: Array) -> void:
-		if rows.is_empty():
+		# FRIENDS never falls back to the seeded local board. The other scopes
+		# invent plausible rivals so an offline player still has something to climb
+		# — for friends that same fallback would be a list of people who do not
+		# exist, presented as the player's friends. An empty list is the honest
+		# answer and the UI says why it is empty.
+		if rows.is_empty() and scope != Scope.FRIENDS:
 			rows = _local_board(scope)
 		board_ready.emit(_scope_name(scope), rows))
+
+
+## True when friends can actually be added and listed right now.
+func friends_available() -> bool:
+	return provider.friends_available()
+
+
+## The player's own code. Same code as the referral one deliberately: two
+## six-character codes to keep track of is one more than anybody needs, and they
+## identify the same person.
+func friend_code() -> String:
+	return referral_code()
+
+
+## Adds by code. Calls back with (ok, friend_name, reason_key).
+func add_friend(code: String, cb: Callable) -> void:
+	var clean := code.strip_edges().to_upper()
+	if clean.length() < 4:
+		cb.call(false, "", "invalid")
+		return
+	if clean == friend_code():
+		cb.call(false, "", "self")
+		return
+	provider.add_friend(clean, cb)
 
 
 func _scope_name(scope: Scope) -> String:

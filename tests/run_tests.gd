@@ -42,6 +42,7 @@ func _ready() -> void:
 	test_spawn_spacing()
 	test_mission_rotation()
 	test_broad_phase()
+	test_friends()
 	test_scrap_field()
 	test_localization()
 	test_cosmetics()
@@ -595,6 +596,63 @@ func test_intent_mapping() -> void:
 	i.handle_event(jitter)
 	i.update(vp)
 	ok(i.dir == Vector2.ZERO, "a thumb twitching in place does not steer")
+
+
+## Friends must never be invented.
+##
+## Every other leaderboard scope falls back to a seeded local board of bot names
+## when offline, so a player always has something to climb. FRIENDS used to hit
+## that same fallback — which presented a list of people who do not exist as the
+## player's friends list. That is the "null providers report unavailable, never
+## fake success" rule, applied to the one screen where a fake is indistinguishable
+## from the real thing.
+func test_friends() -> void:
+	print("friends")
+	var was := Backend.provider
+	Backend.provider = BackendProvider.new()   # the local/null one
+
+	ok(not Backend.friends_available(),
+			"the local provider reports friends unavailable, not empty")
+
+	var got := []
+	Backend.board_ready.connect(func(scope: String, rows: Array) -> void:
+		if scope == "friends":
+			got.assign(rows), CONNECT_ONE_SHOT)
+	Backend.fetch(Backend.Scope.FRIENDS)
+	ok(got.is_empty(), "an offline friends board is empty, never seeded with bots")
+
+	# ...while the other scopes still get their stand-ins.
+	var global_rows := []
+	Backend.board_ready.connect(func(scope: String, rows: Array) -> void:
+		if scope == "global":
+			global_rows.assign(rows), CONNECT_ONE_SHOT)
+	Backend.fetch(Backend.Scope.GLOBAL)
+	ok(not global_rows.is_empty(), "the global board still stands in when offline")
+
+	# A code is a code whether or not anything is reachable, so the player can
+	# read theirs out before the other side has ever connected.
+	ok(Backend.friend_code().length() >= 4, "the player always has a code")
+	ok(Backend.friend_code() == Backend.friend_code(), "the code is stable")
+
+	var results: Array = []
+	Backend.add_friend("", func(ok_: bool, _n: String, reason: String) -> void:
+		results.append([ok_, reason]))
+	ok(results.size() == 1 and not results[0][0] and results[0][1] == "invalid",
+			"an empty code is rejected before it reaches the network")
+
+	results.clear()
+	Backend.add_friend(Backend.friend_code(), func(ok_: bool, _n: String, reason: String) -> void:
+		results.append([ok_, reason]))
+	ok(results.size() == 1 and not results[0][0] and results[0][1] == "self",
+			"adding your own code is refused with a reason the UI can show")
+
+	results.clear()
+	Backend.add_friend("ZZZZZZ", func(ok_: bool, _n: String, reason: String) -> void:
+		results.append([ok_, reason]))
+	ok(results.size() == 1 and not results[0][0] and results[0][1] == "offline",
+			"offline reports offline rather than pretending it worked")
+
+	Backend.provider = was
 
 
 ## The broad phase must not miss anyone.

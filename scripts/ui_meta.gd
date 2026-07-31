@@ -326,8 +326,99 @@ func _build_board() -> void:
 	Backend.board_ready.connect(sink, CONNECT_ONE_SHOT)
 	Backend.fetch(_board_scope)
 
+	if _board_scope == Backend.Scope.FRIENDS:
+		_content.add_child(_friends_header())
+
 	for row: Dictionary in rows:
 		_content.add_child(_board_row(row))
+
+	# An empty friends list is a real state with two different causes, and the
+	# player has to be able to tell them apart. Every other scope invents rivals
+	# when offline; this one must not, so it explains itself instead.
+	if _board_scope == Backend.Scope.FRIENDS and rows.is_empty():
+		_content.add_child(UiKit.spacer(UiKit.S2))
+		_content.add_child(UiKit.lbl(
+				tr("UI_NO_FRIENDS") if Backend.friends_available()
+						else tr("UI_FRIENDS_OFFLINE"),
+				28, UiKit.INK_MUTE, HORIZONTAL_ALIGNMENT_CENTER))
+
+
+## Your own code, and the way in to adding someone else's.
+##
+## The code is shown rather than hidden behind the add button because both halves
+## of this feature need it: one player reads it out, the other types it in, and a
+## screen that only lets you type means nobody can ever be the first to share.
+func _friends_header() -> Control:
+	var card := UiKit.plate()
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", UiKit.S1)
+	card.add_child(box)
+
+	var row := UiKit.row([], UiKit.S2)
+	var label := UiKit.lbl(tr("UI_YOUR_CODE"), 26, UiKit.INK_MUTE)
+	label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	row.add_child(label)
+	var code := UiKit.lbl(Backend.friend_code(), 44, UiKit.BRASS)
+	code.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(code)
+	var share := UiKit.btn_secondary(tr("UI_SHARE"), 76)
+	share.pressed.connect(func() -> void:
+		if not Platform.share_text(Backend.referral_link()):
+			DisplayServer.clipboard_set(Backend.friend_code())
+		_toast(tr("UI_SHARE")))
+	row.add_child(share)
+	box.add_child(row)
+
+	var add := UiKit.btn(tr("UI_ADD_FRIEND"), UiKit.ACCENT, 84)
+	add.disabled = not Backend.friends_available()
+	add.pressed.connect(_open_add_friend)
+	box.add_child(add)
+	return card
+
+
+## Code entry. A LineEdit rather than a keypad: codes are alphanumeric, and the
+## OS keyboard is the one input surface on a phone that is always correct.
+func _open_add_friend() -> void:
+	var box := UiKit.modal(self)
+	box.add_child(UiKit.lbl(tr("UI_ADD_FRIEND"), UiKit.T_TITLE, UiKit.INK,
+			HORIZONTAL_ALIGNMENT_CENTER))
+	box.add_child(UiKit.lbl(tr("UI_ENTER_CODE"), 28, UiKit.INK_DIM,
+			HORIZONTAL_ALIGNMENT_CENTER))
+
+	var field := LineEdit.new()
+	field.alignment = HORIZONTAL_ALIGNMENT_CENTER
+	field.max_length = 16
+	field.custom_minimum_size = Vector2(0, 96)
+	field.add_theme_font_size_override("font_size", 44)
+	UiKit.cap_width(field, 640)
+	box.add_child(field)
+
+	var status := UiKit.lbl("", 28, UiKit.DANGER, HORIZONTAL_ALIGNMENT_CENTER)
+	box.add_child(status)
+
+	var confirm := UiKit.btn(tr("UI_ADD_FRIEND"), UiKit.ACCENT)
+	UiKit.cap_width(confirm, 640)
+	confirm.pressed.connect(func() -> void:
+		confirm.disabled = true
+		Backend.add_friend(field.text, func(ok: bool, who: String, reason: String) -> void:
+			confirm.disabled = false
+			if ok:
+				UiKit.dismiss(box)
+				_toast(tr("UI_FRIEND_ADDED") % (who if who != "" else field.text))
+				_rebuild()
+				return
+			status.text = {
+				"no_code": tr("UI_CODE_NOT_FOUND"),
+				"self": tr("UI_CODE_SELF"),
+				"invalid": tr("UI_CODE_NOT_FOUND"),
+				"offline": tr("UI_FRIENDS_OFFLINE"),
+			}.get(reason, tr("UI_UNAVAILABLE"))))
+	box.add_child(confirm)
+
+	var cancel := UiKit.btn_text(tr("UI_BACK"))
+	cancel.pressed.connect(func() -> void: UiKit.dismiss(box))
+	box.add_child(cancel)
+	field.grab_focus()
 
 
 func _board_row(row: Dictionary) -> Control:

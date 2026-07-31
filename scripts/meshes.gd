@@ -18,29 +18,53 @@ extends RefCounted
 
 ## Horseshoe magnet. Reads as a magnet from directly overhead, which a cylinder
 ## never did.
-static func horseshoe(segments := 20, thickness := 0.34, height := 0.5) -> ArrayMesh:
+static func horseshoe(segments := 14, thickness := 0.44, height := 0.52,
+		leg := 0.78) -> ArrayMesh:
+	## A real U: a semicircular bend with two straight parallel legs.
+	##
+	## This used to be a 320-degree annulus — a band with a 40-degree notch cut in
+	## it — which the player described exactly as "a circle cut in a place". The
+	## silhouette is the whole identity of this game, and an almost-closed ring
+	## reads as a ring no matter what colours are on it. Straight legs and a gap as
+	## wide as the arms are what make the shape say magnet at a glance, and at the
+	## size a magnet occupies on a phone the silhouette is all there is.
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	st.set_smooth_group(-1)   # -1 = flat shading, one normal per face
 
-	var span := deg_to_rad(320.0)
-	var start := -span * 0.5
-	var inner := 1.0 - thickness
 	var half := height * 0.5
+	var half_t := thickness * 0.5
+	# Centreline radius, so the OUTER edge still lands at 1.0 and the mesh keeps
+	# the same footprint every caller already scales by.
+	var rc := 1.0 - half_t
+
+	# Centreline path with an outward normal per point: up one leg, over the bend,
+	# down the other. Legs run along -Z so the two poles separate along X, which is
+	# the axis magnet.gdshader splits on.
+	var path: Array[Vector3] = []
+	var out_n: Array[Vector3] = []
+	path.append(Vector3(-rc, 0.0, -leg))
+	out_n.append(Vector3(-1.0, 0.0, 0.0))
+	for i in segments + 1:
+		var a: float = PI - PI * float(i) / float(segments)
+		var n := Vector3(cos(a), 0.0, sin(a))
+		path.append(n * rc)
+		out_n.append(n)
+	path.append(Vector3(rc, 0.0, -leg))
+	out_n.append(Vector3(1.0, 0.0, 0.0))
 
 	var rings: Array = []
-	for i in segments + 1:
-		var a: float = start + span * float(i) / segments
-		var c := cos(a)
-		var s := sin(a)
+	for i in path.size():
+		var p: Vector3 = path[i]
+		var n: Vector3 = out_n[i]
 		rings.append([
-			Vector3(c * inner, -half, s * inner),   # 0 inner bottom
-			Vector3(c * 1.0, -half, s * 1.0),       # 1 outer bottom
-			Vector3(c * 1.0, half, s * 1.0),        # 2 outer top
-			Vector3(c * inner, half, s * inner),    # 3 inner top
+			p - n * half_t + Vector3(0, -half, 0),   # 0 inner bottom
+			p + n * half_t + Vector3(0, -half, 0),   # 1 outer bottom
+			p + n * half_t + Vector3(0, half, 0),    # 2 outer top
+			p - n * half_t + Vector3(0, half, 0),    # 3 inner top
 		])
 
-	for i in segments:
+	for i in rings.size() - 1:
 		var a: Array = rings[i]
 		var b: Array = rings[i + 1]
 		_quad(st, a[0], b[0], b[3], a[3])   # inner wall
@@ -48,9 +72,9 @@ static func horseshoe(segments := 20, thickness := 0.34, height := 0.5) -> Array
 		_quad(st, a[3], b[3], b[2], a[2])   # top
 		_quad(st, a[0], a[1], b[1], b[0])   # bottom
 
-	# Solid pole tips.
+	# Flat pole faces at the tips of both legs.
 	var first: Array = rings[0]
-	var last: Array = rings[segments]
+	var last: Array = rings[rings.size() - 1]
 	_quad(st, first[0], first[3], first[2], first[1])
 	_quad(st, last[1], last[2], last[3], last[0])
 
