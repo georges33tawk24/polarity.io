@@ -200,6 +200,32 @@ func _check_hud_layout(ui) -> void:
 			ctl.visible = was[idx]
 
 
+## The near-opaque ColorRect a modal puts over everything.
+##
+## Size is part of the definition, not an optimisation: the first version matched
+## any opaque ColorRect and found an 18px "new" badge inside a menu button, which
+## made the whole check meaningless while still reporting a pass. Half the viewport
+## in each axis — low enough that a scrim wrongly sized to the safe-area inset is
+## still caught by the coverage assertion rather than filtered out before it.
+func _find_shade(n: Node) -> ColorRect:
+	var vp := get_viewport().get_visible_rect().size
+	return _find_shade_at(n, vp * 0.5)
+
+
+func _find_shade_at(n: Node, least: Vector2) -> ColorRect:
+	for c in n.get_children():
+		if c is ColorRect:
+			var cr := c as ColorRect
+			var r := cr.get_global_rect()
+			if cr.color.a > 0.5 and cr.is_visible_in_tree() \
+					and r.size.x >= least.x and r.size.y >= least.y:
+				return cr
+		var found := _find_shade_at(c, least)
+		if found != null:
+			return found
+	return null
+
+
 ## Closest point on the rect to the centre; inside the radius means they overlap.
 func _rect_hits_circle(rect: Rect2, centre: Vector2, radius: float) -> bool:
 	var closest := Vector2(
@@ -297,6 +323,44 @@ func _drag(sc: ScrollContainer, dy: float) -> void:
 func _check_modals(ui) -> void:
 	ui.show_screen("menu")
 	await get_tree().process_frame
+
+	# Closing a modal must take its SHADE with it.
+	#
+	# UiKit.modal returns the inner box; the near-opaque scrim is a sibling under a
+	# wrapper node. _close_daily used to queue_free the box alone, which orphaned
+	# the scrim — the whole menu went black after claiming the daily reward, with
+	# nothing left on screen to dismiss it. Nothing caught it because every check
+	# here asserted that a modal APPEARS, and none that it goes away.
+	ui.show_screen("menu")
+	for i in 3:
+		await get_tree().process_frame
+	var clean := _descendants(ui._layout)
+	ui.show_daily_if_due(true)
+	for i in 3:
+		await get_tree().process_frame
+	ok(_descendants(ui._layout) > clean, "daily modal opens")
+
+	# The scrim has to cover the WHOLE screen. Modals are parented inside the
+	# safe-area inset, so one sized to its parent leaves a lit frame around a
+	# blacked-out middle.
+	var shade := _find_shade(ui._layout)
+	ok(shade != null, "the daily modal has a scrim")
+	if shade != null:
+		var vp := get_viewport().get_visible_rect()
+		var sr := shade.get_global_rect()
+		ok(sr.position.x <= vp.position.x and sr.position.y <= vp.position.y
+				and sr.end.x >= vp.end.x and sr.end.y >= vp.end.y,
+				"the scrim covers the whole viewport, leaving no lit frame")
+
+	ui._close_daily()
+	# Long enough for the dismiss fade AND the queue_free behind it.
+	for i in 30:
+		await get_tree().process_frame
+	ok(_descendants(ui._layout) == clean,
+			"closing the daily takes the scrim with it (%d back to %d)"
+			% [_descendants(ui._layout), clean])
+	ok(_find_shade(ui._layout) == null, "no scrim is left covering the menu")
+
 
 	# name -> a callable that opens it. Anything reachable by a player belongs here.
 	# Minimal arena so the revive offer has something to call back into.

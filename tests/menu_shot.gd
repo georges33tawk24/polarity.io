@@ -90,6 +90,11 @@ func _ready() -> void:
 	elif _screen == "settings":
 		main.ui.show_screen("menu")
 		main.ui._open_settings()
+	elif _screen == "daily":
+		# The one modal that had no capture path, which is how a bug that blacked
+		# out the entire menu after claiming reached a device.
+		main.ui.show_screen("menu")
+		main.ui.show_daily_if_due(true)
 	elif _screen != "menu":
 		main.ui.show_screen(_screen)
 	# Six frames used to be enough because nothing on any screen moved. Now the

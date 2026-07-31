@@ -1373,3 +1373,34 @@ offset now derives from `Minimap.SIZE`, the emote row grows away from the corner
 instead of back across the map, and `screens.tscn` asserts rect-vs-circle
 clearance for all three neighbours.
 
+### §12an — claiming the daily reward blacked out the entire game
+
+`UiKit.modal()` builds `popup → [shade, box]` and returns the **box**. The shade
+is its sibling, and `popup` is the thing that has to be freed — which is why
+`UiKit.dismiss()` exists and reads the wrapper back off a meta key.
+
+`_close_daily()` called `_daily_popup.queue_free()` instead. That freed the box
+and orphaned a 0.97-opaque black ColorRect over the whole layout, with nothing
+left on screen to dismiss it. Claiming the reward left the player looking at a
+black rectangle with a faint PLAY button ghosting through.
+
+It was the only raw `queue_free()` on a modal in the file — every other close path
+already used `dismiss()`, including one three lines above it in the same file.
+
+Nothing caught it because `_check_modals` asserted only that each modal APPEARS.
+A modal that never goes away passes every "did it build something" check ever
+written. The suite now opens the daily, asserts a scrim exists, closes it, and
+asserts the node count returns to exactly what it was — verified by reverting the
+fix and confirming both assertions fail.
+
+The same screenshot showed the second bug: modals are parented into the
+safe-area-inset layout, so the scrim stopped at the inset and left a lit frame of
+plate around a blacked-out middle — the "picture frame" already fixed once for
+results. The shade now overshoots its parent by `MODAL_BLEED` on every side.
+Overshooting rather than measuring, because the inset is not known until a layout
+pass has run and a scrim that is correct one frame late flashes on the way in.
+
+One more instance of the standing lesson: a check that measures something
+adjacent to what matters is worse than no check. "The modal opened" was adjacent.
+"The modal went away" was the thing.
+

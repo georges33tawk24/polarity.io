@@ -23,6 +23,11 @@ front end, .io results screen, sentence-cased prose, unified light UI surface.
 
 ## NEXT UP
 
+- (2026-07-31) Fixed: claiming the daily reward left a full-screen black scrim
+  over the menu (`_close_daily` freed the modal box instead of the wrapper, so the
+  shade was orphaned). Modal scrims also now cover the full viewport instead of
+  stopping at the safe-area inset. DECISIONS §12an. screens.tscn asserts a modal
+  goes away, not just that it appears.
 - (2026-07-31) Game feel round: touch steering rebuilt as a floating stick
   (`Intent`), optional semi-transparent on-screen joystick (`Ui.Stick`, settings
   toggle), haptics rate-limited in `Platform` + Off/Light/Full setting, minimap

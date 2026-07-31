@@ -709,6 +709,11 @@ class Swatch extends Control:
 ##
 ## `opaque` is for the age gate, which is a legal precondition rather than a
 ## dialog: nothing may show through it.
+## Comfortably more than any safe-area inset plus layout padding — the largest
+## real inset is a landscape notch at ~130px.
+const MODAL_BLEED := 400.0
+
+
 static func modal(parent: Control, opaque := false) -> VBoxContainer:
 	var popup := Control.new()
 	popup.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -719,6 +724,17 @@ static func modal(parent: Control, opaque := false) -> VBoxContainer:
 	# title. A modal is a different surface, not a tint over the previous one.
 	shade.color = Color(0.055, 0.051, 0.043, 1.0 if opaque else 0.97)
 	shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	# Overshoot the parent on every side. Modals are parented into the safe-area
+	# layout, so a scrim that stops at the parent's rect leaves a bright frame of
+	# plate around a blacked-out middle — the same "picture frame" already fixed
+	# once for the results screen (§12). Overshooting rather than measuring the
+	# inset because the inset is not known until a layout pass has run, and a scrim
+	# that is correct one frame late flashes on the way in. The excess is clipped by
+	# the viewport and a flat ColorRect costs nothing to overdraw.
+	shade.offset_left = -MODAL_BLEED
+	shade.offset_top = -MODAL_BLEED
+	shade.offset_right = MODAL_BLEED
+	shade.offset_bottom = MODAL_BLEED
 	shade.modulate.a = 0.0
 	popup.add_child(shade)
 

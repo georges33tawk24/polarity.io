@@ -527,7 +527,11 @@ func show_daily_if_due(manual := false) -> void:
 
 func _close_daily() -> void:
 	if _daily_popup != null:
-		_daily_popup.queue_free()
+		# UiKit.dismiss, NOT queue_free. modal() returns the inner box, and the
+		# near-opaque shade is its SIBLING under a wrapper node — freeing the box
+		# alone orphaned the shade, which then covered the whole menu in black with
+		# nothing left to dismiss it. Claiming the daily reward blacked out the game.
+		UiKit.dismiss(_daily_popup)
 		_daily_popup = null
 	_refresh_wallet()
 
