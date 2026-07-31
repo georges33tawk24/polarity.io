@@ -1051,3 +1051,28 @@ lacks is not a passing test.**
 
 Verified both ways now: 307/307 with `supabase.cfg` present, and 307/307 with it
 moved aside.
+
+
+## §12ad — iOS project, board collapse (2026-07-31)
+
+**I was wrong about iOS needing a paid account.** A free Apple ID gets a personal
+team — `2P7D4BUWUZ` was already configured in Xcode on this machine — and that is
+enough for device builds with 7-day provisioning. The $99 membership is only needed
+for TestFlight and App Store distribution. With the team id set, Godot generated the
+full Xcode project (`build/ios/polarity.xcodeproj` + `.pck` + frameworks).
+
+It stops one step short of an IPA: `xcodebuild` reports the iOS 17.5 **platform**
+component is not installed (distinct from the SDK, which is). That download is ~7 GB
+and the machine has 2.8 GB free, so it cannot proceed here. Opening the generated
+project in Xcode and building from there is the remaining step.
+
+**Leaderboard collapse.** The board covers the top-right quadrant of the arena, which
+is precisely where a rival closes from. Collapsed it keeps the head row and YOUR row —
+the two things a player acts on — and the plate shrinks rather than leaving an empty
+panel over the fight. The state persists, because a player who collapsed it wants it
+collapsed next match too.
+
+The trap was `_on_board`, which rewrites row visibility three times a second and
+undid the collapse instantly. Visibility now flows through one function that both the
+toggle and the refresh call. Asserted rather than screenshotted: a headless check
+proves the refresh does not undo it, which a screenshot cannot show.

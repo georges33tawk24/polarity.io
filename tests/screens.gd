@@ -105,9 +105,58 @@ func _ready() -> void:
 	if ui._meta_panel != null:
 		ui._meta_panel.visible = false
 
+	_check_board_collapse(ui)
 	_check_icons()
 	_check_audio()
 	_finish()
+
+
+## The in-match leaderboard covers the top-right quadrant of the arena, which is
+## where a rival comes from. Collapsing it has to keep YOUR row — the one line you
+## act on — and has to survive _on_board, which rewrites row visibility three times
+## a second and would otherwise undo it immediately.
+func _check_board_collapse(ui) -> void:
+	ui.show_screen("hud")
+	# One player row plus two rivals is enough to prove the rule.
+	ui._on_board([
+		{"name": "Ferro", "mass": 90.0, "is_player": false, "rank": 1},
+		{"name": "YOU", "mass": 40.0, "is_player": true, "rank": 2},
+		{"name": "Rust", "mass": 20.0, "is_player": false, "rank": 3},
+	])
+	ok(ui._board_rows.size() == 3, "board built 3 rows")
+
+	ui._board_collapsed = false
+	ui._apply_board_collapsed()
+	var open_visible := 0
+	for k: String in ui._board_rows.keys():
+		if (ui._board_rows[k] as Control).visible:
+			open_visible += 1
+	ok(open_visible == 3, "expanded shows every row (%d)" % open_visible)
+
+	ui._board_collapsed = true
+	ui._apply_board_collapsed()
+	var shut_visible: Array[String] = []
+	for k: String in ui._board_rows.keys():
+		if (ui._board_rows[k] as Control).visible:
+			shut_visible.append(k)
+	ok(shut_visible == ["YOU"], "collapsed shows only the player's row (%s)"
+			% ", ".join(shut_visible))
+
+	# The real trap: the 0.35s board refresh must not undo the collapse.
+	ui._on_board([
+		{"name": "Ferro", "mass": 95.0, "is_player": false, "rank": 1},
+		{"name": "YOU", "mass": 41.0, "is_player": true, "rank": 2},
+		{"name": "Rust", "mass": 21.0, "is_player": false, "rank": 3},
+	])
+	var after: Array[String] = []
+	for k: String in ui._board_rows.keys():
+		if (ui._board_rows[k] as Control).visible:
+			after.append(k)
+	ok(after == ["YOU"], "a board refresh does not undo the collapse (%s)"
+			% ", ".join(after))
+
+	ui._board_collapsed = false
+	ui._apply_board_collapsed()
 
 
 ## Unknown icon names silently fall through to a plain disc, so a nav bar of five

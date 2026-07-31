@@ -41,6 +41,8 @@ var _last_clock := -1
 var _alive_caption: Label
 var _board_rows: Dictionary = {}
 var _board_ranks: Dictionary = {}
+var _board_toggle: Button
+var _board_collapsed := false
 var _clock_label: Label
 var _alive_label: Label
 var _board: Control
@@ -589,8 +591,12 @@ func _build_hud() -> Control:
 	_clock_label = UiKit.lbl("1:40", UiKit.T_LEAD, UiKit.INK, HORIZONTAL_ALIGNMENT_RIGHT)
 	var spring := Control.new()
 	spring.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_board_toggle = UiKit.btn_text("", 52)
+	_board_toggle.custom_minimum_size.x = 52
+	_board_toggle.add_theme_font_size_override("font_size", UiKit.T_LABEL)
+	_board_toggle.pressed.connect(_toggle_board)
 	var board_head := UiKit.row([_alive_label, _alive_caption, spring, divider,
-			_clock_label], UiKit.S1)
+			_clock_label, _board_toggle], UiKit.S1)
 	board_panel.add_child(board_head)
 
 	# The ring closes for most of the match and the only previous cue was the clock
@@ -607,6 +613,10 @@ func _build_hud() -> Control:
 	_board.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_board.clip_contents = true
 	board_panel.add_child(_board)
+	# Restored from the profile: a player who collapsed it wants it collapsed next
+	# match too, not every match.
+	_board_collapsed = bool(Game.get_value("board_collapsed", false))
+	_apply_board_collapsed()
 
 	# Bolted into the corner: square on the two edges that meet the screen, round
 	# on the inside one. The riveted material appeared in the HUD zero times.
@@ -764,6 +774,7 @@ func _on_charge(charge01: float, ready: bool) -> void:
 ## which is the agar/slither read.
 func _make_board_row(mine: bool) -> Control:
 	var r := Control.new()
+	r.set_meta("is_player", mine)
 	r.custom_minimum_size = Vector2(BOARD_W, BOARD_ROW_H)
 	r.size = Vector2(BOARD_W, BOARD_ROW_H)
 	r.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -827,7 +838,7 @@ func _on_board(rows: Array) -> void:
 		(r.get_node("Who") as Label).text = who
 		(r.get_node("Score") as Label).text = Locale.number(roundi(row["mass"]))
 
-		var target := float(i) * BOARD_ROW_H
+		var target := 0.0 if _board_collapsed else float(i) * BOARD_ROW_H
 		if fresh:
 			r.position = Vector2(0, target)
 		elif absf(r.position.y - target) > 0.5:
@@ -851,8 +862,10 @@ func _on_board(rows: Array) -> void:
 				dead.queue_free()
 			_board_rows.erase(who)
 			_board_ranks.erase(who)
-	# The plate shrinks as the arena empties, which is a free tension cue.
-	_board.custom_minimum_size.y = maxf(BOARD_ROW_H, float(rows.size()) * BOARD_ROW_H)
+	# The plate shrinks as the arena empties, which is a free tension cue — and
+	# _refresh_board_height re-applies the collapsed state, which _on_board would
+	# otherwise undo three times a second.
+	_refresh_board_height()
 
 
 func _on_eliminated(victim: String, killer: String, by_player: bool) -> void:
@@ -1725,3 +1738,40 @@ func _build_about() -> Control:
 	close.pressed.connect(func() -> void: UiKit.dismiss(box))
 	box.add_child(close)
 	return box
+
+
+## Collapse / expand the in-match leaderboard.
+func _toggle_board() -> void:
+	_board_collapsed = not _board_collapsed
+	Game.set_value("board_collapsed", _board_collapsed)
+	_apply_board_collapsed()
+	Audio.play("ui_tap", 1.05, -14.0)
+
+
+func _apply_board_collapsed() -> void:
+	if _board_toggle != null and is_instance_valid(_board_toggle):
+		# A glyph rather than a word: it sits in a 52px cell and has to work in ten
+		# languages.
+		_board_toggle.text = "+" if _board_collapsed else "\u2013"
+	if _ring_bar != null and is_instance_valid(_ring_bar):
+		_ring_bar.visible = not _board_collapsed
+	_refresh_board_height()
+
+
+## The board is a hand-positioned Control, so its height is set rather than derived.
+## Collapsed it shows only the player's own row — the one line you act on — and the
+## plate shrinks to match instead of leaving an empty panel over the arena.
+func _refresh_board_height() -> void:
+	if _board == null or not is_instance_valid(_board):
+		return
+	var shown := 0
+	for who: String in _board_rows.keys():
+		var r: Control = _board_rows[who]
+		if not is_instance_valid(r):
+			continue
+		# get_meta returns Variant, so this needs an explicit type.
+		var mine: bool = bool(r.get_meta("is_player", false))
+		r.visible = (not _board_collapsed) or mine
+		if r.visible:
+			shown += 1
+	_board.custom_minimum_size.y = maxf(BOARD_ROW_H, float(maxi(shown, 1)) * BOARD_ROW_H)
