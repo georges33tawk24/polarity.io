@@ -30,10 +30,17 @@ func handle_event(event: InputEvent) -> void:
 	elif event is InputEventScreenDrag and event.index == _touch_index:
 		pointer_pos = event.position
 	elif event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
-		pointer_down = event.pressed
-		pointer_pos = event.position
+		# emulate_mouse_from_touch is ON, because Control/Button only listen for
+		# mouse events and the UI is otherwise completely dead on a phone. The cost
+		# is that every touch ALSO arrives here as a synthetic mouse event, so
+		# ignore those: the ScreenTouch branch above already owns the gesture, and
+		# it handles multi-finger cases a single emulated pointer cannot express.
+		if _touch_index == -1:
+			pointer_down = event.pressed
+			pointer_pos = event.position
 	elif event is InputEventMouseMotion:
-		pointer_pos = event.position
+		if _touch_index == -1:
+			pointer_pos = event.position
 
 
 ## `toggle` scheme: a tap flips attract on/off instead of requiring a held

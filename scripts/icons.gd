@@ -37,6 +37,7 @@ static func get_icon(name: String, tint := Color.WHITE) -> Texture2D:
 		"bars": _draw_bars(img, tint)
 		"gear": _draw_gear(img, tint)
 		"card": _draw_card(img, tint)
+		"gift": _draw_gift(img, tint)
 		"skin": _draw_skin(img, tint)
 		"trail": _draw_trail(img, tint)
 		"effect": _draw_effect(img, tint)
@@ -339,4 +340,24 @@ static func _draw_arena(img: Image, tint: Color) -> void:
 	_poly(img, PackedVector2Array([
 		Vector2(s * 0.12, s * 0.5 - g), Vector2(s * 0.88, s * 0.5 - g),
 		Vector2(s * 0.88, s * 0.5 + g), Vector2(s * 0.12, s * 0.5 + g),
+	]), tint, true)
+
+
+## Daily reward. A box with a ribbon — the one shape that reads as "a gift is
+## waiting" without a word of text.
+static func _draw_gift(img: Image, tint: Color) -> void:
+	var s := float(img.get_width())
+	_poly(img, PackedVector2Array([
+		Vector2(s * 0.14, s * 0.40), Vector2(s * 0.86, s * 0.40),
+		Vector2(s * 0.86, s * 0.86), Vector2(s * 0.14, s * 0.86),
+	]), tint)
+	# Lid, slightly proud of the box so the silhouette has a step in it.
+	_poly(img, PackedVector2Array([
+		Vector2(s * 0.08, s * 0.26), Vector2(s * 0.92, s * 0.26),
+		Vector2(s * 0.92, s * 0.40), Vector2(s * 0.08, s * 0.40),
+	]), tint)
+	# Ribbon, punched out so it reads at small sizes instead of muddying.
+	_poly(img, PackedVector2Array([
+		Vector2(s * 0.45, s * 0.26), Vector2(s * 0.55, s * 0.26),
+		Vector2(s * 0.55, s * 0.86), Vector2(s * 0.45, s * 0.86),
 	]), tint, true)

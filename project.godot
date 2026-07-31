@@ -46,7 +46,11 @@ locale/fallback="en"
 [input_devices]
 
 ; Intent handles touch and mouse separately; emulation would double-fire a hold.
-pointing/emulate_mouse_from_touch=false
+; Required. Without it a finger produces only InputEventScreenTouch, which the
+; gameplay handles directly but Control/Button nodes do not listen for — so every
+; button in the game is dead on a phone while the arena still responds. Intent
+; ignores the synthetic mouse events this generates; see intent.gd.
+pointing/emulate_mouse_from_touch=true
 
 [physics]
 

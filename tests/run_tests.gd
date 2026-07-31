@@ -32,6 +32,7 @@ func _ready() -> void:
 	test_supabase_provider()
 	test_locale_formatting()
 	await test_arena_determinism()
+	test_touch_input()
 	test_netcode_seam()
 	test_economy_clamps()
 	test_match_rewards()
@@ -264,6 +265,48 @@ func test_arena_determinism() -> void:
 	ok(b.seed_used == 999, "the seed used is recorded for a bug report")
 	b.queue_free()
 	await get_tree().process_frame
+
+
+## Touch input. This is the check that would have caught the whole UI being dead on
+## a phone — a bug that is completely invisible on desktop, where real mouse events
+## exist and nothing needs emulating. It shipped in an IPA before anyone noticed.
+func test_touch_input() -> void:
+	print("touch input")
+	ok(bool(ProjectSettings.get_setting("input_devices/pointing/emulate_mouse_from_touch", false)),
+			"emulate_mouse_from_touch is on, or every Button is dead on a phone")
+
+	# A finger must drive the gameplay pointer.
+	var it := Intent.new()
+	var down := InputEventScreenTouch.new()
+	down.pressed = true
+	down.index = 0
+	down.position = Vector2(300, 400)
+	it.handle_event(down)
+	ok(it.pointer_down and it.pointer_pos == Vector2(300, 400), "a touch presses")
+
+	# ...and the synthetic mouse event that emulation generates alongside it must
+	# NOT be processed a second time, or a release could be lost or doubled.
+	var synthetic := InputEventMouseButton.new()
+	synthetic.button_index = MOUSE_BUTTON_LEFT
+	synthetic.pressed = false
+	synthetic.position = Vector2(999, 999)
+	it.handle_event(synthetic)
+	ok(it.pointer_down, "a synthetic mouse release during a touch is ignored")
+	ok(it.pointer_pos == Vector2(300, 400), "the touch keeps ownership of the position")
+
+	var up := InputEventScreenTouch.new()
+	up.pressed = false
+	up.index = 0
+	it.handle_event(up)
+	ok(not it.pointer_down, "the touch that started the hold ends it")
+
+	# With no touch active, a real mouse must still work — this is the desktop path.
+	var click := InputEventMouseButton.new()
+	click.button_index = MOUSE_BUTTON_LEFT
+	click.pressed = true
+	click.position = Vector2(120, 130)
+	it.handle_event(click)
+	ok(it.pointer_down and it.pointer_pos == Vector2(120, 130), "mouse still works")
 
 
 func test_netcode_seam() -> void:
@@ -1029,8 +1072,13 @@ func test_ftue_and_unlocks() -> void:
 	await get_tree().process_frame
 	ok(not Ads.needs_consent(), "no consent prompt is ever requested")
 	ok(main.ui._consent_popup == null, "no consent dialog blocks the first session")
-	ok(main.ui._daily_popup != null,
-			"the daily reward is reachable with no gate ahead of it")
+	# Nothing opens itself in front of the player any more — not the age gate, not
+	# the consent dialog, and not the daily reward. The player reported opening the
+	# app straight into an unescapable reward modal.
+	ok(main.ui._daily_popup == null, "the daily reward does not open itself")
+	main.ui.show_daily_if_due(true)
+	await get_tree().process_frame
+	ok(main.ui._daily_popup != null, "it opens when the player asks for it")
 	main.ui._close_daily()
 	await get_tree().process_frame
 	ok(not Ads.personalised_allowed(),
@@ -1042,15 +1090,17 @@ func test_ftue_and_unlocks() -> void:
 	main.ui._close_consent()
 	main.ui._after_consent()
 	await get_tree().process_frame
-	ok(main.ui._daily_popup != null, "the daily reward appears once consent is resolved")
-	main.ui._close_daily()
+	ok(main.ui._daily_popup == null, "resolving consent does not summon the reward")
 
 	# The daily popup is a sibling of the screens, so hiding the menu does not
 	# hide it — it once stayed live on top of the arena with working buttons.
 	Game.set_value("daily", {})
 	main.to_menu()
 	await get_tree().process_frame
-	ok(main.ui._daily_popup != null, "daily reward popup appears on the menu")
+	ok(main.ui._daily_popup == null, "reaching the menu does not summon the reward")
+	main.ui.show_daily_if_due(true)
+	await get_tree().process_frame
+	ok(main.ui._daily_popup != null, "and it can still be opened from the menu")
 	await main.start_match()
 	ok(main.ui._daily_popup == null, "daily popup is dismissed when a match starts")
 	main.to_menu()

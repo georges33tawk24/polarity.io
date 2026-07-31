@@ -1112,3 +1112,38 @@ question, and each one something I had "verified" in the wrong place:**
 
 Every one passed a static check while failing the only test that counted. The pattern
 worth keeping: **"the artefact exists" is not "the platform accepts it."**
+
+
+## §12af — the first device test, and what it found (2026-07-31)
+
+The IPA installed and the report was: it opened straight into the daily-reward
+modal, and nothing was clickable. Both were real, and the first one is the more
+serious bug by far.
+
+**Every button in the game was dead on a phone.** `project.godot` had
+`input_devices/pointing/emulate_mouse_from_touch=false`. With that off a finger
+produces only `InputEventScreenTouch` — which `intent.gd` handles directly, so the
+ARENA responded to touch perfectly well — but `Control`/`Button` only listen for
+mouse events. So the game underneath worked and the entire UI on top of it did not.
+
+**This was invisible on desktop by construction.** Real mouse events exist there;
+nothing needs emulating. No amount of headless testing, screenshotting or code review
+would have surfaced it — only a finger on glass. Now asserted in `test_touch_input`,
+along with the guard that stops `intent.gd` double-counting the synthetic mouse event
+that emulation now generates alongside every touch.
+
+**Nothing opens itself in front of the player any more.** The daily reward auto-showed
+on reaching the menu. Combined with dead touch it was an unescapable wall, but it was
+poor even working: a modal between a new player and the PLAY button, offering a "day 1
+reward" for a game they had not played. It is a `gift` tile on the menu now, first in
+the row because it is the only time-sensitive one, carrying the coach dot when there
+is something to claim. Opened deliberately it also has to handle "already claimed
+today", which auto-show never had to.
+
+Three tests asserted the old auto-popup behaviour and now assert the opposite. They
+were not wrong when written — the contract changed.
+
+`tools/build_ipa.sh` exists so this is repeatable: the pbxproj surgery lived only in
+gitignored `build/` and the next export would have wiped it. It verifies what actually
+shipped and fails on the exact three defects that reached a device — icons under the
+dead key, icons absent from the bundle, wrong device family.

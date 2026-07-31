@@ -348,6 +348,11 @@ func _build_menu() -> Control:
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	row.add_theme_constant_override("separation", UiKit.S4)
 	if matches >= 1:
+		# First tile: it is the only time-sensitive one, and the dot tells you
+		# whether it is worth opening without opening it.
+		row.add_child(_nav_tile("gift", "UI_DAILY_SHORT",
+				func() -> void: show_daily_if_due(true),
+				bool(Meta.daily_state().get("can_claim", false))))
 		row.add_child(_nav_tile("bag", "UI_SHOP", func() -> void: open_meta("shop"),
 				_is_new("shop", matches == 1)))
 	if matches >= 2:
@@ -390,8 +395,10 @@ func _close_consent() -> void:
 ## Runs once the whole consent flow is resolved — anything that was suppressed
 ## while it was on screen happens now.
 func _after_consent() -> void:
-	if _menu != null and _menu.visible:
-		show_daily_if_due()
+	# The daily reward used to open itself here. It is a button on the menu now —
+	# a modal that appears unbidden between a player and the PLAY button is the
+	# thing §16 exists to prevent.
+	pass
 
 
 ## Starts the guided first match if the player has never finished the tutorial.
@@ -415,9 +422,14 @@ func stop_ftue() -> void:
 ## Daily calendar, shown once per UTC day when the player reaches the menu.
 ## Deliberately non-blocking: it is dismissible and never gates the PLAY button
 ## (spec §16 — never block the first play session).
-func show_daily_if_due() -> void:
+## `manual` means the player pressed the button, so the calendar opens even when
+## there is nothing to claim today — they asked to see their streak. Called with
+## false it does nothing, which is what every automatic caller now does.
+func show_daily_if_due(manual := false) -> void:
+	if not manual:
+		return
 	var state := Meta.daily_state()
-	if not state["can_claim"] or _daily_popup != null:
+	if _daily_popup != null:
 		return
 
 	var box := UiKit.modal(_layout)
@@ -469,6 +481,18 @@ func show_daily_if_due() -> void:
 				cell.resized.connect(func() -> void: cell.pivot_offset = cell.size * 0.5)
 	box.add_child(grid)
 	box.add_child(UiKit.spacer(20))
+
+	if not bool(state["can_claim"]):
+		# Reachable now that the player can open this whenever they like. A CLAIM
+		# button that silently does nothing would be worse than saying so.
+		box.add_child(UiKit.state_tag(tr("UI_COME_BACK_TOMORROW"), "check",
+				UiKit.INK_MUTE))
+		var shut := UiKit.btn_secondary(tr("UI_BACK"))
+		UiKit.cap_width(shut, 640)
+		shut.pressed.connect(_close_daily)
+		box.add_child(shut)
+		_daily_popup = box
+		return
 
 	var claim := _btn(tr("UI_CLAIM"), ACCENT)
 	UiKit.cap_width(claim, 640)
@@ -1397,10 +1421,6 @@ func show_screen(which: String) -> void:
 		Audio.set_intensity(0.0)
 		_refresh_wallet()
 		show_consent_if_needed()
-		# The age gate is a legal precondition: nothing else may cover it, and the
-		# daily calendar is added later so it would draw on top.
-		if _consent_popup == null:
-			show_daily_if_due()
 	else:
 		# The popup and the meta panel are siblings of the screens, not children
 		# of them — hiding the menu does not hide either, and the daily calendar
