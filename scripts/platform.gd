@@ -175,18 +175,44 @@ func share_text(text: String) -> bool:
 # Real providers (AdMob on mobile, CrazyGames/Poki on web) plug in here.
 # They are deliberately NOT stubbed as if they work: `available()` is false, so
 # every caller already takes the "no ad" path and nothing is gated on a fake.
+## The AdMob provider, on mobile, when the plugin is actually present. Null
+## everywhere else — desktop and web keep reporting honestly unavailable.
+var _admob = null
+
+
+func _init_ads() -> void:
+	if kind != Kind.MOBILE:
+		return
+	# ClassDB rather than a bare reference: the plugin is an addon, and a build
+	# exported without it must degrade to "no ads" instead of failing to parse.
+	if not ClassDB.class_exists("MobileAds") and not _admob_scripts_present():
+		push_warning("[ads] AdMob addon missing — ads unavailable")
+		return
+	_admob = AdMobProvider.new()
+
+
+func _admob_scripts_present() -> bool:
+	return ResourceLoader.exists("res://addons/admob/plugin.cfg")
+
+
 func ads_available() -> bool:
-	return false
+	return _admob != null and _admob.available()
 
 
-## Calls `cb` with `true` only if a reward was genuinely earned.
+## Calls `cb` with `true` only if a reward was genuinely earned. Placement is not
+## passed to the ad network: one ad unit serves every placement, and what the
+## player receives is decided by the caller, which is the only thing that knows.
 func show_rewarded(_placement: String, cb: Callable) -> void:
-	push_warning("[ads] no provider on %s — reward denied" % os_name)
-	cb.call(false)
+	if _admob == null:
+		push_warning("[ads] no provider on %s — reward denied" % os_name)
+		cb.call(false)
+		return
+	_admob.show_rewarded(cb)
 
 
 func show_interstitial(_placement: String) -> void:
-	pass
+	if _admob != null:
+		_admob.show_interstitial()
 
 
 func iap_available() -> bool:

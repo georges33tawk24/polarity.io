@@ -78,9 +78,10 @@ func _default_consent() -> Consent:
 
 
 func _init_provider() -> void:
-	# AdMob (mobile) / CrazyGames | Poki (web) initialise here once a vendor is
-	# chosen. Deliberately empty rather than faked.
-	pass
+	# AdMob on mobile; web (CrazyGames / Poki) still has no vendor and stays null.
+	# Called from set_consent as well as _ready, because the SDK must not be
+	# initialised before the player has answered the consent prompt.
+	Platform._init_ads()
 
 
 # --- availability ----------------------------------------------------------

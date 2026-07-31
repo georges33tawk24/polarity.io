@@ -1584,3 +1584,47 @@ rather than as part of the same stencil string. At full height eleven characters
 read as one long word; smaller and dimmer, it reads the way a domain does. The
 stencil already had every glyph needed, full stop included.
 
+### §12as — AdMob
+
+Rewarded + interstitial, behind the existing seam. `Ads` still decides WHETHER an
+ad may show (caps, cooldowns, consent, no-ads entitlement); `AdMobProvider` only
+decides how. The null provider stays as the fallback, so desktop, web and any
+build exported without the addon keep reporting honestly unavailable rather than
+pretending.
+
+**Test units in every non-release build.** `OS.is_debug_build()` picks Google's
+public test ad units, and the addon independently injects the test App ID into
+the debug manifest. Clicking your own live ad while testing a rewarded flow is
+invalid traffic and gets AdMob accounts suspended, and it is very easy to do.
+Verified in the generated manifests: debug carries `...3940256099942544`, release
+carries the real one.
+
+**AdMob's reward amount and item are ignored.** The unit is configured 1 /
+"Reward" and the callback is a bool. What the player receives depends on the
+PLACEMENT — double coins, a revive, a mass boost, a wheel spin, a skin trial —
+which only the game knows. `on_ad_dismissed` is what resolves the callback, so a
+dismissal without a reward returns false exactly once rather than leaking.
+
+**UMP consent runs before the SDK initialises.** The hand-rolled consent screen
+was removed earlier with a note that `Ads.needs_consent()` was the switch to bring
+one back "if an ad network demands its own". AdMob does. It is Google's form, not
+ours — only a certified CMP satisfies the requirement.
+
+**Plugin pinned to v4.3.1, not v5.0.0.** v5 requires `compileSdk 36`; Godot 4.3's
+Android template is on 34 and only SDK platform 34 is installed. Note this leaves
+`targetSdk` at 34 while Play requires 35 for new apps — AdMob is unblocked, the
+Play upload is not. That is an engine upgrade, not a plugin choice.
+
+**One vendor patch, and it must be re-applied after any plugin update.**
+`addons/admob/internal/exporters/android/export_plugin.gd` declared
+`const Config := preload(...)` and used it as a return-type annotation. This
+project has a `Config` AUTOLOAD, and an autoload wins over a script const in
+annotation position — so `-> Config` resolved to `res://scripts/remote_config.gd`
+and the entire export plugin failed to parse. It failed *quietly*: the export
+still produced a 50 MB AAB, but with no App ID injected into the AndroidManifest,
+which would have crashed on first ad call. Added an alias rather than renaming
+either side.
+
+`android/build/` is gitignored — 1.2 GB of regenerated engine source and Gradle
+output.
+

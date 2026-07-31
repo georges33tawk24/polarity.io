@@ -23,6 +23,17 @@ front end, .io results screen, sentence-cased prose, unified light UI surface.
 
 ## NEXT UP
 
+- (2026-07-31) AdMob wired: rewarded + interstitial + UMP consent, test units in
+  debug, real IDs in release, Gradle build + AAB export on. Debug AAB builds clean
+  (50 MB, 0 script errors). DECISIONS §12as.
+- **BLOCKED on the Play upload:** Godot 4.3's Android template targets SDK 34;
+  Play requires targetSdk 35 for new apps. Needs a Godot 4.5+ upgrade, not a
+  config change.
+- **NEEDS THE USER:** generate an upload keystore (release AAB cannot be signed
+  without it); real privacy-policy URL and support email; run the friends SQL;
+  rotate the exposed service_role key.
+- **STILL UNPLAYED ON A DEVICE.** Every device test so far has found a bug no
+  headless suite caught. Four for four.
 - (2026-07-31) Renamed to **Polarity.io** — display name, wordmark, web shell,
   credits. Bundle id deliberately unchanged (`io.polarity.arena`). Trademark
   position checked on USPTO: no live bare POLARITY mark in any class. DECISIONS

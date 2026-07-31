@@ -29,7 +29,12 @@
     "interstitial_skip_first_n_matches": 3,
     "rewarded_daily_cap": 20,
     "revive_cost_seconds": 0,
-    "double_coins_multiplier": 2
+    "double_coins_multiplier": 2,
+    "android_app_id": "ca-app-pub-5934305986842564~9127042367",
+    "android_rewarded": "ca-app-pub-5934305986842564/4888414455",
+    "android_interstitial": "ca-app-pub-5934305986842564/9584393276",
+    "test_rewarded": "ca-app-pub-3940256099942544/5224354917",
+    "test_interstitial": "ca-app-pub-3940256099942544/1033173712"
   },
   "economy": {
     "coins_per_kill": 12,

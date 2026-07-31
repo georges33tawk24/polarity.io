@@ -1,8 +1,16 @@
-; POLARITY — Godot 4.3 project.
-; Input map, audio buses and window handling are configured in code
-; (scripts/platform.gd) so there are no fragile hand-authored config blobs.
+; Engine configuration file.
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
+;
+; Format:
+;   [section] ; section goes between []
+;   param=value ; assign values to parameters
 
 config_version=5
+
+[admob]
+
+general/android/app_id="ca-app-pub-5934305986842564~9127042367"
 
 [application]
 
@@ -10,13 +18,12 @@ config/name="Polarity.io"
 config/description="One-thumb magnet combat arena."
 run/main_scene="res://main.tscn"
 config/features=PackedStringArray("4.3", "Mobile")
-config/icon="res://store/icons/icon_512.png"
-boot_splash/show_image=false
 boot_splash/bg_color=Color(0.055, 0.06, 0.09, 1)
+boot_splash/show_image=false
+config/icon="res://store/icons/icon_512.png"
 
 [autoload]
 
-; Order matters: Game applies saved volumes on boot, so Audio's buses must exist first.
 Bus="*res://scripts/bus.gd"
 Platform="*res://scripts/platform.gd"
 Audio="*res://scripts/audio.gd"
@@ -38,30 +45,22 @@ window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
 window/handheld/orientation=1
 
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/admob/plugin.cfg")
+
 [internationalization]
 
 locale/translations=PackedStringArray("res://data/i18n/strings.en.translation", "res://data/i18n/strings.es.translation", "res://data/i18n/strings.pt_BR.translation", "res://data/i18n/strings.fr.translation", "res://data/i18n/strings.de.translation", "res://data/i18n/strings.ru.translation", "res://data/i18n/strings.tr.translation", "res://data/i18n/strings.id.translation", "res://data/i18n/strings.ja.translation", "res://data/i18n/strings.ko.translation")
-locale/fallback="en"
-
-[input_devices]
-
-; Intent handles touch and mouse separately; emulation would double-fire a hold.
-; Required. Without it a finger produces only InputEventScreenTouch, which the
-; gameplay handles directly but Control/Button nodes do not listen for — so every
-; button in the game is dead on a phone while the arena still responds. Intent
-; ignores the synthetic mouse events this generates; see intent.gd.
-pointing/emulate_mouse_from_touch=true
 
 [physics]
 
 3d/default_gravity=0.0
-common/physics_ticks_per_second=60
 
 [rendering]
 
 renderer/rendering_method="mobile"
-renderer/rendering_method.web="gl_compatibility"
 textures/vram_compression/import_etc2_astc=true
-anti_aliasing/quality/msaa_3d=1
 lights_and_shadows/directional_shadow/soft_shadow_filter_quality=0
 environment/defaults/default_clear_color=Color(0.055, 0.06, 0.09, 1)
+anti_aliasing/quality/msaa_3d=1
