@@ -58,7 +58,7 @@ func _ready() -> void:
 	_tab_row.custom_minimum_size = Vector2(0, 148)
 	root.add_child(_tab_row)
 
-	_scroll = ScrollContainer.new()
+	_scroll = UiKit.scroll()
 	var scroll := _scroll
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
@@ -98,8 +98,18 @@ func _refresh_chips() -> void:
 			UiKit.refresh_chip(c)
 
 
+## Which tab `_scroll`'s position belongs to.
+var _scrolled_tab := ""
+
+
 func _rebuild() -> void:
-	var keep_scroll := _scroll.scroll_vertical if _scroll != null else 0
+	# Only within one tab. Staying put after buying something is right; carrying the
+	# pass screen's scroll onto the shop is not — it opens the shop 800px down a list
+	# the player never scrolled, which looks exactly like a screen that will not
+	# scroll back up.
+	var same_tab := _tab == _scrolled_tab
+	var keep_scroll := _scroll.scroll_vertical if _scroll != null and same_tab else 0
+	_scrolled_tab = _tab
 	# The offer clock is about to be freed with the rest of the content.
 	_offer_clock = null
 	_focus_child = null
@@ -153,7 +163,10 @@ func _settle_scroll(keep: int) -> void:
 		return
 	if _focus_child != null and is_instance_valid(_focus_child):
 		_scroll.scroll_vertical = maxi(0, int(_focus_child.position.y) - 120)
-	elif keep > 0:
+	else:
+		# Unconditionally, including 0. Rebuilding does not reset a ScrollContainer,
+		# so "restore only when keep > 0" left the previous tab's position sitting
+		# there untouched.
 		_scroll.scroll_vertical = keep
 
 
@@ -661,7 +674,7 @@ func _open_codex() -> void:
 			UiKit.INK_MUTE, HORIZONTAL_ALIGNMENT_CENTER))
 	box.add_child(UiKit.spacer(UiKit.S2))
 
-	var scroll := ScrollContainer.new()
+	var scroll := UiKit.scroll()
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	scroll.custom_minimum_size = Vector2(0, 1180)

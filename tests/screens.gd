@@ -124,11 +124,92 @@ func _ready() -> void:
 	if ui._meta_panel != null:
 		ui._meta_panel.visible = false
 
+	await _check_scrolling(ui)
 	await _check_modals(ui)
 	_check_board_collapse(ui)
 	_check_icons()
 	_check_audio()
 	_finish()
+
+
+## Every long list, dragged for real.
+##
+## On a phone Godot hands a touch to the topmost Control, so a drag that starts on
+## a shop card goes to the CARD and the ScrollContainer never sees it. Its built-in
+## touch scrolling only works on empty space, and these screens are wall-to-wall
+## cards — so on a device they simply did not scroll.
+##
+## Asserted rather than screenshotted because this cannot reproduce on desktop: a
+## mouse wheel scrolls a plain ScrollContainer perfectly. Same shape as the dead
+## touch input that shipped (DECISIONS §12s) — desktop-only verification is blind
+## to an entire input path.
+func _check_scrolling(ui) -> void:
+	for tab: String in MetaPanel.TABS:
+		ui.open_meta(tab)
+		for i in 3:
+			await get_tree().process_frame
+		var panel = ui._meta_panel
+		if panel == null:
+			continue
+		var sc: ScrollContainer = panel._scroll
+		ok(sc is UiKit.TouchScroll, "%s: list is touch-draggable" % tab)
+		if not (sc is UiKit.TouchScroll):
+			continue
+		var reach: float = sc.get_v_scroll_bar().max_value - sc.size.y
+		if reach <= 1.0:
+			# Nothing to scroll to at this resolution; a drag correctly does nothing.
+			ok(true, "%s: content fits, nothing to scroll" % tab)
+			continue
+		# A tab you just opened starts at the top, unless it deliberately jumps to
+		# where the player is (the pass jumps to their current tier).
+		ok(sc.scroll_vertical == 0 or tab == "pass",
+				"%s: opens at the top (%d)" % [tab, sc.scroll_vertical])
+		var before: int = sc.scroll_vertical
+		_drag(sc, 160.0)
+		ok(sc.scroll_vertical > before,
+				"%s: drag scrolls the list (%d -> %d)" % [tab, before, sc.scroll_vertical])
+		sc.scroll_vertical = 0
+	if ui._meta_panel != null:
+		ui._meta_panel.visible = false
+
+	# Settings is the other long list, and it is the one the user hit: the back
+	# button sits at the bottom, so a screen that will not scroll has no way out.
+	ui.show_screen("menu")
+	ui._open_settings()
+	for i in 3:
+		await get_tree().process_frame
+	ok(_find_touch_scroll(ui._settings) != null, "settings: list is touch-draggable")
+	ui._close_settings()
+	await get_tree().process_frame
+
+
+func _find_touch_scroll(n: Node) -> ScrollContainer:
+	for c in n.get_children():
+		if c is UiKit.TouchScroll:
+			return c as ScrollContainer
+		var found := _find_touch_scroll(c)
+		if found != null:
+			return found
+	return null
+
+
+## A finger pressing in the middle of the list and sliding up by `dy`.
+func _drag(sc: ScrollContainer, dy: float) -> void:
+	var mid := sc.get_global_rect().get_center()
+	var down := InputEventScreenTouch.new()
+	down.index = 0
+	down.pressed = true
+	down.position = mid
+	sc._input(down)
+	var move := InputEventScreenDrag.new()
+	move.index = 0
+	move.position = mid - Vector2(0.0, dy)
+	sc._input(move)
+	var up := InputEventScreenTouch.new()
+	up.index = 0
+	up.pressed = false
+	up.position = move.position
+	sc._input(up)
 
 
 ## Every modal, opened for real.

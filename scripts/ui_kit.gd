@@ -548,6 +548,9 @@ static func refresh_chip(chip: Control) -> void:
 ## is what selection should be.
 static func chip_row(labels: Array, keys: Array, active: String,
 		on_pick: Callable, size := T_LABEL) -> Control:
+	# NOT TouchScroll: that one drags vertically, and this row scrolls sideways —
+	# it would swallow chip taps while scrolling nothing. A short row of chips has
+	# empty space around it, so Godot's built-in touch scrolling is enough here.
 	var sc := ScrollContainer.new()
 	sc.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
 	sc.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
@@ -894,3 +897,60 @@ static func cap_width(c: Control, max_w := 620) -> Control:
 	c.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	c.custom_minimum_size.x = max_w
 	return c
+
+
+## A ScrollContainer you can drag anywhere inside, including on top of buttons.
+##
+## Godot delivers a touch to the topmost Control, so a drag that starts on a shop
+## card goes to the CARD and the ScrollContainer never hears about it. Its built-in
+## touch scrolling only works on empty space — and a shop is packed with cards, so
+## on a phone these screens simply did not scroll.
+##
+## Handled in `_input`, which runs BEFORE the GUI pass, so the drag is seen no
+## matter what is under the finger. Past a small threshold the release is swallowed
+## too: without that, scrolling past a price button would buy the item.
+class TouchScroll extends ScrollContainer:
+	## Below this the gesture is a tap and the button underneath keeps it.
+	const SLOP := 14.0
+
+	var _finger := -1
+	var _last := 0.0
+	var _travel := 0.0
+
+	func _init() -> void:
+		# Godot's own touch handling would fight this one.
+		set_deferred("scroll_deadzone", 0)
+
+	func _input(event: InputEvent) -> void:
+		if not is_visible_in_tree():
+			return
+		if event is InputEventScreenTouch:
+			var touch := event as InputEventScreenTouch
+			if touch.pressed:
+				if get_global_rect().has_point(touch.position):
+					_finger = touch.index
+					_last = touch.position.y
+					_travel = 0.0
+			elif touch.index == _finger:
+				_finger = -1
+				if _travel > SLOP:
+					# This was a scroll, not a tap. Swallow the release so the
+					# control under the finger never fires.
+					get_viewport().set_input_as_handled()
+		elif event is InputEventScreenDrag:
+			var drag := event as InputEventScreenDrag
+			if drag.index != _finger:
+				return
+			var dy := drag.position.y - _last
+			_last = drag.position.y
+			_travel += absf(dy)
+			scroll_vertical -= int(dy)
+			if _travel > SLOP:
+				get_viewport().set_input_as_handled()
+
+
+## Use everywhere a list has to scroll on a phone.
+static func scroll() -> ScrollContainer:
+	var s := TouchScroll.new()
+	s.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	return s

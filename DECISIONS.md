@@ -1260,3 +1260,34 @@ under a second, which is the bug it was written for.
 Also removed two icons I had just added to the results screen: SHARE had the
 leaderboard glyph and MENU had the settings gear. A wrong icon actively misleads,
 where no icon simply leaves the label to do its job.
+
+### §12aj — the shop would not scroll on a phone, for two unrelated reasons
+
+Reported as one bug ("i cant scroll in the shop and those pages"); it was two.
+
+**Godot hands a touch to the topmost Control.** A drag that starts on a shop card
+goes to the *card*. `ScrollContainer`'s built-in touch scrolling only fires when
+the drag starts on the container itself — i.e. on empty space — and these screens
+are wall-to-wall cards. On desktop this is invisible: a mouse wheel scrolls a
+plain `ScrollContainer` perfectly. Same shape as the dead touch input in §12s —
+verifying on desktop is blind to an entire input path.
+
+`UiKit.TouchScroll` handles the gesture in `_input`, which runs *before* the GUI
+pass, so it sees the drag whatever is under the finger. Past 14px of travel it
+swallows the release too — without that, scrolling past a price button buys the
+item. Under 14px the tap belongs to the button, untouched.
+
+Not used for `chip_row`: that scrolls sideways, and a vertical handler there
+would swallow chip taps while scrolling nothing.
+
+**And the panel opened pre-scrolled.** `_settle_scroll` restored a saved position
+with `elif keep > 0`, so a *zero* was never written — and rebuilding does not
+reset a `ScrollContainer`. Opening the shop after the pass left it 804px down a
+list the player never scrolled, which reads exactly like a screen that will not
+scroll back. Two fixes: restore unconditionally, and only carry a position within
+one tab (staying put after a purchase is right; inheriting the pass's position is
+not).
+
+The check drags for real (`InputEventScreenTouch` + `InputEventScreenDrag`) and
+asserts the list moved, because the failure is invisible to a screenshot.
+

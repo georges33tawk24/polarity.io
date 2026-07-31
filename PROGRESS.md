@@ -23,6 +23,12 @@ front end, .io results screen, sentence-cased prose, unified light UI surface.
 
 ## NEXT UP
 
+- (2026-07-31) Touch scrolling fixed on the shop / missions / pass / store /
+  settings lists. Two bugs: a drag starting on a card never reached the
+  ScrollContainer (Godot delivers touches to the topmost Control), and the panel
+  restored a stale scroll position from the previously open tab. `UiKit.TouchScroll`
+  + `_settle_scroll` restoring unconditionally. Dragged for real in
+  `tests/screens.tscn` — a mouse wheel cannot reproduce this. DECISIONS §12aj.
 - (2026-07-30) UI identity pass landed: drawn stencil wordmark + hero numbers, field
   lines poled to the CTA, warm steel ramp, plate()-based depth, chip-row navigation,
   two-pole cosmetic previews, de-neoned rarity/skins/ranks. See ART_DIRECTION Part 6.

@@ -1253,7 +1253,7 @@ func _build_settings() -> Control:
 	head.add_child(UiKit.spacer(160))
 	root.add_child(head)
 
-	var scroll := ScrollContainer.new()
+	var scroll := UiKit.scroll()
 	scroll.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	# Every other screen breathes at the edges; this one ran flush to them, so the
 	# dropdown arrows and the toggle pills sat against the bezel.
