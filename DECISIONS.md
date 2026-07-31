@@ -1628,3 +1628,23 @@ either side.
 `android/build/` is gitignored — 1.2 GB of regenerated engine source and Gradle
 output.
 
+### §12at — targetSdk 35 without an engine upgrade
+
+Play requires targetSdk 35 for new apps; Godot 4.3's Android template ships 34 and
+exposes no property to override compileSdk, which AGP requires to be >= targetSdk.
+
+Rather than migrate the engine — the riskiest change left on a project this size —
+`tools/prepare_android.sh` installs the template and patches `config.gradle` to 35
+on the way past. It lives in a script because `android/build/` is gitignored (1.2 GB
+of engine source) and is regenerated, so a patch in the tree would not survive.
+
+**This buys time, it is not the durable fix.** Google raises the floor every August,
+and API 36 needs a newer AGP than Godot 4.3 ships. The real answer is Godot 4.5+,
+which also unblocks AdMob plugin v5.
+
+Also: SDK platform 35 had to be installed, and the first build after clearing
+`~/.gradle/caches` failed with `NoSuchFileException` on transform results — a stale
+daemon holding references to a cache that had been deleted under it. Killing the
+daemon and removing `transforms-3` fixed it. Worth knowing because the cache
+deletion was advice given here.
+

@@ -23,6 +23,11 @@ front end, .io results screen, sentence-cased prose, unified light UI surface.
 
 ## NEXT UP
 
+- (2026-07-31) targetSdk 35 reached WITHOUT the engine upgrade — see §12at.
+  Debug AAB builds clean at 54 MB with play-services-ads 24.9.0 linked and the
+  test App ID in the debug manifest. `tools/prepare_android.sh` must be run on a
+  fresh checkout before any Android export.
+- Godot 4.5+ upgrade deferred, not cancelled: API 36 lands August and needs it.
 - (2026-07-31) Upload keystore wired via GODOT_ANDROID_KEYSTORE_RELEASE_* env vars
   — nothing secret in export_presets.cfg. `tools/build_aab.sh` builds and verifies
   the signed AAB. Play feature graphic generated (`store/feature_graphic.png`).
