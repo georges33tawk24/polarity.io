@@ -23,6 +23,10 @@ front end, .io results screen, sentence-cased prose, unified light UI surface.
 
 ## NEXT UP
 
+- (2026-07-31) Renamed to **Polarity.io** — display name, wordmark, web shell,
+  credits. Bundle id deliberately unchanged (`io.polarity.arena`). Trademark
+  position checked on USPTO: no live bare POLARITY mark in any class. DECISIONS
+  §12ar. Store listing copy still says POLARITY in places — update before submission.
 - (2026-07-31) Both owed features landed. Magnet body rebuilt as a true U with
   straight legs (was a 320-degree annulus); friends shipped end to end — schema
   with RLS, SECURITY DEFINER code lookup, provider methods, board scope, add-by-code

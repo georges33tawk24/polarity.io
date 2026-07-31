@@ -1201,7 +1201,7 @@ func _render_share_card(result: Dictionary) -> String:
 
 	var placement := int(result.get("placement", 0))
 	var colors := Cosmetics.skin_colors()
-	box.add_child(_lbl("POLARITY", 96, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER))
+	box.add_child(_lbl("POLARITY.IO", 96, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER))
 	var headline := _lbl(tr("UI_VICTORY") if placement == 1 else "#%d" % placement,
 			200, colors[0] if placement == 1 else Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER)
 	box.add_child(headline)
@@ -1846,7 +1846,7 @@ func _build_about() -> Control:
 	var box := UiKit.modal(_layout)
 	box.add_child(_lbl(tr("UI_CREDITS"), UiKit.T_TITLE, UiKit.INK,
 			HORIZONTAL_ALIGNMENT_CENTER))
-	var body := _lbl("POLARITY\n\n%s\n\nGodot %s\n%s" % [
+	var body := _lbl("POLARITY.IO\n\n%s\n\nGodot %s\n%s" % [
 			tr("UI_CREDITS_BODY"),
 			"%d.%d" % [Engine.get_version_info()["major"], Engine.get_version_info()["minor"]],
 			Game.build_string() if Game.has_method("build_string") else ""],
@@ -1860,7 +1860,7 @@ func _build_about() -> Control:
 	support.pressed.connect(func() -> void:
 		# mailto: is the only contact channel that needs no backend and works on
 		# every platform this ships to.
-		OS.shell_open("mailto:%s?subject=POLARITY%%20support" % SUPPORT_EMAIL))
+		OS.shell_open("mailto:%s?subject=Polarity.io%%20support" % SUPPORT_EMAIL))
 	box.add_child(support)
 
 	var close := UiKit.btn_ghost(tr("UI_BACK"))

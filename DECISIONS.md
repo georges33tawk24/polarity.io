@@ -1555,3 +1555,32 @@ The player's own code is shown on the board, not hidden behind the add button:
 one side reads it out and the other types it in, so a screen that only accepts
 input means nobody can ever be first to share.
 
+### §12ar — renamed to Polarity.io
+
+Display name only. `package/unique_name` and `application/bundle_identifier` both
+stay `io.polarity.arena`: changing a bundle id makes it a brand-new app to both
+stores, with no update path, no reviews and no install base. The name a store
+shows and the id it keys on are separate fields and there was no reason to touch
+the second one.
+
+Checked before committing to it, since the player asked directly whether the name
+was usable. A USPTO wordmark search for "polarity" returns 66 marks and **every
+bare POLARITY wordmark is dead** — including all three in IC 028 (board game) and
+all four in IC 009. Everything still live is a compound mark in an unrelated field
+(POLARITY MEDICAL, PRECISION POLARITY, POLARITY MANAGEMENT, Polarity Life...).
+The closest live thing to this space is POLARITY OF PROMINENCE, pending, IC 009
+"downloadable software for interactive strategy gaming".
+
+Known and accepted: `polarity.io` the domain belongs to Polarity, a security
+product acquired by ThreatConnect in July 2024. That is a branding cost, not a
+legal one — different class, different buyers, no plausible confusion — and the
+call was the player's to make.
+
+Not checked: non-US registers, unregistered common-law rights (several Steam and
+itch games use the word), and app store review, which follows its own rules.
+
+The wordmark renders ".IO" at 52% height in INK_DIM on a baseline-aligned row
+rather than as part of the same stencil string. At full height eleven characters
+read as one long word; smaller and dimmer, it reads the way a domain does. The
+stencil already had every glyph needed, full stop included.
+

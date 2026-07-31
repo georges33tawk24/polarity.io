@@ -167,10 +167,28 @@ static func lbl_label(text: String, size := T_LABEL, color := INK_DIM,
 
 ## The wordmark, drawn rather than typeset. See `Stencil` for why.
 static func wordmark(height := 96.0, color := INK) -> Node:
+	# ".IO" rides at 52% height on a baseline-aligned row rather than being part of
+	# the same stencil string. At full height the suffix competes with the mark and
+	# the whole thing reads as one eleven-character word; smaller, it reads the way
+	# a domain does — the name, then the tag.
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", int(height * 0.10))
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+
 	var w: Stencil.StencilLabel = Stencil.node("POLARITY", height, color)
 	w.seam = 0.44
 	w.rivet_in_o = true
-	return w
+	w.size_flags_vertical = Control.SIZE_SHRINK_END
+	row.add_child(w)
+
+	var tag: Stencil.StencilLabel = Stencil.node(".IO", height * 0.52, INK_DIM)
+	tag.seam = 0.44
+	tag.rivet_in_o = true
+	# Shrink-end on both, so the suffix sits on the wordmark's baseline instead of
+	# floating at the vertical centre of a taller row.
+	tag.size_flags_vertical = Control.SIZE_SHRINK_END
+	row.add_child(tag)
+	return row
 
 
 # --- surfaces --------------------------------------------------------------
