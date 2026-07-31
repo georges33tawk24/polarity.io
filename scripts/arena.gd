@@ -401,9 +401,8 @@ func _hazard_node(radius: float, tint: Color, saw: bool) -> Node3D:
 
 # --- spawning --------------------------------------------------------------
 func _spawn_magnets() -> void:
-	var names := _bot_name_pool()
-	names.shuffle()
 	var total: int = t.bot_count + 1
+	var names := _bot_names(total)
 	for i in total:
 		var m := Magnet.new()
 		var is_player := i == 0
@@ -941,6 +940,60 @@ func _bot_name_pool() -> Array:
 				if pools.has(key) and (pools[key] as Array).size() >= 8:
 					return (pools[key] as Array).duplicate()
 	return BOT_NAMES.duplicate()
+
+
+## Turns a base pool into `count` distinct handles that look like a real lobby.
+##
+## A fixed list gives itself away in two matches — the same fourteen names in a
+## different order. Roughly half the names get gamertag decoration and half stay
+## plain, because an all-decorated lobby reads as fake exactly as fast as an
+## all-plain one. Decoration is language-neutral on purpose: xX_ and 1337 look the
+## same in every locale a real player would use them in.
+func _bot_names(count: int) -> Array:
+	var base := _bot_name_pool()
+	base.shuffle()
+	var decor := _bot_decor()
+	var prefixes: Array = decor.get("prefixes", [])
+	var suffixes: Array = decor.get("suffixes", [])
+	var numbers: Array = decor.get("numbers", [])
+	var leet: Dictionary = decor.get("leet", {})
+
+	var out: Array = []
+	var used := {}
+	var guard := 0
+	while out.size() < count and guard < count * 40:
+		guard += 1
+		var name := String(base[rng.randi() % base.size()])
+		var roll := rng.randf()
+		if roll < 0.22 and not numbers.is_empty():
+			name += String(numbers[rng.randi() % numbers.size()])
+		elif roll < 0.36 and not prefixes.is_empty():
+			name = String(prefixes[rng.randi() % prefixes.size()]) + name
+		elif roll < 0.46 and not suffixes.is_empty():
+			name += String(suffixes[rng.randi() % suffixes.size()])
+		elif roll < 0.54 and not leet.is_empty():
+			var swapped := ""
+			for ch in name:
+				var lower := ch.to_lower()
+				swapped += String(leet[lower]) if leet.has(lower) and rng.randf() < 0.6 else ch
+			name = swapped
+		if used.has(name):
+			continue
+		used[name] = true
+		out.append(name)
+	# Guard exhausted (a tiny pool): fall back to numbering so a match still starts.
+	while out.size() < count:
+		out.append("Magnet%d" % (out.size() + 1))
+	return out
+
+
+func _bot_decor() -> Dictionary:
+	var f := FileAccess.get_file_as_string("res://data/bot_names.json")
+	if f != "":
+		var parsed: Variant = JSON.parse_string(f)
+		if parsed is Dictionary:
+			return (parsed as Dictionary).get("decor", {})
+	return {}
 
 
 ## Accepted the revive. Placed at the ring centre with a fraction of peak mass:

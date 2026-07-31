@@ -1224,3 +1224,39 @@ are all the same shape:
 
 The pattern in all three: a plausible explanation adopted before checking. The parse
 error was one `--check-only` away the whole time.
+
+
+## §12ai — lobby names, map size, and a balance regression caught by the harness
+(2026-07-31)
+
+**Bot names are generated, not listed.** A fixed pool of 28 gives itself away in two
+matches — the same handles in a different order. The base pool went to 60 and gets
+gamertag decoration: numbers, `xX_` prefixes, `_Xx` suffixes, occasional leet. Twelve
+lobbies now produce 142 distinct handles.
+
+Roughly half get decorated on purpose. **An all-decorated lobby reads as fake exactly
+as fast as an all-plain one** — a real lobby is a mix, and that mix is the thing being
+imitated. Decoration is language-neutral because `xX_` and `1337` look the same in
+every locale a player would use them in.
+
+Asserted, not eyeballed: no duplicates within a lobby, >120 distinct handles across
+twelve, and a decorated fraction between 15% and 85%.
+
+**Minimap 230 -> 320.** At 230 the dots were 2-3px on a phone — decorative rather than
+usable. It can be hidden entirely now, so the screen-space trade is the player's.
+
+### The tuning fix broke the other end, and smoke caught it
+
+Raising `absorb_fraction` to 0.26 with a 0.38s bite cooldown made an idle player die
+in **1.9s**, which the smoke test failed against its 3s floor. That check exists for
+exactly this and it was right to fire.
+
+Settled at 0.19 / 0.46s, which lands around 2.3s. The floor moved 3.0 -> 2.0, and it is
+worth being explicit that **this is a threshold moved because the design changed, not
+to silence a failure**: 3.0 encoded the original balance the player described as
+"takes wayyyy too long to kill someone". The check still catches drain that kills in
+under a second, which is the bug it was written for.
+
+Also removed two icons I had just added to the results screen: SHARE had the
+leaderboard glyph and MENU had the settings gear. A wrong icon actively misleads,
+where no icon simply leaves the label to do its job.

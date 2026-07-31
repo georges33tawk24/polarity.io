@@ -1020,14 +1020,10 @@ func _build_results() -> Control:
 	# controls and awkward to hit.
 	var share := UiKit.btn_secondary(tr("UI_SHARE"), 116)
 	share.custom_minimum_size.x = 330
-	share.icon = Icons.get_icon("bars", UiKit.INK)
-	share.add_theme_constant_override("h_separation", 12)
 	share.pressed.connect(_on_share)
 	links.add_child(share)
 	var home := UiKit.btn_secondary(tr("UI_MENU"), 116)
 	home.custom_minimum_size.x = 330
-	home.icon = Icons.get_icon("gear", UiKit.INK)
-	home.add_theme_constant_override("h_separation", 12)
 	home.pressed.connect(func() -> void: menu_pressed.emit())
 	links.add_child(home)
 	box.add_child(links)

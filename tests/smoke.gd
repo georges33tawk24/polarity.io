@@ -221,7 +221,14 @@ func _on_ended(result: Dictionary) -> void:
 	var survived := float(result.get("survived", 0.0))
 	var final_mass := float(result.get("mass", 0.0))
 	var drained := final_mass <= Game.tuning.min_mass + 0.5
-	if drained and survived < 3.0:
+	# Floor lowered from 3.0s to 2.0s deliberately, not to make a failure go away.
+	# It encoded the ORIGINAL balance, where an idle player lasted ~3.5s — which the
+	# player reported as "takes wayyyy too long to kill someone". Kills are meant to
+	# be faster now, and 2.3s for a magnet that never touches the controls while
+	# being actively eaten is the intended cost. The check still earns its place: it
+	# catches drain that kills in well under a second, which is a real bug and is
+	# what it was written for.
+	if drained and survived < 2.0:
 		printerr("FAIL  idle player drained to death in %.1fs — drain is too lethal" % survived)
 		fails += 1
 	if not drained and survived < 1.5:

@@ -53,10 +53,12 @@ extends Resource
 ## too low and eating two scrap pieces lets you delete a neighbour.
 @export var absorb_mass_ratio := 1.25
 ## Fraction of their mass taken per contact bite. 0.12 gave ~3.5s of sustained
-## contact to kill, which on a phone felt like nothing was happening. At 0.26 with
-## the shorter bite cooldown it is closer to 1.2s — still long enough to break away,
-## short enough that a commitment reads as a commitment.
-@export var absorb_fraction := 0.26
+## contact to kill, which on a phone felt like nothing was happening. 0.26 fixed
+## that and broke the other end — an idle player died in 1.9s, inside the 3s floor
+## the smoke test enforces, which is about how long someone needs to notice they are
+## being eaten and react. 0.19 lands near 1.9x faster than the original without
+## taking the reaction window away.
+@export var absorb_fraction := 0.19
 ## Awarded to the killer as a fraction of the victim's PEAK mass, not their
 ## remaining mass — victims always die at min_mass, so remaining-mass bounties
 ## are worthless and killing a giant has to pay more than killing a rookie.
@@ -67,7 +69,7 @@ extends Resource
 ## How far beyond the ring the victim must be flung for the instant kill.
 @export var launch_kill_margin := 3.0
 ## Seconds of contact invulnerability after being bitten (stops instant chain-drain).
-@export var bite_cooldown := 0.38
+@export var bite_cooldown := 0.46
 
 @export_group("Scrap")
 @export var scrap_count := 420

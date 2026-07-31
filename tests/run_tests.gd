@@ -33,6 +33,7 @@ func _ready() -> void:
 	test_locale_formatting()
 	await test_arena_determinism()
 	test_touch_input()
+	test_bot_names()
 	test_netcode_seam()
 	test_economy_clamps()
 	test_match_rewards()
@@ -307,6 +308,46 @@ func test_touch_input() -> void:
 	click.position = Vector2(120, 130)
 	it.handle_event(click)
 	ok(it.pointer_down and it.pointer_pos == Vector2(120, 130), "mouse still works")
+
+
+## Bot names. A fixed list gives itself away in two matches, so this asserts the
+## three properties that make a lobby look real: no duplicates within a match, high
+## variety ACROSS matches, and a mix of plain and decorated handles rather than all
+## of one kind.
+func test_bot_names() -> void:
+	print("bot names")
+	var a := Arena.new()
+	add_child(a)
+	a.setup(Game.tuning, null, 111)
+
+	var lobby := a._bot_names(15)
+	ok(lobby.size() == 15, "produced the requested count")
+	var uniq := {}
+	for n: String in lobby:
+		uniq[n] = true
+	ok(uniq.size() == 15, "no duplicate names inside one lobby (%d unique)" % uniq.size())
+
+	# Across many lobbies the pool must not visibly repeat.
+	var seen := {}
+	for i in 12:
+		for n: String in a._bot_names(15):
+			seen[n] = true
+	ok(seen.size() > 120,
+			"12 lobbies produce %d distinct handles, not a fixed list" % seen.size())
+
+	# A mix: all-decorated reads as fake exactly as fast as all-plain.
+	var decorated := 0
+	for n: String in seen.keys():
+		if n != n.capitalize() or n.to_lower() != n.to_lower().strip_edges():
+			pass
+		for ch in n:
+			if ch.is_valid_int() or ch == "_" or ch == "X":
+				decorated += 1
+				break
+	var frac := float(decorated) / maxf(1.0, float(seen.size()))
+	ok(frac > 0.15 and frac < 0.85,
+			"a mix of plain and decorated handles (%.0f%% decorated)" % (frac * 100.0))
+	a.queue_free()
 
 
 func test_netcode_seam() -> void:

@@ -10,7 +10,10 @@ extends Control
 ## Drawn with `_draw` rather than viewports or sprites — it is a dozen circles
 ## and a rectangle, redrawn at a throttled rate.
 
-const SIZE := 230.0
+## Bigger than it was (230): at that size the dots were 2-3px on a phone and the
+## map was decorative rather than usable. It can be hidden entirely now, so the
+## trade for screen space is the player's to make.
+const SIZE := 320.0
 const REDRAW_HZ := 12.0
 
 var arena: Arena
