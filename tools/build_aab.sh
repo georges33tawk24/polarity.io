@@ -27,4 +27,13 @@ mkdir -p build/android
 # Android export "succeeded" while silently producing an unsigned artifact.
 [ -f "$OUT" ] || { echo "!! no AAB produced"; exit 1; }
 echo "AAB: $(du -h "$OUT" | cut -f1)  $OUT"
-unzip -l "$OUT" | grep -q "META-INF" && echo "   signed: yes" || { echo "!! UNSIGNED"; exit 1; }
+# jarsigner, not a grep for META-INF: `grep -q` exits on first match, unzip takes
+# SIGPIPE, and `set -o pipefail` turns that into a failure — so a correctly signed
+# bundle was reported UNSIGNED. jarsigner also actually verifies the signature
+# rather than checking that some file with the right name exists.
+if jarsigner -verify "$OUT" 2>/dev/null | grep -q "jar verified"; then
+  echo "   signed: yes"
+else
+  echo "!! UNSIGNED — do not upload"
+  exit 1
+fi
