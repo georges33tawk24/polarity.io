@@ -68,7 +68,16 @@ locale/translations=PackedStringArray("res://data/i18n/strings.en.translation", 
 [rendering]
 
 renderer/rendering_method="mobile"
+; Android drops to the compatibility (GLES3) renderer. The Vulkan "mobile"
+; backend is faster on hardware with a good driver and catastrophic on hardware
+; without one — this build ran the MENU at about 2fps on a real Samsung, which is
+; not a scene-complexity number, it is a driver number. Compatibility is the
+; standard remedy and the same backend the web build already uses.
+renderer/rendering_method.mobile="gl_compatibility"
 textures/vram_compression/import_etc2_astc=true
 lights_and_shadows/directional_shadow/soft_shadow_filter_quality=0
 environment/defaults/default_clear_color=Color(0.055, 0.06, 0.09, 1)
-anti_aliasing/quality/msaa_3d=1
+; MSAA off. On a phone it costs real milliseconds per frame for an edge quality
+; nobody can see at that pixel density, and this build was measured at ~2fps on a
+; device.
+anti_aliasing/quality/msaa_3d=0

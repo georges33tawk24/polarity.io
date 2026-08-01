@@ -21,6 +21,8 @@ var theme_res: Theme
 ## width clamp below.
 var _safe: Control
 var _stick: Stick
+var _fps: Label
+var _fps_t := 0.0
 var _layout: Control
 var _backdrop: ColorRect
 var _menu: Control
@@ -122,6 +124,15 @@ func _ready() -> void:
 		c.visible = false
 
 	add_child(_stick)
+
+	_fps = _lbl("", 30, UiKit.BRASS)
+	_fps.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	_fps.offset_left = -180.0
+	_fps.offset_top = 8.0
+	_fps.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_fps.visible = false
+	add_child(_fps)
+	set_process(true)
 
 	get_viewport().size_changed.connect(_relayout)
 	_relayout()
@@ -730,6 +741,10 @@ func _build_hud() -> Control:
 	_warning = UiKit.hud_lbl(tr("UI_OUT_OF_RING"), UiKit.T_LEAD, UiKit.DANGER_LINE,
 			HORIZONTAL_ALIGNMENT_CENTER)
 	_warning.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE)
+	# Stops at the board's left edge. Full width ran it straight under the
+	# leaderboard, so the one message telling you that you are dying was the one
+	# message you could not read.
+	_warning.offset_right = -(BOARD_W + 24)
 	_warning.offset_top = 380
 	_warning.visible = false
 	root.add_child(_warning)
@@ -1370,6 +1385,10 @@ func _build_settings() -> Control:
 	display.add_child(_rule())
 	display.add_child(_toggle(tr("UI_COLORBLIND"), "colorblind"))
 	display.add_child(_rule())
+	# So a performance report can be a number. "Super laggy" cost a whole
+	# build-and-upload cycle to turn into "about 2fps".
+	display.add_child(_toggle(tr("UI_SHOW_FPS"), "show_fps"))
+	display.add_child(_rule())
 	display.add_child(_toggle(tr("UI_REDUCED_MOTION"), "reduced_motion"))
 	display.add_child(_rule())
 
@@ -1583,6 +1602,7 @@ func _aim_pole(target: Control, strength: float) -> void:
 ## Mass climbs rather than teleporting, and heavier numbers settle slower — the
 ## whole scoring verb is accumulation, so weight belongs in the motion.
 func _process(delta: float) -> void:
+	_tick_fps(delta)
 	if _mass_label == null or not is_instance_valid(_mass_label):
 		return
 	if absf(_mass_target - _mass_shown) < 0.05:
@@ -2039,3 +2059,19 @@ class Stick extends Control:
 		draw_circle(knob, kr, Color(UiKit.POLE_POS, 0.22))
 		draw_arc(knob, kr, 0.0, TAU, 32, Color(UiKit.POLE_POS, 0.42), 3.0, true)
 
+
+## FPS readout. Off by default, on from Settings — it exists so a performance
+## report from a device is a number rather than an adjective.
+func _tick_fps(delta: float) -> void:
+	if _fps == null or not is_instance_valid(_fps):
+		return
+	if not bool(Game.get_value("show_fps", false)):
+		if _fps.visible:
+			_fps.visible = false
+		return
+	_fps.visible = true
+	_fps_t += delta
+	if _fps_t < 0.25:
+		return
+	_fps_t = 0.0
+	_fps.text = "%d fps" % Engine.get_frames_per_second()

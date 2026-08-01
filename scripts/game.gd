@@ -102,6 +102,7 @@ static func defaults() -> Dictionary:
 		"haptics": true,
 		"haptics_level": "light",
 		"joystick": true,
+		"show_fps": false,
 		"reduced_motion": false,
 		"colorblind": false,
 		"quality": "auto",

@@ -90,9 +90,36 @@ func setup(tuning: Tuning, camera_rig: CameraRig, match_seed := 0) -> void:
 
 ## Same work, yielded in stages so a loading screen can report honest progress.
 ## Each stage is one frame's worth of construction; the caller drives it.
+## Entity budget for the device actually running this.
+##
+## The shipped tuning is authored on a desktop. On a real phone, 91
+## CharacterBody3D magnets plus 7000 MultiMesh scrap pieces measured about two
+## frames per second — the game was not slow, it was unplayable, and every button
+## looked broken because the UI was updating twice a second too.
+##
+## The arena keeps its size: the player asked for a big map and a big map is
+## cheap. What is expensive is what is IN it, so density comes down on mobile
+## instead. Scaled from the shipped values rather than hardcoded so tuning still
+## has one source of truth.
+func _fit_to_device(tuning: Tuning) -> Tuning:
+	if not Platform.is_mobile():
+		return tuning
+	var t2: Tuning = tuning.duplicate()
+	t2.bot_count = maxi(8, int(round(float(tuning.bot_count) * MOBILE_BOTS)))
+	t2.scrap_count = maxi(120, int(round(float(tuning.scrap_count) * MOBILE_SCRAP)))
+	return t2
+
+
+## Fractions of the desktop counts. Deliberately aggressive: an unplayable frame
+## rate costs more than a thinner lobby, and these are the two numbers to raise
+## once there is a real measurement from a device.
+const MOBILE_BOTS := 0.33
+const MOBILE_SCRAP := 0.25
+
+
 func setup_staged(tuning: Tuning, camera_rig: CameraRig,
 		match_seed := 0) -> Array[Callable]:
-	t = tuning
+	t = _fit_to_device(tuning)
 	rig = camera_rig
 	# 0 means "pick one" — a real match should differ every time. A caller that
 	# passes a seed gets that exact layout back, which is what makes a bug report

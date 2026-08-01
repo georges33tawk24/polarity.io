@@ -1648,3 +1648,36 @@ daemon holding references to a cache that had been deleted under it. Killing the
 daemon and removing `transforms-3` fixed it. Worth knowing because the cache
 deletion was advice given here.
 
+### §12au — 2fps on a real device
+
+First device install of this build ran at roughly two frames per second, **on the
+menu as well as in a match**. Every button looked dead; the player reported it as
+"nothing is clickable", and the press animation showing while nothing happened was
+the UI updating twice a second, not an input bug.
+
+Menu-too is the important half. Entity counts cannot explain a slow menu, so the
+cause is not the 91 magnets or the 7000 scrap. A modern phone rendering a handful
+of Control nodes and one full-screen shader at 2fps is a driver number, so Android
+now uses the **compatibility (GLES3) renderer** — the same backend the web build
+already uses. The Vulkan "mobile" backend is faster where the driver is good and
+catastrophic where it is not.
+
+Also changed, because they were wrong regardless:
+
+- **MSAA off.** Real milliseconds per frame for edge quality invisible at phone
+  pixel density.
+- **Entity counts scale on mobile** (`Arena._fit_to_device`): a third of the bots,
+  a quarter of the scrap. `_update_quality` could never have recovered from this —
+  it scales effects and 3D resolution, while bot and scrap counts are fixed at
+  spawn. The arena keeps its size; a big map is cheap, what is in it is not.
+- **An FPS readout**, off by default, in Settings. "Super laggy" cost a whole
+  build-and-upload cycle to turn into "about 2fps".
+
+None of this is confirmed fixed. It is four plausible causes addressed at once
+because each device round trip costs an upload, an install and a person's evening.
+
+Also fixed from the same session: the FTUE skip button and the out-of-ring warning
+both sat under the leaderboard, and the magnet body never turned — every magnet
+faced the same way regardless of travel, which reads as a sprite rather than an
+object. `_face_travel` eases the body toward its velocity; physics stays radial.
+

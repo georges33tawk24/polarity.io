@@ -57,8 +57,10 @@ func _ready() -> void:
 	add_child(_flash)
 
 	var skip := UiKit.btn(tr("UI_SKIP"), Color.TRANSPARENT, 90)
-	skip.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
-	skip.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	# Top LEFT: the leaderboard owns the top-right corner, and the skip button was
+	# sitting on top of it.
+	skip.set_anchors_and_offsets_preset(Control.PRESET_TOP_LEFT)
+	skip.grow_horizontal = Control.GROW_DIRECTION_END
 	skip.offset_top = 120
 	skip.custom_minimum_size.x = 220
 	skip.add_theme_font_size_override("font_size", 32)

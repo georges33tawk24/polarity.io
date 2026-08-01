@@ -23,6 +23,12 @@ front end, .io results screen, sentence-cased prose, unified light UI surface.
 
 ## NEXT UP
 
+- (2026-08-01) FIRST DEVICE INSTALL: ~2fps, menu included. Addressed four ways —
+  Android on the compatibility renderer, MSAA off, mobile entity scaling, FPS
+  readout in Settings. NOT confirmed fixed; needs another device round trip.
+  DECISIONS §12au.
+- Also fixed: FTUE skip and out-of-ring warning overlapped the leaderboard; the
+  magnet now turns to face travel.
 - (2026-07-31) targetSdk 35 reached WITHOUT the engine upgrade — see §12at.
   Debug AAB builds clean at 54 MB with play-services-ads 24.9.0 linked and the
   test App ID in the debug manifest. `tools/prepare_android.sh` must be run on a

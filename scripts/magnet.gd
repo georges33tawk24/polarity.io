@@ -352,6 +352,7 @@ func set_leader(v: bool) -> void:
 
 
 func _update_visuals(delta: float) -> void:
+	_face_travel(delta)
 	var charge01 := charge / t.repel_charge_time if t.repel_charge_time > 0.0 else 0.0
 	var ready := cooldown <= 0.0
 	_body_mat.set_shader_parameter("charge", charge01 if ready else 0.0)
@@ -529,3 +530,25 @@ func speed() -> float:
 ## What the arena's magnetism pass should treat as "attracting".
 func is_attracting() -> bool:
 	return alive and ((not holding) if inverted else holding) and frozen <= 0.0
+
+
+## Turns the body to face where it is going.
+##
+## The mesh is a U with its opening along -Z, so a fixed orientation meant every
+## magnet in the arena pointed the same way regardless of travel — which reads as
+## a sprite, not an object. Turning it also makes the two poles mean something at
+## a glance: the arms lead, so you can see which way a rival is committed.
+##
+## Only the visual turns. Physics stays radial, so nothing about the game changes.
+func _face_travel(delta: float) -> void:
+	if _body == null or not is_instance_valid(_body):
+		return
+	var v := Vector2(velocity.x, velocity.z)
+	# Below walking pace the direction is noise, and snapping to it makes a
+	# drifting magnet spin on the spot.
+	if v.length_squared() < 1.5:
+		return
+	var want := atan2(v.x, v.y) + PI
+	# Eased, not snapped: heavier magnets should feel like they take a moment to
+	# come about, and an instant rotation looks like a glitch at speed.
+	_body.rotation.y = lerp_angle(_body.rotation.y, want, clampf(delta * 7.0, 0.0, 1.0))
