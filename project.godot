@@ -49,6 +49,14 @@ window/handheld/orientation=1
 
 enabled=PackedStringArray("res://addons/admob/plugin.cfg")
 
+[input_devices]
+
+; Explicit, not left to the engine default. Control/Button only listen for MOUSE
+; events, so with this off every button in the game is dead on a phone — the bug
+; that shipped in an IPA (§12s). Godot omits settings that match the default when
+; it rewrites this file, so it has silently disappeared from here once already.
+pointing/emulate_mouse_from_touch=true
+
 [internationalization]
 
 locale/translations=PackedStringArray("res://data/i18n/strings.en.translation", "res://data/i18n/strings.es.translation", "res://data/i18n/strings.pt_BR.translation", "res://data/i18n/strings.fr.translation", "res://data/i18n/strings.de.translation", "res://data/i18n/strings.ru.translation", "res://data/i18n/strings.tr.translation", "res://data/i18n/strings.id.translation", "res://data/i18n/strings.ja.translation", "res://data/i18n/strings.ko.translation")

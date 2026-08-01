@@ -279,8 +279,15 @@ func test_arena_determinism() -> void:
 ## exist and nothing needs emulating. It shipped in an IPA before anyone noticed.
 func test_touch_input() -> void:
 	print("touch input")
-	ok(bool(ProjectSettings.get_setting("input_devices/pointing/emulate_mouse_from_touch", false)),
-			"emulate_mouse_from_touch is on, or every Button is dead on a phone")
+	# Read the FILE, not ProjectSettings. get_setting() returns the engine's
+	# built-in default when the key is absent, so this assertion passed happily
+	# while the key had vanished from project.godot entirely — a check measuring
+	# something adjacent to what it claims.
+	var cfg := ConfigFile.new()
+	ok(cfg.load("res://project.godot") == OK, "project.godot is readable")
+	ok(bool(cfg.get_value("input_devices", "pointing/emulate_mouse_from_touch", false)),
+			"emulate_mouse_from_touch is set EXPLICITLY in project.godot, or every "
+			+ "Button is dead on a phone")
 
 	# A finger must drive the gameplay pointer.
 	var it := Intent.new()
