@@ -13,8 +13,17 @@ set -euo pipefail
 GODOT="${GODOT:-/Applications/Godot.app/Contents/MacOS/Godot}"
 OUT="build/android/polarity.aab"
 
-: "${POLARITY_KEYSTORE:?set POLARITY_KEYSTORE to your upload .jks path}"
-: "${POLARITY_KEYSTORE_PASS:?set POLARITY_KEYSTORE_PASS to the keystore password}"
+POLARITY_KEYSTORE="${POLARITY_KEYSTORE:-$HOME/polarity-upload.jks}"
+[ -f "$POLARITY_KEYSTORE" ] || { echo "!! no keystore at $POLARITY_KEYSTORE"; exit 1; }
+
+# Prompt rather than requiring the caller to export it. Passing a password on the
+# command line puts it in shell history in plaintext, and the read-and-export
+# one-liner that avoids that is fiddly enough to get wrong.
+if [ -z "${POLARITY_KEYSTORE_PASS:-}" ]; then
+  read -rsp "Keystore password: " POLARITY_KEYSTORE_PASS
+  echo
+fi
+[ -n "$POLARITY_KEYSTORE_PASS" ] || { echo "!! no password given"; exit 1; }
 
 export GODOT_ANDROID_KEYSTORE_RELEASE_PATH="$POLARITY_KEYSTORE"
 export GODOT_ANDROID_KEYSTORE_RELEASE_USER="${POLARITY_KEYSTORE_ALIAS:-upload}"
