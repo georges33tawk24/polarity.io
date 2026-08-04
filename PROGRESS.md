@@ -23,6 +23,54 @@ front end, .io results screen, sentence-cased prose, unified light UI surface.
 
 ## NEXT UP
 
+### DO THIS FIRST — endless mode (agreed 2026-08-01, not started)
+
+Turn the match from a timed round into an .io session. Agreed with the player;
+the ring is already gone, so the clock is the last piece of battle-royale framing
+left. Do it as ONE change — the pieces do not work apart.
+
+1. **Remove the match timer.** `Arena.time_left` stops being a countdown that ends
+   the match. Keep `elapsed` and emit it as the session clock (count up). Delete
+   the `time_left <= 0` end condition. `Bus.clock_changed` consumers in `ui.gd`
+   expect seconds remaining — they want elapsed instead, and the HUD label should
+   stop turning red near zero.
+
+2. **Bot respawn, or the arena empties.** There is no respawn today: bots eat each
+   other, nobody refills, and a cautious player ends up alone in a 370-unit arena
+   forever. Respawn on a delay to hold the lobby near `bot_count`.
+   **Spawn them at the arena EDGE, not on the spawn rings** — respawning next to
+   the player is the same defect as the spawn-death bug (§12ao), and it would be
+   worse because it happens mid-match at full mass. Reuse `_spawn_slots()`
+   spacing logic against the outer ring.
+
+3. **The session ends when the PLAYER dies.** That path already exists —
+   `AWAITING_REVIVE`, the revive offer, then results. Removing the timer means it
+   becomes the only end condition, so check `_on_player_down` and the revive
+   decline path actually reach `FINISHED` with no timer to fall back on.
+
+4. **Scoring changes shape.** With respawn there is no final placement, so
+   `placement` is meaningless — results, `Meta.record_match`, the leaderboard
+   submission and the mission metrics all key off it today. Replace with
+   **peak mass** and **survival time**, both of which are better scores than
+   "mass at 100 seconds" anyway. `Magnet.peak_mass` already exists.
+
+5. **Results screen** reports peak mass + survival time instead of placement.
+   `_choreograph()` and `_count_up()` animate a placement number; they want the
+   two new figures.
+
+Verify with `smoke --real`: a match must still terminate (on player death), the
+lobby must stay near `bot_count` after 60s, and no respawn may land within
+`pull_radius_for(start_mass) * 2.4` of the player.
+
+### Also outstanding
+
+- **Revert the mobile entity cut.** `Arena.MOBILE_BOTS` (0.33) / `MOBILE_SCRAP`
+  (0.25) were added chasing a frame rate problem that turned out to be the VIBRATE
+  permission (§12av). The player is getting 30 magnets instead of 91. Raise once a
+  real FPS reading exists — Settings > Display > Show FPS.
+- Godot 4.5+ upgrade before API 36 lands (Play raises the floor each August).
+- Receipt validation and AdMob server-side reward verification are both still
+  client-side.
 - (2026-08-01) **FIXED, CONFIRMED ON DEVICE:** the dead-buttons / "2fps" bug was a
   missing VIBRATE permission. vibrate_handheld() requested it on every button
   press, launching Android's permission activity, pausing and resuming the game
