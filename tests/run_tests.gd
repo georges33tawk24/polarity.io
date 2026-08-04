@@ -43,6 +43,7 @@ func _ready() -> void:
 	test_mission_rotation()
 	test_broad_phase()
 	test_android_permissions()
+	test_first_seconds()
 	test_friends()
 	test_product_types()
 	test_scrap_field()
@@ -741,6 +742,31 @@ func test_broad_phase() -> void:
 	ok(missed == 0, "the grid finds every reachable magnet (%d missed of %d)"
 			% [missed, total])
 	a.queue_free()
+
+
+## A new player must be able to absorb something almost immediately.
+##
+## The first three seconds decide whether someone understands the loop or puts
+## the game down. If the scrap field is thin enough that a player can spawn, move
+## off, and touch nothing, the game has failed to explain itself before it has
+## started — and that is a tuning value away at all times, on mobile especially,
+## where scrap is cut to a quarter.
+func test_first_seconds() -> void:
+	print("first seconds")
+	var t: Tuning = Game.tuning
+	for label in ["desktop", "mobile"]:
+		var count: float = float(t.scrap_count)
+		if label == "mobile":
+			count = maxf(120.0, round(count * Arena.MOBILE_SCRAP))
+		# Scrap fills 0.95 of the arena — see Arena._build_world.
+		var field_r: float = t.ring_start_radius * 0.95
+		var density: float = count / (PI * field_r * field_r)
+		# What a starting magnet sweeps in three seconds: its pull diameter, times
+		# the distance it covers at base speed.
+		var swept: float = t.pull_radius_for(t.start_mass) * 2.0 * t.base_speed * 3.0
+		var expect: float = density * swept
+		ok(expect >= 3.0,
+				"%s: ~%.1f scrap within reach in the first 3s" % [label, expect])
 
 
 ## Anything the game CALLS must be declared in the Android export.

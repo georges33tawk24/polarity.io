@@ -35,7 +35,7 @@ the run actually produced, and says so when it cannot exercise the pipeline.
 Placement also had to change: a fixed countdown from the starting lobby cannot
 survive respawn, so it is now "how many were standing when you died".
 
-### Polish queue — agreed 2026-08-01, ordered by impact
+### Polish queue — ALL SIX DONE 2026-08-01
 
 1. **Audio.** DONE (procedural, no purchase needed). The bed already had bass,
    pad and arp; it was missing rhythm, which is why it read as a drone. Kick,
@@ -65,11 +65,14 @@ survive respawn, so it is now "how many were standing when you died".
    Original note: Hitstop and a shockwave exist, but
    the mass gain reads as a ticking number. Camera pull-back, trail flare, heavier
    haptic.
-5. **Threat telegraphy in the world**, not just the minimap. You should know
-   something bigger is closing without looking down.
-6. **First ten seconds.** Verify scrap density at the spawn ring guarantees an
-   absorb within ~3s. That is the difference between "I get it" and "nothing
-   happened".
+5. **Threat telegraphy in the world.** DONE. `Ui.ThreatEdge` draws chevrons at
+   the screen edge for magnets that can eat you, sized and faded by proximity,
+   only when they are off screen and within range. Threats only — an indicator
+   for everything is an indicator for nothing.
+6. **First ten seconds.** DONE as a guard rather than a change: the density was
+   already fine (~38 pieces within reach in 3s on desktop, ~9 on mobile), so
+   `test_first_seconds` now asserts it for both device profiles. It was one tuning
+   edit away from breaking silently, on mobile especially where scrap is quartered.
 
 ### Also outstanding
 

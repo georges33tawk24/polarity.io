@@ -40,6 +40,7 @@ var _best_label: Label
 var _best_mass := 0.0
 var _best_survived := 0.0
 var _best_clock: Label
+var _threats: ThreatEdge
 var _best_beaten := false
 var _mass_shown := 0.0
 var _mass_target := 0.0
@@ -734,6 +735,13 @@ func _build_hud() -> Control:
 	_map_collapsed = bool(Game.get_value("map_collapsed", false))
 	_apply_map_collapsed()
 
+	# Off-screen threat markers. The minimap says who can eat you, but only if you
+	# look at it — and you look at it least when it matters most.
+	_threats = ThreatEdge.new()
+	_threats.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_threats.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	root.add_child(_threats)
+
 	# --- transient overlays --------------------------------------------------
 	_feed = VBoxContainer.new()
 	# Left column, not centred. Centred at the top it ran straight under the
@@ -823,6 +831,8 @@ func _build_hud() -> Control:
 ## needs the tuning. Ui held neither.
 func attach_arena(a: Arena) -> void:
 	_arena = a
+	if _threats != null and is_instance_valid(_threats):
+		_threats.arena = a
 	_best_mass = float(Game.get_value("best_mass", 0.0))
 	_best_survived = float(Game.get_value("best_survived", 0.0))
 	_best_beaten = false
@@ -2145,3 +2155,77 @@ func _tick_fps(delta: float) -> void:
 		return
 	_fps_t = 0.0
 	_fps.text = "%d fps" % Engine.get_frames_per_second()
+
+
+## Chevrons at the screen edge for the things that can eat you.
+##
+## The minimap already encodes threat by shape and colour, but you look at the
+## minimap least at the moment it matters most — when something bigger is closing
+## and your eyes are on your own magnet. This puts the same information in the
+## periphery, where it can be read without looking away.
+##
+## Only threats, never prey: an indicator for everything is an indicator for
+## nothing, and the whole point is that these are the ones worth turning for.
+class ThreatEdge extends Control:
+	## Redraw rate. Chevrons drift by a pixel or two per frame; 15Hz is invisible
+	## and iterating every magnet at 60Hz is not free at this lobby size.
+	const HZ := 15.0
+	## How far out a threat still earns a marker, as a multiple of its pull radius.
+	const RANGE := 5.0
+
+	var arena: Arena
+	var _timer := 0.0
+
+	func _init() -> void:
+		set_process(true)
+
+	func _process(delta: float) -> void:
+		_timer += delta
+		if _timer >= 1.0 / HZ:
+			_timer = 0.0
+			queue_redraw()
+
+	func _draw() -> void:
+		if arena == null or not is_instance_valid(arena) or arena.t == null:
+			return
+		var me: Magnet = arena.player
+		if me == null or not me.alive or arena.rig == null:
+			return
+		# Inset so a chevron is never half under a rounded corner or a notch.
+		var pad := 46.0
+		var rect := Rect2(Vector2(pad, pad), size - Vector2(pad, pad) * 2.0)
+		if rect.size.x <= 0.0 or rect.size.y <= 0.0:
+			return
+		var centre := size * 0.5
+
+		for m: Magnet in arena.magnets:
+			if not m.alive or m.is_player:
+				continue
+			if m.mass <= me.mass * arena.t.absorb_mass_ratio:
+				continue   # cannot eat you — not a threat
+			var d := m.global_position.distance_to(me.global_position)
+			if d > m.pull_radius() * RANGE:
+				continue   # far enough away to be somebody else's problem
+			var p := arena.rig.screen_point(m.global_position)
+			if rect.has_point(p):
+				continue   # on screen; you can see it yourself
+
+			# Where the line to it leaves the screen.
+			var dir := (p - centre).normalized()
+			if dir == Vector2.ZERO:
+				continue
+			var edge: Vector2 = centre + dir * maxf(rect.size.x, rect.size.y)
+			edge.x = clampf(edge.x, rect.position.x, rect.end.x)
+			edge.y = clampf(edge.y, rect.position.y, rect.end.y)
+
+			# Closer reads as bigger and more opaque — distance is the urgency.
+			var near: float = clampf(1.0 - d / maxf(m.pull_radius() * RANGE, 1.0),
+					0.0, 1.0)
+			var sz: float = 16.0 + 16.0 * near
+			var a: float = 0.28 + 0.55 * near
+			var n := dir.orthogonal()
+			draw_colored_polygon(PackedVector2Array([
+					edge + dir * sz,
+					edge - dir * sz * 0.5 + n * sz * 0.75,
+					edge - dir * sz * 0.5 - n * sz * 0.75]),
+					Color(UiKit.POLE_POS, a))
