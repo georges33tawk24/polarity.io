@@ -11,6 +11,8 @@ var _done := false
 var _elapsed := 0.0
 var _shot_path := ""
 var _frames: Array[float] = []
+var _run_kills_seen := 0
+var _run_scrap_seen := 0
 var _magnet_count := 0
 var _shot_at := 4.0
 var _shot_taken := false
@@ -64,8 +66,12 @@ func _ready() -> void:
 		Game.tuning = t
 
 	Bus.match_ended.connect(_on_ended)
-	Bus.magnet_eliminated.connect(func(_v: String, _k: String, _p: bool) -> void:
-		_eliminations += 1)
+	Bus.magnet_eliminated.connect(func(_v: String, _k: String, by_player: bool) -> void:
+		_eliminations += 1
+		if by_player:
+			_run_kills_seen += 1)
+	Bus.player_absorbed.connect(func(_pos: Vector3, _amt: float) -> void:
+		_run_scrap_seen += 1)
 
 	# Guarantee the daily missions can move: trophies start mid-ladder so the
 	# trophy delta is measurable in both directions.
@@ -254,11 +260,29 @@ func _on_ended(result: Dictionary) -> void:
 	if int(Game.get_value("matches", 0)) <= _matches_before:
 		printerr("FAIL  match not recorded in the profile")
 		fails += 1
+	# Only the three dailies ACTIVE today receive progress, and which three roll is
+	# a function of the date. A run that banks no kills and little scrap progresses
+	# nothing if today happens to be all kill/win missions — which made this
+	# assertion fail on a dice roll rather than on a defect, and it did.
+	#
+	# So: require progress only for metrics this run actually produced. "matches"
+	# is always 1, so whenever a matches-based daily is active this still proves
+	# the whole mission pipeline end to end.
+	var produced := {"matches": 1, "kills": _run_kills_seen,
+			"scrap": _run_scrap_seen, "mass": 1}
+	var testable := false
 	var mission_moved := false
 	for m: Dictionary in Meta.active("daily"):
+		var metric := String(Meta._mission_def(String(m["id"])).get("metric", ""))
+		if int(produced.get(metric, 0)) <= 0:
+			continue
+		testable = true
 		if int(m["current"]) > 0:
 			mission_moved = true
-	if not mission_moved:
+	if not testable:
+		print("  note  no active daily uses a metric this run produced — "
+				+ "mission plumbing not exercised")
+	if testable and not mission_moved:
 		printerr("FAIL  no daily mission progressed from a full match — the meta "
 				+ "layer is not hearing gameplay events")
 		fails += 1
@@ -266,9 +290,14 @@ func _on_ended(result: Dictionary) -> void:
 		printerr("FAIL  placement awarded no trophy change")
 		fails += 1
 
+	# Placement is no longer a unique permutation of a fixed lobby: bots respawn,
+	# so it means "how many were standing when you died" and ties are expected
+	# (two magnets dying between refills share a number). What must still hold is
+	# that everyone HAS one and it is in range — a zero means an elimination path
+	# that never assigned it.
 	var seen := {}
 	for m: Magnet in _main.arena.magnets:
-		if m.placement < 1 or seen.has(m.placement):
+		if m.placement < 1 or m.placement > _main.arena.magnets.size():
 			printerr("FAIL  bad placement %d for %s" % [m.placement, m.display_name])
 			fails += 1
 		seen[m.placement] = true

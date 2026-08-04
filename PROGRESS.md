@@ -28,10 +28,12 @@ front end, .io results screen, sentence-cased prose, unified light UI surface.
 Timer removed, bots respawn at the edge, score is peak mass + survival time.
 DECISIONS §12aw. 405 logic checks green; matches terminate on player death.
 
-**OPEN:** `smoke --real` fails one assertion — "no daily mission progressed from a
-full match". Sessions now end in ~10s rather than 100s, so far less scrap is
-banked. Likely a fixture artifact (today's dailies may all be kill/win based), but
-UNVERIFIED — check which dailies were active before dismissing it.
+RESOLVED: the mission assertion was luck-based — only the three dailies active on
+a given date receive progress, so a run banking no kills progressed nothing when
+today's three were all kill/win missions. It now demands progress only for metrics
+the run actually produced, and says so when it cannot exercise the pipeline.
+Placement also had to change: a fixed countdown from the starting lobby cannot
+survive respawn, so it is now "how many were standing when you died".
 
 ### Polish queue — agreed 2026-08-01, ordered by impact
 

@@ -1016,8 +1016,10 @@ func _on_repelled(origin: Vector3, radius: float, strength: float, power: float,
 
 
 func _on_eliminated(victim: Magnet, killer: Magnet) -> void:
-	victim.placement = _placement_counter
-	_placement_counter -= 1
+	# How many were still standing, including the victim. A fixed countdown from
+	# the starting lobby size cannot work now bots respawn — the count only goes
+	# down, while the lobby refills, so placements collided and ran past the end.
+	victim.placement = maxi(1, _alive_count())
 
 	fx.burst(victim.global_position, victim.tint_a)
 	# Was radius * 6.0 — a ring six times the width of the thing that died, which is
