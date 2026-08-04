@@ -37,7 +37,13 @@ survive respawn, so it is now "how many were standing when you died".
 
 ### Polish queue — agreed 2026-08-01, ordered by impact
 
-1. **Audio.** 13 synthesised SFX, no music. Everything else has had an art pass;
+1. **Audio.** DONE (procedural, no purchase needed). The bed already had bass,
+   pad and arp; it was missing rhythm, which is why it read as a drone. Kick,
+   inharmonic anvil backbeat and an offbeat tick added, all struck metal to match
+   the scrapyard. screens.tscn measures all three tracks for clipping and loudness.
+   Remaining if you ever want it: authored samples would still beat synthesis, but
+   that is a purchase decision, not a blocker.
+   Original note: 13 synthesised SFX, no music. Everything else has had an art pass;
    the sound has not, and absorbing something — the payoff of the whole game —
    currently reads as a synthesised blip. Highest-impact item left. Needs a
    licensed pack or authored samples; ASK BEFORE BUYING.
@@ -52,7 +58,11 @@ survive respawn, so it is now "how many were standing when you died".
    number to beat: best survival time and best peak mass on screen DURING the run,
    with a marker when they are about to beat it. Without this an endless game is a
    drift rather than a chase.
-4. **Absorbing another magnet should be felt.** Hitstop and a shockwave exist, but
+4. **Absorbing another magnet should be felt.** DONE. `Magnet.celebrate()` on a
+   player kill: camera punch (the clip-moment one), a trail burst aimed away from
+   the kill, and a squash deeper than any amount of scrap can produce — so eating
+   a RIVAL is categorically different from eating a nut.
+   Original note: Hitstop and a shockwave exist, but
    the mass gain reads as a ticking number. Camera pull-back, trail flare, heavier
    haptic.
 5. **Threat telegraphy in the world**, not just the minimap. You should know

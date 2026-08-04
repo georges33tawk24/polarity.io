@@ -407,6 +407,29 @@ func fire_repel() -> void:
 		Bus.shake.emit(t.shake_launch * power)
 
 
+## The moment this magnet eats another one. Visual only.
+##
+## Separate from gain_mass because the size of the meal is not the point — a
+## bounty happens to be a large number, but what makes it land is that it came
+## off a rival. Scrap should never look like this no matter how much of it
+## arrives at once.
+func celebrate(from: Vector3) -> void:
+	_squash = 0.5
+	if _trail != null and is_instance_valid(_trail):
+		# A burst off the body, aimed away from the kill, then back to normal.
+		_trail.emitting = true
+		_trail.amount_ratio = 1.0
+		var dir := (global_position - from).normalized()
+		if _trail_mat != null:
+			_trail_mat.direction = Vector3(dir.x, 0.6, dir.z)
+			var t2 := create_tween()
+			t2.tween_interval(0.35)
+			t2.tween_callback(func() -> void:
+				if _trail_mat != null:
+					_trail_mat.direction = Vector3(0, 1, 0))
+	_hurt = maxf(_hurt, 0.0)
+
+
 func gain_mass(amount: float) -> void:
 	if not alive or amount <= 0.0:
 		return

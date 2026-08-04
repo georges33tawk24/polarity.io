@@ -1033,6 +1033,13 @@ func _on_eliminated(victim: Magnet, killer: Magnet) -> void:
 		killer.gain_mass(bounty)
 		if killer.is_player:
 			fx.floater(victim.global_position, "+%d" % roundi(bounty), Color(0.5, 1.0, 0.6))
+			# Eating a rival is the payoff of the whole game and it read as a
+			# number ticking up. The camera punch is the same one clip moments
+			# use, the trail flares off the body, and the squash is deeper than
+			# any amount of scrap can produce — so absorbing a PLAYER feels
+			# categorically different from absorbing a nut.
+			Bus.clip_moment.emit(killer.global_position)
+			killer.celebrate(victim.global_position)
 
 	var by_player := killer != null and killer.is_player
 	if by_player:
