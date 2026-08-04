@@ -44,9 +44,8 @@ UNVERIFIED — check which dailies were active before dismissing it.
    Remaining: consider skipping results entirely on a fast death.
 3. **Endless needs a target.** PARTLY DONE: personal best mass now shows under
    the HUD readout and flips to NEW BEST in brass, with a sting, the moment it is
-   beaten. Remaining: best SURVIVAL time is not stored anywhere (`Game.profile`
-   has `best_mass` but no `best_survived`) — add it in record_match and show it
-   beside the clock.
+   beaten. Best survival time is now stored (`best_survived`) and shown under the
+   clock, which turns brass once the run outlasts it. DONE.
    Original note: No finish line any more, so the player needs a
    number to beat: best survival time and best peak mass on screen DURING the run,
    with a marker when they are about to beat it. Without this an endless game is a

@@ -38,6 +38,8 @@ const BOARD_ROW_H := 44
 var _mass_label: Stencil.StencilLabel
 var _best_label: Label
 var _best_mass := 0.0
+var _best_survived := 0.0
+var _best_clock: Label
 var _best_beaten := false
 var _mass_shown := 0.0
 var _mass_target := 0.0
@@ -661,6 +663,11 @@ func _build_hud() -> Control:
 	var board_head := UiKit.row([_alive_label, _alive_caption, spring, divider,
 			_clock_label, _board_toggle], UiKit.S1)
 	board_panel.add_child(board_head)
+	# The clock's target, on its own line under the row so it cannot push the
+	# header's widths around as the text changes length.
+	_best_clock = UiKit.hud_lbl("", UiKit.T_CAPTION, UiKit.INK_MUTE,
+			HORIZONTAL_ALIGNMENT_RIGHT)
+	board_panel.add_child(_best_clock)
 
 	# The ring closes for most of the match and the only previous cue was the clock
 	# going red under 15 seconds — i.e. after you were already dying. ring_changed
@@ -817,6 +824,7 @@ func _build_hud() -> Control:
 func attach_arena(a: Arena) -> void:
 	_arena = a
 	_best_mass = float(Game.get_value("best_mass", 0.0))
+	_best_survived = float(Game.get_value("best_survived", 0.0))
 	_best_beaten = false
 	if _best_label != null and is_instance_valid(_best_label):
 		_best_label.text = (tr("UI_BEST_MASS") % Locale.number(roundi(_best_mass))) \
@@ -843,8 +851,19 @@ func _on_clock(seconds: float) -> void:
 	# Counts UP now — it is survival time, not time remaining, so there is no
 	# "running out" to turn red for. Brass once past the old round length, because
 	# outlasting it is the thing worth noticing.
+	# Brass once this run has outlasted the best one. The clock is the other half
+	# of the score, so it needs the same target the mass readout got.
+	var beat := _best_survived >= 1.0 and seconds > _best_survived
 	_clock_label.add_theme_color_override("font_color",
-			UiKit.BRASS if seconds >= 100.0 else UiKit.INK)
+			UiKit.BRASS if beat else UiKit.INK)
+	if _best_clock != null and is_instance_valid(_best_clock):
+		if beat:
+			if _best_clock.text != tr("UI_NEW_BEST"):
+				_best_clock.text = tr("UI_NEW_BEST")
+				_best_clock.add_theme_color_override("font_color", UiKit.BRASS)
+		elif _best_survived >= 1.0:
+			_best_clock.text = tr("UI_BEST_TIME") % [int(_best_survived) / 60,
+					int(_best_survived) % 60]
 
 
 func _on_charge(charge01: float, ready: bool) -> void:

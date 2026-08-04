@@ -90,6 +90,7 @@ static func defaults() -> Dictionary:
 		"level": 1,
 		"trophies": 0,
 		"best_mass": 0.0,
+		"best_survived": 0.0,
 		"best_placement": 0,
 		"matches": 0,
 		"wins": 0,
@@ -371,6 +372,10 @@ func record_match(result: Dictionary) -> Dictionary:
 	profile["matches"] = int(profile.get("matches", 0)) + 1
 	profile["kills"] = int(profile.get("kills", 0)) + kills
 	profile["best_mass"] = maxf(float(profile.get("best_mass", 0.0)), mass)
+	# Survival is half the score now that the round is gone, so it needs a best of
+	# its own — best_mass alone cannot describe a long, careful run.
+	profile["best_survived"] = maxf(float(profile.get("best_survived", 0.0)),
+			float(result.get("survived", 0.0)))
 	var best := int(profile.get("best_placement", 0))
 	profile["best_placement"] = placement if best == 0 else mini(best, placement)
 	if placement == 1:
