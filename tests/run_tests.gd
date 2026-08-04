@@ -42,6 +42,7 @@ func _ready() -> void:
 	test_spawn_spacing()
 	test_mission_rotation()
 	test_broad_phase()
+	test_android_permissions()
 	test_friends()
 	test_product_types()
 	test_scrap_field()
@@ -740,6 +741,36 @@ func test_broad_phase() -> void:
 	ok(missed == 0, "the grid finds every reachable magnet (%d missed of %d)"
 			% [missed, total])
 	a.queue_free()
+
+
+## Anything the game CALLS must be declared in the Android export.
+##
+## Godot's vibrate_handheld() requests the VIBRATE permission at the moment it is
+## called if the app does not hold it — which launches Android's permission
+## activity, pausing and resuming the game. Platform.vibrate() runs on every
+## button press, so the app paused and resumed on every tap: buttons showed their
+## press state and never fired, and the lifecycle thrash was indistinguishable
+## from a 2fps game. It cost a full day to find, on a device, via logcat.
+func test_android_permissions() -> void:
+	print("android permissions")
+	var cfg := ConfigFile.new()
+	ok(cfg.load("res://export_presets.cfg") == OK, "export_presets.cfg is readable")
+
+	# The Android preset's section index is not fixed, so find it by name.
+	var section := ""
+	for s in cfg.get_sections():
+		if String(cfg.get_value(s, "name", "")) == "Android":
+			section = s + ".options"
+			break
+	ok(section != "", "the Android export preset exists")
+	if section == "":
+		return
+
+	# Each entry: the permission flag, and what in the game needs it.
+	for pair in [["permissions/vibrate", "Platform.vibrate() on every button press"],
+			["permissions/internet", "Supabase, AdMob and Play Billing"]]:
+		ok(bool(cfg.get_value(section, String(pair[0]), false)),
+				"%s is declared — needed by %s" % [pair[0], pair[1]])
 
 
 ## Dailies must actually rotate.

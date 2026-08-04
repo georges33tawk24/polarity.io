@@ -23,6 +23,13 @@ front end, .io results screen, sentence-cased prose, unified light UI surface.
 
 ## NEXT UP
 
+- (2026-08-01) ROOT CAUSE FOUND: no VIBRATE permission in the Android export.
+  vibrate_handheld() requests it on call, launching Android's permission activity,
+  pausing/resuming the app on EVERY button press. That is the dead buttons and the
+  "2fps" both. Fixed + guarded by test_android_permissions. DECISIONS §12av.
+  v0.1.2 (3) — needs a device confirmation.
+- The four earlier perf changes (compat renderer, MSAA off, mobile entity scaling)
+  were NOT the cause. Keep or revert on their own merits, not as fixes.
 - (2026-08-01) FIRST DEVICE INSTALL: ~2fps, menu included. Addressed four ways —
   Android on the compatibility renderer, MSAA off, mobile entity scaling, FPS
   readout in Settings. NOT confirmed fixed; needs another device round trip.

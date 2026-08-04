@@ -1681,3 +1681,32 @@ both sat under the leaderboard, and the magnet body never turned — every magne
 faced the same way regardless of travel, which reads as a sprite rather than an
 object. `_face_travel` eases the body toward its velocity; physics stays radial.
 
+### §12av — the whole day, caused by a missing VIBRATE permission
+
+Dead buttons, press animations that never fired, and an apparent 2fps were all
+one bug, and it was none of the things they looked like.
+
+`dumpsys package` listed every permission the app holds. VIBRATE was not among
+them. Godot's `vibrate_handheld()` REQUESTS the permission at the moment it is
+called if the app does not hold it, and `Platform.vibrate()` runs on every button
+press. So every tap launched Android's `GrantPermissionsActivity`, which paused
+the Godot activity and resumed it ~300ms later. The button got its press but
+never its release; sensors, audio and rendering tore down and rebuilt each time,
+which is what read as two frames per second.
+
+Visible in logcat as `START u0 {act=android.content.pm.action.REQUEST_PERMISSIONS}`
+from the app's own uid, immediately after every `ViewPostIme pointer 0`.
+
+What this cost, and why: four separate fixes were shipped at it first — the
+compatibility renderer, MSAA off, mobile entity scaling, an FPS readout — none of
+which were the cause. Each was defensible on its own evidence ("a 2fps MENU is a
+driver number") and each was wrong, because the evidence was a symptom two layers
+removed. The thing that actually found it was the smallest, dullest command in
+the whole session: list what the app declares, and notice what is missing.
+
+The guard is `test_android_permissions`, which asserts the export preset declares
+what the code calls. It reads export_presets.cfg rather than trusting behaviour,
+for the same reason the emulate_mouse_from_touch check had to be rewritten to
+read project.godot: a check that asks the engine gets the engine's default and
+learns nothing about what ships.
+
