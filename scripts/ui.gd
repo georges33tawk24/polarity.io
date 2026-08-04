@@ -1519,8 +1519,7 @@ func _toggle(label: String, key: String) -> Control:
 	l.clip_text = true
 	l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(l)
-	var c := CheckButton.new()
-	c.button_pressed = bool(Game.get_value(key, true))
+	var c := UiKit.switch(bool(Game.get_value(key, true)))
 	c.toggled.connect(func(v: bool) -> void: Game.set_value(key, v))
 	row.add_child(c)
 	return row
@@ -1983,7 +1982,20 @@ func _rule() -> Control:
 	return wrap
 
 
+## Dropdowns arrive from Godot at their theme's default height, which is a small
+## target on a phone. Sized here rather than at each of the four call sites.
+func _size_control(control: Control) -> void:
+	if control is OptionButton:
+		var o := control as OptionButton
+		o.custom_minimum_size.y = 96.0
+		o.add_theme_font_size_override("font_size", UiKit.T_LEAD)
+		# The popup is a separate control and keeps its own tiny font otherwise.
+		var pop := o.get_popup()
+		pop.add_theme_font_size_override("font_size", UiKit.T_LEAD)
+
+
 func _setting_row(label: String, control: Control) -> HBoxContainer:
+	_size_control(control)
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", UiKit.S2)
 	var l := _lbl(label, 36, UiKit.INK_DIM)

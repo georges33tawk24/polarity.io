@@ -1710,3 +1710,48 @@ for the same reason the emulate_mouse_from_touch check had to be rewritten to
 read project.godot: a check that asks the engine gets the engine's default and
 learns nothing about what ships.
 
+### §12av — the missing VIBRATE permission, which looked like everything else
+
+Every button in the game was dead on a real device, and the game looked like it
+ran at about two frames per second. It was one bug.
+
+`Platform.vibrate()` runs on every button press. Godot's Android
+`vibrate_handheld()` requests the VIBRATE permission *at the moment it is called*
+if the app does not hold it — and the Android export preset never declared it. So
+every tap launched `GrantPermissionsActivity`, which paused the Godot activity and
+resumed it ~300ms later. The button showed its press state, the activity paused
+before the release could complete it, and the constant pause/resume — tearing down
+and re-registering sensors, audio and rendering each cycle — is what looked like a
+catastrophic frame rate.
+
+The diagnosis took a full day and four wrong theories: dead input routing, the
+Vulkan driver, entity counts, MSAA. Each was plausible and each was wrong. What
+actually found it was logcat filtered to the app's own PID:
+
+    ViewPostIme pointer 0     <- finger down
+    Godot: OnPause            <- the app backgrounds itself
+    ViewPostIme pointer 1     <- finger up
+    Godot: OnResume
+
+then `START u0 {act=android.content.pm.action.REQUEST_PERMISSIONS}` from the
+game's uid, and finally `dumpsys package` showing no VIBRATE among the requested
+permissions at all.
+
+Two lessons worth keeping. First, a symptom that presents as "slow" can be a
+lifecycle bug, and the two are indistinguishable from the outside — the frame rate
+was a consequence, never the cause. Second, three of the four wrong theories were
+diagnosed from the desktop; none of them could have been. The one piece of
+evidence that mattered came from the device, filtered to the app's own process,
+and every earlier capture was either the wrong process or taken while the game was
+not running.
+
+`test_android_permissions` now asserts the export preset declares what the code
+actually calls. It reads export_presets.cfg rather than trusting the runtime, for
+the same reason the emulate_mouse_from_touch guard had to (§12au): a check that
+reads a default cannot see a missing declaration.
+
+Also fixed in the same pass: settings toggles were raw CheckButtons drawing a
+theme icon at native pixel size — a ~30px target on a 1080-wide viewport. They are
+now drawn at 156x84 in the game's own material, and the dropdowns are 96 tall with
+a matching popup font.
+

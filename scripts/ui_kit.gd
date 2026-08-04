@@ -988,3 +988,47 @@ static func scroll() -> ScrollContainer:
 	var s := TouchScroll.new()
 	s.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	return s
+
+
+## A drawn switch, sized for a thumb.
+##
+## CheckButton draws a theme icon at its native pixel size, which on a 1080-wide
+## viewport is a ~30px target — small to see and smaller to hit. This is the same
+## control drawn at the scale the rest of the UI uses, in the same material.
+class Switch extends Button:
+	const W := 156.0
+	const H := 84.0
+
+	func _init() -> void:
+		toggle_mode = true
+		custom_minimum_size = Vector2(W, H)
+		focus_mode = Control.FOCUS_NONE
+		# The default Button chrome would draw a box behind the drawn switch.
+		for s in ["normal", "hover", "pressed", "focus", "disabled"]:
+			add_theme_stylebox_override(s, StyleBoxEmpty.new())
+		toggled.connect(func(_v: bool) -> void: queue_redraw())
+
+	func _draw() -> void:
+		var r := H * 0.5
+		var track := Rect2(0.0, (size.y - H) * 0.5, W, H)
+		var on := button_pressed
+		# Trough, then a lit lip on the inside top — the same fabricated depth as
+		# every other surface, rather than a flat pill.
+		draw_rect(track, Color(0.043, 0.039, 0.035, 0.55), true)
+		draw_rect(Rect2(track.position, Vector2(W, 3.0)), Color(0, 0, 0, 0.5), true)
+		if on:
+			draw_rect(track.grow(-4.0), Color(POLE_POS, 0.55), true)
+		draw_rect(track, Color(STEEL_50, 0.9), false, 2.0)
+
+		var cx: float = track.position.x + (W - r) if on else track.position.x + r
+		var c := Vector2(cx, track.position.y + r)
+		draw_circle(c + Vector2(0, 3.0), r - 8.0, Color(0, 0, 0, 0.45))
+		draw_circle(c, r - 9.0, INK if on else STEEL_50)
+		draw_circle(c - Vector2(0, 2.0), r - 13.0,
+				Color(1, 1, 1, 0.18) if on else Color(1, 1, 1, 0.07))
+
+
+static func switch(on: bool) -> Button:
+	var s := Switch.new()
+	s.button_pressed = on
+	return s

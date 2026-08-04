@@ -23,6 +23,15 @@ front end, .io results screen, sentence-cased prose, unified light UI surface.
 
 ## NEXT UP
 
+- (2026-08-01) **FIXED, CONFIRMED ON DEVICE:** the dead-buttons / "2fps" bug was a
+  missing VIBRATE permission. vibrate_handheld() requested it on every button
+  press, launching Android's permission activity, pausing and resuming the game
+  each tap. DECISIONS §12av. Settings toggles and dropdowns resized in the same
+  build.
+- **Consider reverting the mobile entity cut.** `Arena.MOBILE_BOTS` (0.33) and
+  `MOBILE_SCRAP` (0.25) were added chasing a frame rate problem that did not
+  exist. The player is currently getting 30 magnets instead of 91. Raise them once
+  a real FPS reading exists — Settings > Display > Show FPS.
 - (2026-08-01) ROOT CAUSE FOUND: no VIBRATE permission in the Android export.
   vibrate_handheld() requests it on call, launching Android's permission activity,
   pausing/resuming the app on EVERY button press. That is the dead buttons and the
