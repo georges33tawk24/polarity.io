@@ -130,6 +130,7 @@ func _ready() -> void:
 	_check_board_collapse(ui)
 	_check_icons()
 	_check_audio()
+	_check_music()
 	_finish()
 
 
@@ -574,6 +575,41 @@ func _check_audio() -> void:
 		ok(peak > 0.05, "sfx %s is not silent (peak %.3f)" % [n, peak])
 		ok(peak < 0.999, "sfx %s is not clipped (peak %.3f)" % [n, peak])
 		ok(rms > 0.004, "sfx %s carries energy (rms %.4f)" % [n, rms])
+
+
+## The music bed, measured. Percussion was added to a mix that clamps at +/-1,
+## so "it plays" is not the question — whether it now spends its life against the
+## limiter is.
+func _check_music() -> void:
+	for track: String in ["menu", "game", "intensity"]:
+		Audio.ensure_music(track)
+		var stream: AudioStreamWAV = Audio._music.get(track)
+		ok(stream != null, "music %s exists" % track)
+		if stream == null:
+			continue
+		var bytes: PackedByteArray = stream.data
+		ok(bytes.size() > 40000, "music %s is a real loop (%d bytes)" % [track, bytes.size()])
+		var peak := 0.0
+		var sum_sq := 0.0
+		var clipped := 0
+		var count := bytes.size() / 2
+		var taken := 0
+		for i in range(0, count, 7):
+			var v: float = float(bytes.decode_s16(i * 2)) / 32768.0
+			peak = maxf(peak, absf(v))
+			sum_sq += v * v
+			if absf(v) > 0.995:
+				clipped += 1
+			taken += 1
+		var rms: float = sqrt(sum_sq / maxf(1.0, float(taken)))
+		ok(peak > 0.05, "music %s is not silent (peak %.3f)" % [track, peak])
+		# A handful of samples at the rail is fine; a percussive mix living there
+		# is distortion, and it is the kind you stop hearing after ten minutes.
+		ok(float(clipped) / maxf(1.0, float(taken)) < 0.01,
+				"music %s is not clipping (%.2f%% at the rail)"
+				% [track, 100.0 * float(clipped) / maxf(1.0, float(taken))])
+		ok(rms > 0.02 and rms < 0.5,
+				"music %s sits in a sane loudness band (rms %.3f)" % [track, rms])
 
 
 func _finish() -> void:

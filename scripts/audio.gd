@@ -197,6 +197,35 @@ func _music_bed(level: float, drive: bool) -> PackedFloat32Array:
 		var env: float = 1.0 - fmod(t, 30.0 / MUSIC_BPM) / (30.0 / MUSIC_BPM)
 		v += asin(sin(TAU * arp * t)) * (2.0 / PI) * 0.10 * env * env
 
+		# --- percussion ---------------------------------------------------
+		# The bed had bass, pad and arp but no rhythm, which is why it read as a
+		# drone rather than a loop. Everything here is struck metal and a low
+		# thump, because the game is set in a scrapyard — a synth drum kit would
+		# belong to a different product.
+		var beat_len := 60.0 / MUSIC_BPM
+		var beat_pos: float = fmod(t, beat_len) / beat_len
+		var beat_in_bar: int = beat % 4
+
+		# Kick on 1 and 3: a pitch-dropping sine, which is the whole trick.
+		if beat_in_bar == 0 or beat_in_bar == 2:
+			var kd: float = exp(-beat_pos * 11.0)
+			var kf: float = 92.0 * (1.0 + 2.2 * exp(-beat_pos * 26.0))
+			v += sin(TAU * kf * fmod(t, beat_len)) * 0.42 * kd
+
+		# Anvil on 2 and 4 — inharmonic partials, the same trick as _metal(),
+		# so the backbeat is a struck object rather than a snare.
+		if beat_in_bar == 1 or beat_in_bar == 3:
+			var ad: float = exp(-beat_pos * 15.0)
+			var hit := 0.0
+			for k in [1.0, 2.76, 5.4]:
+				hit += sin(TAU * 620.0 * k * fmod(t, beat_len))
+			v += hit * 0.055 * ad
+
+		# Offbeat tick: eighth notes between the beats, quiet, to carry the pulse
+		# through the long bass notes.
+		var eighth: float = fmod(t + beat_len * 0.5, beat_len) / beat_len
+		v += sin(TAU * 2400.0 * t) * 0.02 * exp(-eighth * 30.0)
+
 		if drive:
 			# Sudden death: a pulse on every beat and an octave-up arp.
 			var pulse: float = 1.0 - fmod(t, 60.0 / MUSIC_BPM) / (60.0 / MUSIC_BPM)
