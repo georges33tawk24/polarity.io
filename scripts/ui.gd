@@ -36,6 +36,9 @@ const BOARD_W := 430
 const BOARD_ROW_H := 44
 
 var _mass_label: Stencil.StencilLabel
+var _best_label: Label
+var _best_mass := 0.0
+var _best_beaten := false
 var _mass_shown := 0.0
 var _mass_target := 0.0
 var _last_clock := -1
@@ -622,6 +625,14 @@ func _build_hud() -> Control:
 	_charge.custom_minimum_size.x = 260
 	score_box.add_child(_charge)
 	score_box.add_child(UiKit.hud_lbl(tr("UI_MASS"), UiKit.T_CAPTION, UiKit.INK_DIM))
+	# Personal best, under the readout.
+	#
+	# Removing the round removed the finish line, and an endless game without a
+	# number to beat is a drift rather than a chase. This is the target: it sits
+	# next to the only number that matters, and turns brass the moment it is beaten
+	# so the run has a visible peak to reach and then exceed.
+	_best_label = UiKit.hud_lbl("", UiKit.T_CAPTION, UiKit.INK_MUTE)
+	score_box.add_child(_best_label)
 	root.add_child(score_box)
 
 	# --- leaderboard, top-right. In this genre it IS the motivation loop. ---
@@ -805,6 +816,12 @@ func _build_hud() -> Control:
 ## needs the tuning. Ui held neither.
 func attach_arena(a: Arena) -> void:
 	_arena = a
+	_best_mass = float(Game.get_value("best_mass", 0.0))
+	_best_beaten = false
+	if _best_label != null and is_instance_valid(_best_label):
+		_best_label.text = (tr("UI_BEST_MASS") % Locale.number(roundi(_best_mass))) \
+				if _best_mass >= 1.0 else ""
+		_best_label.add_theme_color_override("font_color", UiKit.INK_MUTE)
 	if _stick != null and is_instance_valid(_stick):
 		_stick.intent = a.intent
 
@@ -1615,6 +1632,13 @@ func _process(delta: float) -> void:
 	var shown := Locale.number(roundi(_mass_shown))
 	if _mass_label.stencil_text != shown:
 		_mass_label.stencil_text = shown
+	# Beating it is the moment worth marking, and it happens once per run.
+	if not _best_beaten and _best_mass >= 1.0 and _mass_target > _best_mass:
+		_best_beaten = true
+		if _best_label != null and is_instance_valid(_best_label):
+			_best_label.text = tr("UI_NEW_BEST")
+			_best_label.add_theme_color_override("font_color", UiKit.BRASS)
+		Audio.play("reward", 1.2, -10.0)
 
 
 func _punch_mass() -> void:

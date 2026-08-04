@@ -42,7 +42,12 @@ UNVERIFIED — check which dailies were active before dismissing it.
 2. **Replay loop.** PARTLY DONE: revive auto-decline cut 8s -> 5s and a tap
    anywhere now declines. PLAY AGAIN on results already restarts in one tap.
    Remaining: consider skipping results entirely on a fast death.
-3. **Endless needs a target.** No finish line any more, so the player needs a
+3. **Endless needs a target.** PARTLY DONE: personal best mass now shows under
+   the HUD readout and flips to NEW BEST in brass, with a sting, the moment it is
+   beaten. Remaining: best SURVIVAL time is not stored anywhere (`Game.profile`
+   has `best_mass` but no `best_survived`) — add it in record_match and show it
+   beside the clock.
+   Original note: No finish line any more, so the player needs a
    number to beat: best survival time and best peak mass on screen DURING the run,
    with a marker when they are about to beat it. Without this an endless game is a
    drift rather than a chase.
