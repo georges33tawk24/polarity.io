@@ -577,8 +577,11 @@ func _tick_countdown(delta: float) -> void:
 
 func _tick_match(delta: float) -> void:
 	elapsed += delta
-	time_left = maxf(0.0, time_left - delta)
-	Bus.clock_changed.emit(time_left)
+	# Counts UP. There is no round any more: the session ends when the PLAYER
+	# dies, which is the only end condition left now the ring and the timer are
+	# both gone. What the clock shows is how long you have survived, which is
+	# also half the score.
+	Bus.clock_changed.emit(elapsed)
 
 	_apply_intent()
 	_think_bots(delta)
@@ -596,8 +599,61 @@ func _tick_match(delta: float) -> void:
 	else:
 		Audio.set_hum(0.0)
 
-	if time_left <= 0.0:
-		_finish()
+	_respawn_bots(delta)
+
+
+## Refills the lobby from the arena edge.
+##
+## Without this the arena empties: bots eat each other, nobody replaces them, and
+## a cautious player ends up alone in a 370-unit arena with nothing to do and no
+## way to finish. agar.io works without a round timer because the lobby is always
+## full; this is that.
+##
+## Always at the OUTER edge, never on the spawn rings. A bot appearing next to the
+## player mid-match is the spawn-death bug (§12ao) with worse consequences, since
+## both are at full mass by then.
+func _respawn_bots(delta: float) -> void:
+	if state != State.PLAYING:
+		return
+	var alive := 0
+	for m in magnets:
+		if m.alive:
+			alive += 1
+	if alive >= t.bot_count + 1:
+		return
+	_respawn_timer -= delta
+	if _respawn_timer > 0.0:
+		return
+	_respawn_timer = RESPAWN_EVERY
+	_add_bot()
+
+
+## One replacement bot on the boundary, at an angle well clear of the player.
+func _add_bot() -> void:
+	var names := _bot_names(8)
+	var m := Magnet.new()
+	var pal: Array = PALETTE[rng.randi() % PALETTE.size()]
+	add_child(m)
+	m.configure(t, String(names[rng.randi() % names.size()]), pal[0], pal[1], false)
+
+	# Pick an angle away from the player, so nobody arrives on top of them.
+	var away := 0.0
+	if player != null and player.alive:
+		away = atan2(player.global_position.z, player.global_position.x) + PI
+	var a := away + rng.randf_range(-1.1, 1.1)
+	var r: float = ring_radius * 0.88
+	m.position = Vector3(cos(a) * r, Magnet.BODY_Y, sin(a) * r)
+
+	var bias := Meta.bot_skill_bias()
+	m.brain = BotBrain.new(m, t, clampf(rng.randfn(0.35 + bias * 0.4, 0.22), 0.05, 0.98))
+	magnets.append(m)
+	Bus.alive_count_changed.emit(_alive_count())
+
+
+## Gap between replacements. Instant refill would make eliminations feel weightless.
+const RESPAWN_EVERY := 2.5
+
+var _respawn_timer := 0.0
 
 
 func _apply_intent() -> void:
@@ -1038,7 +1094,9 @@ func _finish() -> void:
 	Engine.time_scale = 1.0
 	Audio.set_hum(0.0)
 
-	# Anyone still alive is ranked by mass for the remaining places.
+	# Placement is meaningless once bots respawn — there is no fixed lobby to
+	# place within. Rank among the living at the moment of death is still a useful
+	# thing to show, so it is kept, but the SCORE is peak mass and survival time.
 	var live: Array[Magnet] = []
 	for m in magnets:
 		if m.alive:
@@ -1047,13 +1105,18 @@ func _finish() -> void:
 	for i in live.size():
 		live[i].placement = i + 1
 
+	var peak: float = player.peak_mass if player != null else 0.0
 	var result := {
 		"placement": player.placement if player != null else 99,
-		"mass": player.mass if player != null else 0.0,
+		# Peak, not final: you are at your smallest the instant you die, and
+		# scoring that punishes the player for the last second of a good run.
+		"mass": peak,
+		"peak_mass": peak,
 		"kills": player.kills if player != null else 0,
 		"survived": elapsed,
 		"total": magnets.size(),
-		"won": player != null and player.placement == 1,
+		# No round to win. "Won" now means outlasting the clock's own par.
+		"won": elapsed >= t.match_duration,
 	}
 	Audio.play("win" if result["won"] else "lose", 1.0, -3.0)
 	Bus.match_ended.emit(Game.record_match(result))

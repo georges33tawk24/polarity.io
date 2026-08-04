@@ -1755,3 +1755,31 @@ theme icon at native pixel size — a ~30px target on a 1080-wide viewport. They
 now drawn at 156x84 in the game's own material, and the dropdowns are 96 tall with
 a matching popup font.
 
+### §12aw — endless mode
+
+The round is gone. There is no closing ring and now no timer, so the session ends
+when the PLAYER dies and nothing else.
+
+- **The clock counts up.** It is survival time, which is also half the score. It
+  turns brass past the old round length, because outlasting it is the thing worth
+  noticing; there is no "running out" to turn red for.
+- **Bots respawn** on a 2.5s cadence up to `bot_count`, always at 0.88 of the
+  boundary and at an angle picked AWAY from the player. Without respawn the arena
+  empties and a cautious player is left alone in a 370-unit map with no way to
+  finish. Spawning them anywhere near the player would be the spawn-death bug
+  (§12ao) with worse consequences, since both sides are at full mass by then.
+- **Score is peak mass, not final mass.** You are at your smallest the instant you
+  die, so scoring the final figure punishes the last second of a good run.
+- **Placement is kept but demoted.** With respawn there is no fixed lobby to place
+  within, so it means "rank among the living when you died" and no longer decides
+  the score. `won` now means outlasting `match_duration`.
+
+**Open:** `smoke --real` reports one failure — "no daily mission progressed from a
+full match". A session now ends in ~10s when the scripted smoke player dies,
+instead of running the full 100s, so it banks far less scrap and no kills. My
+hypothesis is that today's three random dailies are all kill/win/top3 based and a
+10-second death progresses none of them, which would make this a fixture artifact
+rather than a broken pipeline — `_add_progress(scope, "matches", 1)` runs
+unconditionally, so the meta layer is demonstrably still hearing match_ended.
+NOT VERIFIED. Do not dismiss it on my say-so; check which dailies were active.
+

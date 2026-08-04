@@ -823,8 +823,11 @@ func _on_clock(seconds: float) -> void:
 		return
 	_last_clock = whole
 	_clock_label.text = "%d:%02d" % [whole / 60, whole % 60]
+	# Counts UP now — it is survival time, not time remaining, so there is no
+	# "running out" to turn red for. Brass once past the old round length, because
+	# outlasting it is the thing worth noticing.
 	_clock_label.add_theme_color_override("font_color",
-			UiKit.DANGER_LINE if seconds < 15.0 else UiKit.INK)
+			UiKit.BRASS if seconds >= 100.0 else UiKit.INK)
 
 
 func _on_charge(charge01: float, ready: bool) -> void:

@@ -23,44 +23,15 @@ front end, .io results screen, sentence-cased prose, unified light UI surface.
 
 ## NEXT UP
 
-### DO THIS FIRST — endless mode (agreed 2026-08-01, not started)
+### Endless mode — DONE 2026-08-01, one open failure
 
-Turn the match from a timed round into an .io session. Agreed with the player;
-the ring is already gone, so the clock is the last piece of battle-royale framing
-left. Do it as ONE change — the pieces do not work apart.
+Timer removed, bots respawn at the edge, score is peak mass + survival time.
+DECISIONS §12aw. 405 logic checks green; matches terminate on player death.
 
-1. **Remove the match timer.** `Arena.time_left` stops being a countdown that ends
-   the match. Keep `elapsed` and emit it as the session clock (count up). Delete
-   the `time_left <= 0` end condition. `Bus.clock_changed` consumers in `ui.gd`
-   expect seconds remaining — they want elapsed instead, and the HUD label should
-   stop turning red near zero.
-
-2. **Bot respawn, or the arena empties.** There is no respawn today: bots eat each
-   other, nobody refills, and a cautious player ends up alone in a 370-unit arena
-   forever. Respawn on a delay to hold the lobby near `bot_count`.
-   **Spawn them at the arena EDGE, not on the spawn rings** — respawning next to
-   the player is the same defect as the spawn-death bug (§12ao), and it would be
-   worse because it happens mid-match at full mass. Reuse `_spawn_slots()`
-   spacing logic against the outer ring.
-
-3. **The session ends when the PLAYER dies.** That path already exists —
-   `AWAITING_REVIVE`, the revive offer, then results. Removing the timer means it
-   becomes the only end condition, so check `_on_player_down` and the revive
-   decline path actually reach `FINISHED` with no timer to fall back on.
-
-4. **Scoring changes shape.** With respawn there is no final placement, so
-   `placement` is meaningless — results, `Meta.record_match`, the leaderboard
-   submission and the mission metrics all key off it today. Replace with
-   **peak mass** and **survival time**, both of which are better scores than
-   "mass at 100 seconds" anyway. `Magnet.peak_mass` already exists.
-
-5. **Results screen** reports peak mass + survival time instead of placement.
-   `_choreograph()` and `_count_up()` animate a placement number; they want the
-   two new figures.
-
-Verify with `smoke --real`: a match must still terminate (on player death), the
-lobby must stay near `bot_count` after 60s, and no respawn may land within
-`pull_radius_for(start_mass) * 2.4` of the player.
+**OPEN:** `smoke --real` fails one assertion — "no daily mission progressed from a
+full match". Sessions now end in ~10s rather than 100s, so far less scrap is
+banked. Likely a fixture artifact (today's dailies may all be kill/win based), but
+UNVERIFIED — check which dailies were active before dismissing it.
 
 ### Also outstanding
 
