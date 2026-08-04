@@ -33,6 +33,28 @@ full match". Sessions now end in ~10s rather than 100s, so far less scrap is
 banked. Likely a fixture artifact (today's dailies may all be kill/win based), but
 UNVERIFIED — check which dailies were active before dismissing it.
 
+### Polish queue — agreed 2026-08-01, ordered by impact
+
+1. **Audio.** 13 synthesised SFX, no music. Everything else has had an art pass;
+   the sound has not, and absorbing something — the payoff of the whole game —
+   currently reads as a synthesised blip. Highest-impact item left. Needs a
+   licensed pack or authored samples; ASK BEFORE BUYING.
+2. **Replay loop.** PARTLY DONE: revive auto-decline cut 8s -> 5s and a tap
+   anywhere now declines. PLAY AGAIN on results already restarts in one tap.
+   Remaining: consider skipping results entirely on a fast death.
+3. **Endless needs a target.** No finish line any more, so the player needs a
+   number to beat: best survival time and best peak mass on screen DURING the run,
+   with a marker when they are about to beat it. Without this an endless game is a
+   drift rather than a chase.
+4. **Absorbing another magnet should be felt.** Hitstop and a shockwave exist, but
+   the mass gain reads as a ticking number. Camera pull-back, trail flare, heavier
+   haptic.
+5. **Threat telegraphy in the world**, not just the minimap. You should know
+   something bigger is closing without looking down.
+6. **First ten seconds.** Verify scrap density at the spawn ring guarantees an
+   absorb within ~3s. That is the difference between "I get it" and "nothing
+   happened".
+
 ### Also outstanding
 
 - **Revert the mobile entity cut.** `Arena.MOBILE_BOTS` (0.33) / `MOBILE_SCRAP`

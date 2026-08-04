@@ -1769,12 +1769,24 @@ func _on_player_down() -> void:
 	UiKit.cap_width(no, 640)
 	no.pressed.connect(func() -> void: answer.call(false))
 	box.add_child(no)
+	# Declining is the common case, so it should not require aiming at a button.
+	var popup: Control = box.get_meta("popup", null)
+	if popup != null and is_instance_valid(popup):
+		popup.mouse_filter = Control.MOUSE_FILTER_STOP
+		popup.gui_input.connect(func(e: InputEvent) -> void:
+			if e is InputEventMouseButton and e.pressed:
+				answer.call(false))
 
 	# A countdown, and a hard auto-decline behind it. Without this a player who
 	# backgrounds the app leaves the match frozen forever.
 	var clock := _lbl("", UiKit.T_LABEL, UiKit.INK_MUTE, HORIZONTAL_ALIGNMENT_CENTER)
 	box.add_child(clock)
-	var left := [8]
+	# Five, not eight. In this genre the loop is die -> playing again in a couple of
+	# seconds, and the revive offer sits directly in that path — every second here
+	# is a second of not playing, paid by every player on every death, most of whom
+	# are going to decline anyway. Long enough to read and decide, short enough not
+	# to be a wall.
+	var left := [5]
 	var tick := Timer.new()
 	tick.wait_time = 1.0
 	tick.autostart = true
