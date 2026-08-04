@@ -43,8 +43,12 @@ func _ready() -> void:
 func _select_provider() -> void:
 	if Platform.os_name != "Android":
 		return
-	if not ResourceLoader.exists("res://addons/GodotGooglePlayBilling/plugin.cfg"):
-		push_warning("[iap] billing addon missing — purchases unavailable")
+	# Ask the ENGINE, not the filesystem. plugin.cfg is an editor file and is not
+	# exported, so this check reported "addon missing" on every device build even
+	# though the plugin was there — the log said IAP was unavailable when it was
+	# only the check that was wrong.
+	if not Engine.has_singleton("GodotGooglePlayBilling"):
+		push_warning("[iap] billing plugin singleton absent — purchases unavailable")
 		return
 	var p := PlayBillingProvider.new()
 	add_child(p)
