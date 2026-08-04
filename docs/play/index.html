@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover" />
+	<title>Polarity.io</title>
+	<meta name="theme-color" content="#26241f" />
+	<!--
+	Custom shell. Godot's default one shows a bare progress bar and, if the WASM
+	fails, a line of grey text with no way forward — a 35 MB download that dies on a
+	flaky connection left the player looking at nothing at all.
+
+	This one is branded in the game's own material, reports real progress, and has an
+	actual failure state with a retry. It also names the two causes that account for
+	almost every real failure (a stale service worker, and a browser without the
+	required features) instead of printing an engine exception at the player.
+	-->
+	<style>
+		:root {
+			--steel-20: #26241f;
+			--steel-30: #332f28;
+			--steel-50: #554e41;
+			--ink: #ede8de;
+			--ink-dim: #9a9184;
+			--accent: #e8a33d;
+			--danger: #e0705a;
+		}
+		* { box-sizing: border-box; }
+		html, body {
+			margin: 0; padding: 0; height: 100%; overflow: hidden;
+			background: var(--steel-20); color: var(--ink);
+			font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+			-webkit-text-size-adjust: 100%;
+		}
+		/* The plate seams and rivets from the game's floor, in CSS. Same material,
+		   so the loader is not a different product to the thing it loads. */
+		#plate {
+			position: absolute; inset: 0;
+			background-color: var(--steel-20);
+			background-image:
+				linear-gradient(90deg, rgba(0,0,0,.42) 2px, transparent 2px),
+				linear-gradient(0deg, rgba(0,0,0,.42) 2px, transparent 2px),
+				radial-gradient(circle at 14px 14px, rgba(184,178,168,.5) 2.5px, transparent 3px);
+			background-size: 210px 210px, 210px 210px, 210px 210px;
+		}
+		canvas { display: block; margin: 0; width: 100%; height: 100%; touch-action: none; }
+		canvas:focus { outline: none; }
+		#boot {
+			position: absolute; inset: 0; display: flex; flex-direction: column;
+			align-items: center; justify-content: center; gap: 22px; padding: 24px;
+			text-align: center;
+		}
+		#mark {
+			font-size: clamp(34px, 9vw, 64px); font-weight: 800; letter-spacing: .34em;
+			text-indent: .34em; margin: 0; line-height: 1;
+			text-shadow: 0 4px 0 rgba(0,0,0,.55);
+		}
+		#tag { color: var(--ink-dim); font-size: clamp(12px, 3.2vw, 16px); margin: 0; }
+		#barwrap {
+			width: min(70vw, 440px); height: 14px; background: #1a1814;
+			border-top: 2px solid rgba(0,0,0,.65); border-radius: 3px; overflow: hidden;
+		}
+		#bar {
+			height: 100%; width: 0%; background: var(--accent);
+			border-top: 2px solid #f2c078; transition: width .18s ease-out;
+		}
+		#pct { color: var(--ink-dim); font-size: 13px; font-variant-numeric: tabular-nums; margin: 0; }
+		#fail { display: none; max-width: 560px; }
+		#fail h2 { color: var(--danger); font-size: clamp(18px, 5vw, 26px); margin: 0 0 10px; }
+		#fail p { color: var(--ink-dim); font-size: 14px; line-height: 1.55; margin: 0 0 8px; }
+		#detail {
+			display: block; margin: 14px auto 0; max-width: 100%; overflow-x: auto;
+			background: #1a1814; border: 1px solid var(--steel-50); border-radius: 8px;
+			padding: 10px 12px; color: #b8b0a2; font-size: 12px; text-align: left;
+			font-family: ui-monospace, SFMono-Regular, Menlo, monospace; white-space: pre-wrap;
+		}
+		button {
+			font: inherit; font-weight: 700; letter-spacing: .06em; cursor: pointer;
+			margin-top: 18px; padding: 14px 30px; color: #1a1814;
+			background: var(--accent); border: 0; border-bottom: 5px solid #c9821f;
+			border-radius: 8px;
+		}
+		button:active { border-bottom-width: 0; transform: translateY(5px); }
+		button.ghost {
+			background: transparent; color: var(--ink-dim);
+			border: 2px solid var(--steel-50); margin-left: 10px;
+		}
+		@media (prefers-reduced-motion: reduce) { #bar { transition: none; } }
+	</style>
+	<link id="-gd-engine-icon" rel="icon" type="image/png" href="index.icon.png" />
+<link rel="apple-touch-icon" href="index.apple-touch-icon.png"/>
+<link rel="manifest" href="index.manifest.json">
+
+</head>
+<body>
+	<div id="plate"></div>
+	<canvas id="canvas" tabindex="0">Your browser does not support the canvas element.</canvas>
+
+	<div id="boot">
+		<div id="loading">
+			<h1 id="mark">POLARITY<span class="tag">.IO</span></h1>
+			<p id="tag">Hold to attract &middot; Release to repel</p>
+			<div id="barwrap"><div id="bar"></div></div>
+			<p id="pct">Loading&hellip;</p>
+		</div>
+
+		<div id="fail">
+			<h2 id="fail-title">Could not start</h2>
+			<p id="fail-body"></p>
+			<code id="detail"></code>
+			<div>
+				<button id="retry" type="button">Try again</button>
+				<button id="hard" type="button" class="ghost">Clear cache &amp; retry</button>
+			</div>
+		</div>
+	</div>
+
+	<script src="index.js"></script>
+	<script>
+const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":4172688,"index.wasm":35376909},"focusCanvas":true,"gdextensionLibs":[],"serviceWorker":"index.service.worker.js"};
+const GODOT_THREADS_ENABLED = false;
+const engine = new Engine(GODOT_CONFIG);
+
+(function () {
+	const boot = document.getElementById('boot');
+	const loading = document.getElementById('loading');
+	const fail = document.getElementById('fail');
+	const failBody = document.getElementById('fail-body');
+	const detail = document.getElementById('detail');
+	const bar = document.getElementById('bar');
+	const pct = document.getElementById('pct');
+
+	function showFailure(title, body, raw) {
+		document.getElementById('fail-title').textContent = title;
+		failBody.textContent = body;
+		if (raw) {
+			detail.textContent = String(raw && raw.message ? raw.message : raw);
+			detail.style.display = 'block';
+		} else {
+			detail.style.display = 'none';
+		}
+		loading.style.display = 'none';
+		fail.style.display = 'block';
+		console.error(title, raw);
+	}
+
+	document.getElementById('retry').addEventListener('click', function () {
+		window.location.reload();
+	});
+
+	// A stale service worker serving a half-cached build is the single most common
+	// cause of a web game that will not start after an update, and a plain reload
+	// does not fix it.
+	document.getElementById('hard').addEventListener('click', async function () {
+		try {
+			if ('serviceWorker' in navigator) {
+				const regs = await navigator.serviceWorker.getRegistrations();
+				await Promise.all(regs.map((r) => r.unregister()));
+			}
+			if (window.caches) {
+				const keys = await caches.keys();
+				await Promise.all(keys.map((k) => caches.delete(k)));
+			}
+		} catch (e) {
+			console.error('cache clear failed', e);
+		}
+		window.location.reload(true);
+	});
+
+	const missing = Engine.getMissingFeatures({ threads: GODOT_THREADS_ENABLED });
+	if (missing.length !== 0) {
+		showFailure(
+			'This browser cannot run the game',
+			'Your browser is missing features the game needs. Updating it, or trying '
+				+ 'Chrome, Edge, Firefox or Safari, usually fixes this.',
+			missing.join('\n'));
+		return;
+	}
+
+	// The download is tens of megabytes, so a stalled connection has to look
+	// different from a slow one — otherwise the player stares at a frozen bar with
+	// no idea whether to wait.
+	let lastBytes = 0;
+	let lastMove = Date.now();
+	const stallCheck = setInterval(function () {
+		if (Date.now() - lastMove > 25000) {
+			clearInterval(stallCheck);
+			showFailure('Download stalled',
+				'The connection dropped partway through. Your progress is safe — '
+					+ 'nothing has been lost.', null);
+		}
+	}, 4000);
+
+	engine.startGame({
+		onProgress: function (current, total) {
+			if (current > lastBytes) {
+				lastBytes = current;
+				lastMove = Date.now();
+			}
+			if (current > 0 && total > 0) {
+				const p = Math.min(100, Math.round((current / total) * 100));
+				bar.style.width = p + '%';
+				pct.textContent = p + '%';
+			}
+		},
+	}).then(function () {
+		clearInterval(stallCheck);
+		boot.remove();
+		document.getElementById('plate').remove();
+	}, function (err) {
+		clearInterval(stallCheck);
+		showFailure('Could not start',
+			'The game files did not load correctly. Retrying usually works; if it '
+				+ 'does not, clearing the cache will.', err);
+	});
+}());
+	</script>
+</body>
+</html>
+

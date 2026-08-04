@@ -45,6 +45,16 @@ extends Resource
 @export_group("Repel")
 ## Base impulse strength of a release burst.
 @export var repel_impulse := 30.0
+## Fraction of current mass a FULL-power repel costs.
+##
+## Repel used to be free — a cooldown and nothing else — so there was never a
+## moment of "can I afford this?", and the core verb carried no decision. Every
+## .io game that worked is built on one risk/reward lever: agar.io's split leaves
+## you fragile, slither.io's boost burns length. This is that lever.
+##
+## Scaled by power, so a tap costs almost nothing and a held blast is a real
+## commitment. Never lethal — see Magnet.fire_repel.
+@export var repel_mass_cost := 0.045
 ## Hold this long (seconds) for a full-power release.
 @export var repel_charge_time := 0.45
 ## Power floor, so a quick tap still does something.

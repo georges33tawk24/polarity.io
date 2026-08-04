@@ -399,6 +399,22 @@ func fire_repel() -> void:
 	cooldown = t.repel_cooldown
 	charge = 0.0
 	_squash = -0.28
+
+	# Repel costs mass, scaled by how hard you fired it. This is the game's only
+	# risk/reward decision: a full blast clears the space around you and makes you
+	# smaller doing it, so escaping a bigger magnet costs you the size you were
+	# trying to protect.
+	#
+	# Never lethal. Dying to your own escape would be correct by the arithmetic and
+	# infuriating in the hand — a mechanic that can kill you for using it is one
+	# players stop using.
+	var cost: float = mass * t.repel_mass_cost * power
+	var floor_mass: float = t.min_mass * 1.05
+	if mass - cost > floor_mass:
+		_set_mass(mass - cost)
+	elif mass > floor_mass:
+		_set_mass(floor_mass)
+
 	repelled.emit(global_position, _pull_radius, strength, power)
 	if is_player:
 		Audio.play("launch", 1.0 + (1.0 - power) * 0.25, -3.0)

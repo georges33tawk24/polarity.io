@@ -20,6 +20,7 @@ min_distance = 1.4
 scrap_max_speed = 30.0
 scrap_drag = 1.4
 repel_impulse = 30.0
+repel_mass_cost = 0.045
 repel_charge_time = 0.45
 repel_min_power = 0.35
 repel_cooldown = 0.35

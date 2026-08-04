@@ -44,6 +44,7 @@ func _ready() -> void:
 	test_broad_phase()
 	test_android_permissions()
 	test_first_seconds()
+	test_repel_cost()
 	test_friends()
 	test_product_types()
 	test_scrap_field()
@@ -742,6 +743,50 @@ func test_broad_phase() -> void:
 	ok(missed == 0, "the grid finds every reachable magnet (%d missed of %d)"
 			% [missed, total])
 	a.queue_free()
+
+
+## Repel has to cost something, and must never be the thing that kills you.
+##
+## A free core verb is a verb with no decision attached: you fire it whenever the
+## cooldown allows and never think about it. The cost is what turns escaping a
+## bigger magnet into a trade — you survive, and you are smaller for it.
+##
+## The floor matters as much as the cost. Dying to your own escape is correct by
+## the arithmetic and infuriating in the hand, and a mechanic that can kill you
+## for using it is one players simply stop using.
+func test_repel_cost() -> void:
+	print("repel cost")
+	var t: Tuning = Game.tuning
+	ok(t.repel_mass_cost > 0.0, "repel costs mass at all")
+
+	var m := Magnet.new()
+	add_child(m)
+	m.configure(t, "TEST", Color.RED, Color.BLUE, false)
+
+	# A full-power blast is a real bite out of you.
+	m._set_mass(200.0)
+	m.charge = t.repel_charge_time
+	m.fire_repel()
+	var full := 200.0 - m.mass
+	ok(full > 0.0, "a full repel costs mass (%.1f)" % full)
+	ok(full < 200.0 * 0.15, "but not a punishing amount (%.1f%%)" % (full * 0.5))
+
+	# A tap costs proportionally less, so light steering stays cheap.
+	m._set_mass(200.0)
+	m.cooldown = 0.0
+	m.charge = t.repel_charge_time * 0.25
+	m.fire_repel()
+	var tap := 200.0 - m.mass
+	ok(tap < full, "a tap costs less than a held blast (%.1f vs %.1f)" % [tap, full])
+
+	# At the floor it must still fire and must not kill.
+	m._set_mass(t.min_mass * 1.02)
+	m.cooldown = 0.0
+	m.charge = t.repel_charge_time
+	m.fire_repel()
+	ok(m.mass > t.min_mass, "repelling at minimum mass does not kill you (%.2f)" % m.mass)
+	ok(m.alive, "and leaves you alive")
+	m.queue_free()
 
 
 ## A new player must be able to absorb something almost immediately.
