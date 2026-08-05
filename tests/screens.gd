@@ -174,8 +174,9 @@ func _check_hud_layout(ui) -> void:
 	var centre := map.get_global_rect().get_center()
 	var radius := map.size.x * 0.5
 
-	var probes := [["emote button", ui._emote_btn], ["emote row", ui._emote_row],
-			["hint line", ui._hint]]
+	# Emotes were removed from the HUD for screen space (§12az), so the corner now
+	# holds only the hint line.
+	var probes := [["hint line", ui._hint]]
 	var was: Array[bool] = []
 	for pair in probes:
 		var ctl := pair[1] as Control

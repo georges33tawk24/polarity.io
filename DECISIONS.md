@@ -1828,3 +1828,26 @@ next words were that the screen is getting cramped. A repel button would have
 been the seventh thing competing for a corner. `Intent` was already ignoring
 extra fingers, so this costs no screen space at all.
 
+### §12az — the HUD was carrying too much
+
+At 1080 wide the minimap owned 43% of the screen and the leaderboard another 40%
+— between them the entire right side, top and bottom, plus an emote button parked
+in the busiest corner of all.
+
+**Minimap 460 -> 320.** It had been raised twice on request, and each raise was
+right in isolation; together with everything else it stopped being a gauge and
+became a wall. Still 39% larger than the 230 it started at, everything in `_draw`
+scales from SIZE so the blips stay legible, and the toggle beside it expands the
+map when it actually matters.
+
+**Emotes removed from the HUD entirely — button AND row.** The button was the
+least valuable element on screen in the most contested corner. Removing only the
+button would have left the row with no way to open it, which is a dead feature
+pretending to be a live one. `Magnet.EMOTES` and `_send_emote` stay, so restoring
+this is a matter of finding an entry point that does not cost a permanent seat.
+
+Worth recording: the first version of this change removed the button and left a
+comment claiming emotes now opened "from the leaderboard's own toggle area" —
+something never built. A comment describing behaviour that does not exist is
+worse than no comment, because the next person believes it.
+

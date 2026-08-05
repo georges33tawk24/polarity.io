@@ -51,7 +51,6 @@ var _board_ranks: Dictionary = {}
 var _board_toggle: Button
 var _board_collapsed := false
 var _map_toggle: Button
-var _emote_btn: Button
 var _map_collapsed := false
 var _clock_label: Label
 var _alive_label: Label
@@ -68,7 +67,6 @@ var _pole_target: Control
 var _result_trophy: HBoxContainer
 var _arena: Arena
 var _revive_box: Control
-var _emote_row: HBoxContainer
 var _result_pose: Control
 
 ## Store review requires a working support contact on both platforms. Replace with
@@ -777,39 +775,15 @@ func _build_hud() -> Control:
 
 	# Emotes. Collapsed behind one button: an always-open row of four would sit in
 	# the same corner the minimap needs, and this is a side feature.
-	_emote_row = HBoxContainer.new()
-	_emote_row.add_theme_constant_override("separation", UiKit.S1)
-	_emote_row.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
-	# Clear of the map's left edge rather than a constant that only happened to
-	# work at one map size. The emote button was already overlapping the map circle
-	# before it grew — these offsets were tuned when the map was 230.
-	_emote_row.offset_right = -(Minimap.SIZE + 14.0)
-	_emote_row.offset_left = _emote_row.offset_right - 340.0
-	# The row's four buttons measure wider and taller than the box reserved for
-	# them, and a container grows toward its grow direction — which by default was
-	# back across the map. Grow away from the corner instead.
-	_emote_row.grow_horizontal = Control.GROW_DIRECTION_BEGIN
-	_emote_row.grow_vertical = Control.GROW_DIRECTION_BEGIN
-	_emote_row.offset_top = -330.0
-	_emote_row.offset_bottom = -242.0
-	_emote_row.visible = false
-	root.add_child(_emote_row)
-	for i in Magnet.EMOTES.size():
-		var e := UiKit.btn_secondary(Magnet.EMOTES[i], 88)
-		e.custom_minimum_size.x = 74
-		e.add_theme_font_size_override("font_size", UiKit.T_LABEL)
-		e.pressed.connect(func() -> void: _send_emote(i))
-		_emote_row.add_child(e)
 
-	_emote_btn = UiKit.icon_btn("star", 92)
-	_emote_btn.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
-	_emote_btn.offset_right = -(Minimap.SIZE + 14.0)
-	_emote_btn.offset_left = _emote_btn.offset_right - 92.0
-	_emote_btn.offset_top = -228.0
-	_emote_btn.offset_bottom = -136.0
-	_emote_btn.pressed.connect(func() -> void:
-		_emote_row.visible = not _emote_row.visible)
-	root.add_child(_emote_btn)
+	# Emotes are gone from the HUD entirely — button AND row.
+	#
+	# The button was the least valuable thing on screen and sat in the busiest
+	# corner, beside the minimap and the leaderboard. Removing only the button
+	# would have left the row with no way to open it, which is a dead feature
+	# pretending to be a live one, so both went. Magnet.EMOTES and _send_emote
+	# remain, so restoring this is a matter of finding it an entry point that does
+	# not cost a permanent seat on a phone screen already carrying five things.
 
 	_hint = UiKit.hud_lbl("", UiKit.T_CAPTION, UiKit.INK_DIM, HORIZONTAL_ALIGNMENT_CENTER)
 	_hint.anchor_left = 0.0
@@ -1886,9 +1860,10 @@ func _on_wheel() -> void:
 ## Emotes are cosmetic only. The symbol appears above the SENDER's own magnet, so
 ## it can be ignored by looking elsewhere — which is why a fixed symbol set needs no
 ## moderation and no mute button.
+## Kept, with no caller: the HUD entry point was removed for screen space, not
+## because the feature is wrong. Whatever gives emotes a way in next — a gesture,
+## a radial, a slot on the results screen — calls this.
 func _send_emote(index: int) -> void:
-	if _emote_row != null:
-		_emote_row.visible = false
 	if _arena != null and is_instance_valid(_arena) and _arena.player != null:
 		_arena.player.emote(index)
 		Audio.play("ui_tap", 1.1, -14.0)

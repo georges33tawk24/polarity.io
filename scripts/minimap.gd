@@ -17,7 +17,11 @@ extends Control
 ## Everything below is drawn in units of SIZE/320, so growing this scales the
 ## bezel, the rivets and the blips with it. Growing it on its own just made a
 ## bigger empty circle with the same unreadable specks in it.
-const SIZE := 460.0
+## 320, not 460. It was raised twice on request, and at 460 it owned 43% of the
+## screen width while the leaderboard owned another 40% — between them the entire
+## right side, top and bottom. Everything below scales from SIZE, so the blips
+## stay legible; the toggle beside it expands the map when you actually need it.
+const SIZE := 320.0
 ## Every hard-coded pixel figure in _draw was tuned at this size.
 const BASE_SIZE := 320.0
 const REDRAW_HZ := 12.0
