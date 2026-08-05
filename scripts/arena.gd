@@ -661,6 +661,12 @@ func _apply_intent() -> void:
 		return
 	player.move_dir = intent.dir
 	player.holding = intent.held
+	# A second-finger tap fires the blast while the stick keeps steering. Consumed
+	# here so it can only ever fire once.
+	if intent.repel_tapped:
+		intent.repel_tapped = false
+		if player.cooldown <= 0.0:
+			player.fire_repel()
 
 
 func _think_bots(delta: float) -> void:

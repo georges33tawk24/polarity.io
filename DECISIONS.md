@@ -1811,3 +1811,20 @@ not damage, and lighting the body up as though it were teaches the wrong thing.
 Measured: firing next to a rival eight times your mass launches you at 42 u/s
 against a base speed of 16.5. That is the dash the mass cost is buying.
 
+### §12ay — repel needed a second finger, not a button
+
+"On mobile the only way to repel is to remove ur finger from the joystick."
+
+Correct, and it is the flaw in "hold to attract, release to repel" that only shows
+up on a touchscreen: releasing means lifting off the stick, so steering died at
+the exact moment it mattered most — mid-escape.
+
+A second finger tapping anywhere now fires the blast while the stick keeps
+steering. Release still repels, so nothing already learned stops working.
+
+Deliberately a gesture and NOT a button: the HUD already carries a leaderboard, a
+minimap, an emote control, the mass readout and the charge bar, and the player's
+next words were that the screen is getting cramped. A repel button would have
+been the seventh thing competing for a corner. `Intent` was already ignoring
+extra fingers, so this costs no screen space at all.
+

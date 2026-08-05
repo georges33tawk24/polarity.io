@@ -3,8 +3,10 @@ extends RefCounted
 ## Input abstraction. Gameplay reads `dir` and `held` — never a device event.
 ##
 ## Touch: press anywhere; that spot becomes a floating stick. Push away from it to
-## steer. Holding attracts, releasing repels, so one thumb does both — that is the
-## whole game and the control must not split it across two fingers.
+## steer. Holding attracts, and EITHER releasing OR tapping with a second finger
+## repels — the second finger exists because on a phone "release" means lifting off
+## the stick, so the one moment you most need to steer was the one moment you could
+## not. One thumb still plays the whole game; two just plays it better.
 ## Mouse: identical, with the left button.
 ## Keyboard: WASD/arrows to steer, space/shift to attract.
 ##
@@ -34,6 +36,9 @@ var pointer_pos := Vector2.ZERO
 ## travels. Read by the HUD to draw the stick.
 var anchor := Vector2.ZERO
 var pointer_down := false
+## Set for one frame when a second finger taps while the stick is held. Gameplay
+## consumes it; see Arena._apply_intent.
+var repel_tapped := false
 
 ## Stick throw, as a fraction of the shorter viewport axis. At 1080x1920 this is
 ## ~162px, about 1cm of thumb travel for full speed. A fraction rather than a
@@ -51,6 +56,17 @@ func handle_event(event: InputEvent) -> void:
 		if event.pressed and _touch_index == -1:
 			_touch_index = event.index
 			_begin(event.position)
+		elif event.pressed:
+			# A SECOND finger fires the repel without letting go of the stick.
+			#
+			# "Hold to attract, release to repel" is the whole game, but on a phone
+			# releasing means lifting your thumb off the stick — so the one moment
+			# you most need to steer is the one moment you cannot. Reported from a
+			# device as "the only way to repel is to remove ur finger".
+			#
+			# Release still repels, so nothing anyone has already learned stops
+			# working; this is an addition, not a replacement.
+			repel_tapped = true
 		elif not event.pressed and event.index == _touch_index:
 			# Extra fingers are ignored; only the one that started the hold ends it.
 			_touch_index = -1

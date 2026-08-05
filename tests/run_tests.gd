@@ -579,6 +579,21 @@ func test_intent_mapping() -> void:
 	i.update(vp)
 	ok(about(i.dir.y, 0.5), "half a throw is half tilt")
 
+	# A second finger FIRES THE REPEL without disturbing the stick. On a phone,
+	# releasing to repel means lifting off the stick, so steering died at the exact
+	# moment it mattered — reported from a device as "the only way to repel is to
+	# remove ur finger from the joystick".
+	var tap := InputEventScreenTouch.new()
+	tap.index = 1
+	tap.pressed = true
+	tap.position = Vector2(200, 1500)
+	i.handle_event(tap)
+	ok(i.repel_tapped, "a second finger requests a repel")
+	ok(i.pointer_down, "and does not end the hold")
+	i.update(vp)
+	ok(i.dir.length() > 0.4, "the stick keeps steering through the blast")
+	i.repel_tapped = false
+
 	# A second finger must not hijack or cancel the active hold.
 	var second := InputEventScreenTouch.new()
 	second.index = 1
