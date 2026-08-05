@@ -995,6 +995,7 @@ func _on_player_absorbed(pos: Vector3, amount: float) -> void:
 func _on_repelled(origin: Vector3, radius: float, strength: float, power: float, source: Magnet) -> void:
 	scrap.repel(origin, radius, strength * 0.7)
 	var launched := 0
+	var push := Vector3.ZERO
 	for m in magnets:
 		if m == source or not m.alive:
 			continue
@@ -1005,7 +1006,22 @@ func _on_repelled(origin: Vector3, radius: float, strength: float, power: float,
 			continue
 		var falloff := 1.0 - d / radius
 		m.apply_impulse(to / d, strength * falloff, source)
+		# Newton's third law, and the whole point of the verb: you push off what
+		# you shove, weighted by how heavy it is. Shoving something big is what
+		# actually launches you clear.
+		push += (to / d) * falloff * sqrt(m.mass / t.start_mass)
 		launched += 1
+
+	# Recoil. Away from what you pushed off, or along where you were steering if
+	# you fired into open space — a blast that only works next to somebody would
+	# still feel dead most of the time.
+	var away := Vector3.ZERO
+	if push.length_squared() > 0.0001:
+		away = -push.normalized()
+	elif source.last_dir.length_squared() > 0.01:
+		away = Vector3(source.last_dir.x, 0.0, source.last_dir.y).normalized()
+	if away != Vector3.ZERO:
+		source.apply_impulse(away, strength * t.repel_recoil, null, false)
 
 	if source.is_player:
 		fx.shockwave(origin, radius * Cosmetics.launch_scale(), Cosmetics.launch_color(), power)

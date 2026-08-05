@@ -1783,3 +1783,31 @@ rather than a broken pipeline — `_add_progress(scope, "matches", 1)` runs
 unconditionally, so the meta layer is demonstrably still hearing match_ended.
 NOT VERIFIED. Do not dismiss it on my say-so; check which dailies were active.
 
+### §12ax — repel did nothing, and the mass cost made that worse
+
+Player report: "i dont feel like repel does anything". Correct, and the mass cost
+added the day before had quietly made it a strictly bad deal — you paid for a
+verb that did not work.
+
+Three separate reasons, all in `_on_repelled`:
+
+1. **Reach was `_pull_radius`** — about 5 units at start mass, on an arena 370
+   across. Most blasts touched nothing at all. Attraction is a slow field and
+   repel is a shove; they had no business sharing a radius. Now 2.4x.
+2. **No self-recoil.** It moved everyone EXCEPT the person who fired it, which
+   means the escape verb did not escape. It was a courtesy extended to whoever
+   was chasing you. Recoil is now Newton's third law — you push off what you
+   shove, weighted by its mass, so shoving something big launches you hardest.
+   Firing into open space recoils along `last_dir` instead, or a blast with
+   nobody nearby would still feel dead.
+3. **The impulse was divided by target mass**, so it was weakest against exactly
+   the thing worth fleeing. Unchanged — that part is correct physics and the
+   recoil now compensates, since a heavy target you cannot move is a heavy target
+   you can push off hard.
+
+`apply_impulse` gained a `flash` parameter: being launched by your own repel is
+not damage, and lighting the body up as though it were teaches the wrong thing.
+
+Measured: firing next to a rival eight times your mass launches you at 42 u/s
+against a base speed of 16.5. That is the dash the mass cost is buying.
+

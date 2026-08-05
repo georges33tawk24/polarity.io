@@ -351,7 +351,14 @@ func set_leader(v: bool) -> void:
 			_label.modulate = Color(1, 1, 1, 0.45)
 
 
+## Last direction this magnet was actually steering, kept so a repel fired with
+## the stick released still knows which way "away" was.
+var last_dir := Vector2.ZERO
+
+
 func _update_visuals(delta: float) -> void:
+	if move_dir.length_squared() > 0.04:
+		last_dir = move_dir.normalized()
 	_face_travel(delta)
 	var charge01 := charge / t.repel_charge_time if t.repel_charge_time > 0.0 else 0.0
 	var ready := cooldown <= 0.0
@@ -415,7 +422,7 @@ func fire_repel() -> void:
 	elif mass > floor_mass:
 		_set_mass(floor_mass)
 
-	repelled.emit(global_position, _pull_radius, strength, power)
+	repelled.emit(global_position, _pull_radius * t.repel_radius_mult, strength, power)
 	if is_player:
 		Audio.play("launch", 1.0 + (1.0 - power) * 0.25, -3.0)
 		Platform.vibrate(14, 0.25 + power * 0.25)
@@ -553,10 +560,14 @@ func revive(at: Vector3, with_mass: float) -> void:
 	# open space, which is cheaper and cannot be gamed by standing in a saw.
 
 
-func apply_impulse(dir: Vector3, strength: float, source: Magnet = null) -> void:
+## `flash` off for self-recoil: being launched by your own repel is not damage,
+## and lighting the body up as though it were teaches exactly the wrong thing.
+func apply_impulse(dir: Vector3, strength: float, source: Magnet = null,
+		flash := true) -> void:
 	# Divide by mass: a heavy magnet shrugs off a hit that would launch a light one.
 	velocity += dir * strength / maxf(mass / t.start_mass, 0.35)
-	_hurt = maxf(_hurt, 0.45)
+	if flash:
+		_hurt = maxf(_hurt, 0.45)
 	if source != null and source != self:
 		last_attacker = source
 		attacker_timer = 3.5

@@ -55,6 +55,18 @@ extends Resource
 ## Scaled by power, so a tap costs almost nothing and a held blast is a real
 ## commitment. Never lethal — see Magnet.fire_repel.
 @export var repel_mass_cost := 0.045
+## Repel reaches this multiple of the pull radius.
+##
+## It used to reach exactly as far as attraction — about 5 units at start mass, on
+## an arena 370 across — so most blasts hit nothing at all and the verb felt inert.
+## Attraction is a slow field; repel is a shove, and a shove should have room.
+@export var repel_radius_mult := 2.4
+## Self-recoil, as a multiple of the impulse handed to the things you push.
+##
+## Repel moved everyone EXCEPT you, which is why it did not read as an escape.
+## Pushing off something is how you get away from it; without this, the verb was
+## a courtesy extended to whoever was chasing you.
+@export var repel_recoil := 1.35
 ## Hold this long (seconds) for a full-power release.
 @export var repel_charge_time := 0.45
 ## Power floor, so a quick tap still does something.

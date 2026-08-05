@@ -45,6 +45,7 @@ func _ready() -> void:
 	test_android_permissions()
 	test_first_seconds()
 	test_repel_cost()
+	test_repel_moves_you()
 	test_friends()
 	test_product_types()
 	test_scrap_field()
@@ -787,6 +788,44 @@ func test_repel_cost() -> void:
 	ok(m.mass > t.min_mass, "repelling at minimum mass does not kill you (%.2f)" % m.mass)
 	ok(m.alive, "and leaves you alive")
 	m.queue_free()
+
+
+## Repel must MOVE you, and must reach further than attraction.
+##
+## The player's report was "i dont feel like repel does anything", and they were
+## right: it reached exactly as far as the pull field (about 5 units on an arena
+## 370 across, so most blasts hit nothing), it moved everyone except the person
+## who fired it, and the impulse was divided by target mass — weakest against the
+## thing you were fleeing. An escape verb that does not move you is not an escape.
+func test_repel_moves_you() -> void:
+	print("repel recoil")
+	var t: Tuning = Game.tuning
+	ok(t.repel_radius_mult > 1.0, "repel reaches further than the pull field")
+	ok(t.repel_recoil > 0.0, "repel pushes the firer as well as the target")
+
+	var a := Arena.new()
+	add_child(a)
+	a.setup(t, null, 24680)
+	var me: Magnet = a.player
+	ok(me != null, "arena has a player")
+	if me == null:
+		return
+
+	# Something heavy right next to us, which is when a player actually repels.
+	var foe: Magnet = a.magnets[1]
+	foe.global_position = me.global_position + Vector3(3.0, 0.0, 0.0)
+	foe._set_mass(t.start_mass * 8.0)
+
+	me.velocity = Vector3.ZERO
+	me.charge = t.repel_charge_time
+	me.cooldown = 0.0
+	me.fire_repel()
+
+	var speed := Vector2(me.velocity.x, me.velocity.z).length()
+	ok(speed > 1.0, "firing next to a heavy rival launches you (%.1f u/s)" % speed)
+	# ...and AWAY from it, not into it.
+	ok(me.velocity.x < 0.0, "the recoil is away from what you pushed off")
+	a.queue_free()
 
 
 ## A new player must be able to absorb something almost immediately.
